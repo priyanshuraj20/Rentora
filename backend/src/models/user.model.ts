@@ -9,7 +9,7 @@ export interface IUser extends Document {
   googleId?: string;
   isVerified: boolean;
 
-  roles?: "renter" | "owner" | "admin";
+  roles: "renter" | "owner" | "admin";
 
   address?: {
     district?: string;

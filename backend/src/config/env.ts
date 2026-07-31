@@ -18,6 +18,13 @@ const envSchema = z.object({
   CLIENT_URL: z.string().url(),
 
   SENTRY_DSN: z.string().url().optional(),
+  ELASTIC_SEARCH_URL: z.string().url(),
+  ELASTIC_API_KEY: z.string().min(1),
+
+  GOOGLE_CLIENT_ID: z.string().min(1),
+  GOOGLE_CLIENT_SECRET: z.string().min(1),
+  GOOGLE_CALLBACK_URL: z.string().url(),
+  SESSION_SECRET: z.string().min(20),
 });
 
 // Parse once at startup. If anything is missing/wrong, app crashes HERE

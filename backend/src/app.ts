@@ -6,10 +6,20 @@ import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import * as Sentry from "@sentry/node";
 
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger";
+
 import { env } from "@config/env";
 import { healthController } from "@controllers/health.controller";
 import { globalErrorHandler } from "@middlewares/error.middleware";
 import { AppError } from "@utils/AppError";
+
+
+import authRouter from "./routes/auth.route";
+import userRouter from "./routes/user.route";
+import itemRouter from "./routes/items.route";
+import bookingRouter from "./routes/booking.route";
+import exploreRouter from "./routes/explore.route";
 
 const app = express();
 
@@ -39,13 +49,18 @@ const globalLimiter = rateLimit({
   legacyHeaders: false,
 });
 app.use(globalLimiter);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // -------------------- HEALTH CHECK --------------------
 app.get("/health", healthController);
 
-
 // -------------------- ROUTES --------------------
 // Will mount things like: app.use("/api/v1/auth", authRoute) from Phase 4 onward.
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/user", userRouter);
+app.use("/api/v1/items", itemRouter);
+app.use("/api/v1/booking", bookingRouter);
+app.use("/api/v1/explore", exploreRouter);
 
 // -------------------- SENTRY ERROR HANDLER --------------------
 // Must come after all routes, before our own error handlers.
