@@ -1,6 +1,9 @@
 import app from "./app";
 import { connectDB } from "@config/db";
 import { env } from "@config/env";
+import { initSentry } from "@config/sentry";
+
+initSentry();
 
 const startServer = async () => {
   try {

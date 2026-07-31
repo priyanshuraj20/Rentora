@@ -16,6 +16,8 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRY: z.string().default("7d"),
 
   CLIENT_URL: z.string().url(),
+
+  SENTRY_DSN: z.string().url().optional(),
 });
 
 // Parse once at startup. If anything is missing/wrong, app crashes HERE
@@ -23,7 +25,7 @@ const envSchema = z.object({
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  console.error("❌ Invalid environment variables:");
+  console.error(" Invalid environment variables:");
   console.error(parsed.error.format());
   process.exit(1);
 }

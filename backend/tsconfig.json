@@ -28,7 +28,7 @@
       "@middlewares/*": ["middlewares/*"],
       "@routes/*": ["routes/*"],
       "@utils/*": ["utils/*"],
-      "@types/*": ["types/*"],
+      "@types/*": ["src/types/*"],
       "@queues/*": ["queues/*"],
       "@validators/*": ["validators/*"]
     }
