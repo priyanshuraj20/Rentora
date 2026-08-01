@@ -1,9 +1,16 @@
 import { Redis } from "ioredis";
 import logger from "./logger";
 
-export const redisConnection = new Redis(process.env.REDIS_URL as string, {
+const redisUrl = process.env.REDIS_URL as string;
+
+// Upstash and other hosted providers use rediss:// (TLS).
+// ioredis needs { tls: {} } when connecting over TLS.
+const isTLS = redisUrl?.startsWith("rediss://");
+
+export const redisConnection = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
+  ...(isTLS ? { tls: { rejectUnauthorized: false } } : {}),
 });
 
 redisConnection.on("connect", () => {
