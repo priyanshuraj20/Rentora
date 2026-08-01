@@ -70,7 +70,7 @@ const RenterNavbar = () => {
                     <Link to="/renter" className="flex items-center gap-2">
                         <img src={logo} alt="logo" width="35px" />
                         <h2 className="text-2xl font-bold text-text-primary">
-                            RentIt<span className="text-bright">Right</span>
+                            Rent<span className="text-bright">ora</span>
                         </h2>
                     </Link>
 

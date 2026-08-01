@@ -175,7 +175,7 @@ const Register = ({ switchMode, email, setEmail }) => {
                          text-accent focus:ring-accent"
             />
             <p className="text-xs text-text-secondary leading-relaxed">
-              By creating an account, I agree to Rent It Right&apos;s{" "}
+              By creating an account, I agree to Rentora&apos;s{" "}
               <span className="text-bright hover:underline cursor-pointer">
                 Terms of Service
               </span>{" "}

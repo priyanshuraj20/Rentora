@@ -13,7 +13,7 @@ export default function Footer() {
             <div className="flex items-center gap-3 mb-6">
               <img src={logo} alt="logo" width="35px" />
               <h2 className="text-lg font-bold text-white">
-                Rent It Right
+                Rentora
               </h2>
             </div>
 
@@ -79,7 +79,7 @@ export default function Footer() {
         {/* BOTTOM BAR */}
         <div className="pt-8 border-t border-border-custom flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-text-secondary text-xs">
-            © 2024 Rent It Right Marketplace. All rights reserved.
+            © 2024 Rentora Marketplace. All rights reserved.
           </p>
 
           <div className="flex gap-8 text-xs text-text-secondary">
