@@ -32,6 +32,7 @@ const envSchema = z.object({
 
   RAZORPAY_KEY_ID: z.string().min(1, "RAZORPAY_KEY_ID is required"),
   RAZORPAY_KEY_SECRET: z.string().min(1, "RAZORPAY_KEY_SECRET is required"),
+  RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
 });
 
 // Parse once at startup. If anything is missing/wrong, app crashes HERE
