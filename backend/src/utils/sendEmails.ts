@@ -9,17 +9,23 @@ const FROM = "RentItRight <onboarding@resend.dev>";
 
 export const sendOTP = async (email: string, otp: string) => {
   try {
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: FROM,
       to: email,
       subject: `${otp} is your RentItRight verification code`,
-      html: `<div>Verification Code: ${otp}</div>`,
+      html: `...`,
     });
+
+    if (error) {
+      logger.error("Resend rejected the email", { email, error });
+      throw new AppError("Unable to send OTP", 500);
+    }
   } catch (error) {
     logger.error("Unable to send OTP", { email, error });
     throw new AppError("Unable to send OTP", 500);
   }
 };
+
 
 export const cancellationEmail = async (email: string, bookingId: string) => {
   try {
