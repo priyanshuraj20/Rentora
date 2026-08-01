@@ -28,6 +28,7 @@ import messageRouter from "./routes/message.route";
 import csrfRouter, { verifyCsrf } from "./routes/csrf.route";
 
 const app = express();
+app.set("trust proxy", 1);
 
 // -------------------- CORS --------------------
 // credentials:true needed because we'll send JWT via httpOnly cookie
