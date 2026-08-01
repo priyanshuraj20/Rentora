@@ -17,8 +17,8 @@ export class RazorpayPaymentProvider implements IPaymentProvider {
   private readonly keySecret: string;
 
   constructor() {
-    this.keyId = env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || "";
-    this.keySecret = env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET || "";
+    this.keyId = env.RAZORPAY_KEY_ID;
+    this.keySecret = env.RAZORPAY_KEY_SECRET;
   }
 
   async createOrder(params: CreateOrderParams): Promise<CreateOrderResult> {
@@ -40,11 +40,22 @@ export class RazorpayPaymentProvider implements IPaymentProvider {
   }
 
   async verifyPayment(params: VerifyPaymentParams): Promise<boolean> {
+    if (typeof params.signature !== "string" || !params.signature) {
+      return false;
+    }
+
     const generatedSignature = crypto
       .createHmac("sha256", this.keySecret)
       .update(`${params.orderId}|${params.paymentId}`)
       .digest("hex");
 
-    return generatedSignature === params.signature;
+    const genBuf = Buffer.from(generatedSignature, "utf8");
+    const paramBuf = Buffer.from(params.signature, "utf8");
+
+    if (genBuf.length !== paramBuf.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(genBuf, paramBuf);
   }
 }

@@ -6,7 +6,8 @@ import { userInterface } from "../controllers/auth.controller";
 import { OTP } from "../models/OTP.model";
 import { sendOTP } from "../utils/sendEmails";
 import { AppError } from "../utils/AppError";
-import { TokenPayload } from "../utils/generateTokens";
+import { TokenPayload } from "@utils/generateTokens";
+import { isTokenBlacklisted } from "../utils/tokenBlacklist";
 import { env } from "@config/env";
 
 export const registerService = async (userData: {
@@ -175,6 +176,12 @@ export const refreshTokenService = async (
 
   if (!refreshToken) {
     throw new AppError("Refresh token missing. Please login again", 401);
+  }
+
+  const isBlacklisted = await isTokenBlacklisted(refreshToken);
+  if (isBlacklisted) {
+    logger.warn("Attempt to use revoked refresh token");
+    throw new AppError("Token revoked. Please login again", 401);
   }
 
   let decoded: TokenPayload;

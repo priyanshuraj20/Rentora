@@ -18,6 +18,7 @@ import {
   generateRefreshToken,
   TokenPayload,
 } from "@utils/generateTokens";
+import { blacklistToken } from "../utils/tokenBlacklist";
 import { env } from "@config/env";
 
 export interface userInterface {
@@ -136,7 +137,12 @@ export const me = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const logout = (_req: Request, res: Response) => {
+export const logout = catchAsync(async (req: Request, res: Response) => {
+  const refreshToken = req.cookies?.refreshToken;
+  if (refreshToken) {
+    await blacklistToken(refreshToken);
+  }
+
   const cookieOptions = {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
@@ -152,7 +158,7 @@ export const logout = (_req: Request, res: Response) => {
     success: true,
     message: "Logged out",
   });
-};
+});
 
 export const googleCallback = catchAsync(
   async (req: Request, res: Response) => {
