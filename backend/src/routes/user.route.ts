@@ -10,6 +10,7 @@ import {
   dashboard,
   getWishlist,
   toggleWishlist,
+  getUserVerifications,
 } from "../controllers/user.controller";
 
 const router = Router();
@@ -240,5 +241,48 @@ router.get("/wishlist", VerifyUser, getWishlist);
  *         description: Wishlist toggled successfully
  */
 router.post("/wishlist/toggle", VerifyUser, toggleWishlist);
+
+/**
+ * @swagger
+ * /user/me/verifications:
+ *   get:
+ *     summary: Get user verification badges & selfie status
+ *     tags: [User]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Verifications fetched successfully
+ */
+router.get("/me/verifications", VerifyUser, getUserVerifications);
+
+import { verifyPhoneFirebase } from "../controllers/verification.controller";
+
+/**
+ * @swagger
+ * /user/me/verification/phone-firebase:
+ *   post:
+ *     summary: Verify phone number using Firebase SMS OTP Token
+ *     tags: [User]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               idToken:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Phone number verified successfully
+ */
+import { phoneVerificationLimiter } from "../middlewares/rateLimiter.middleware";
+
+router.post("/me/verification/phone-firebase", VerifyUser, phoneVerificationLimiter, verifyPhoneFirebase);
 
 export default router;

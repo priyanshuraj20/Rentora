@@ -37,6 +37,26 @@ export interface IUser extends Document {
     };
   };
 
+  verifications?: {
+    email: {
+      isVerified: boolean;
+      verifiedAt?: Date;
+    };
+    phone: {
+      isVerified: boolean;
+      phoneNumber?: string;
+      verifiedAt?: Date;
+    };
+    govtId: {
+      status: "none" | "pending" | "verified" | "rejected";
+      provider?: string;
+      documentType?: "aadhaar" | "pan";
+      verifiedAt?: Date;
+    };
+  };
+
+  trustScore: number;
+
   walletBalance: number;
   isActive: boolean;
   isBlocked: boolean;
@@ -147,6 +167,35 @@ const UserSchema: Schema<IUser> = new Schema(
       type: Boolean,
       default: false,
     },
+
+    trustScore: {
+      type: Number,
+      default: 50,
+      min: 0,
+      max: 100,
+    },
+
+    verifications: {
+      email: {
+        isVerified: { type: Boolean, default: false },
+        verifiedAt: { type: Date },
+      },
+      phone: {
+        isVerified: { type: Boolean, default: false },
+        phoneNumber: { type: String },
+        verifiedAt: { type: Date },
+      },
+      govtId: {
+        status: {
+          type: String,
+          enum: ["none", "pending", "verified", "rejected"],
+          default: "none",
+        },
+        provider: { type: String },
+        documentType: { type: String, enum: ["aadhaar", "pan"] },
+        verifiedAt: { type: Date },
+      },
+    },
   },
   { timestamps: true },
 );
@@ -158,6 +207,12 @@ UserSchema.index(
     expireAfterSeconds: 3600, // 1 hour
     partialFilterExpression: { isVerified: false },
   },
+);
+
+// Unique sparse index for verified phone numbers
+UserSchema.index(
+  { "verifications.phone.phoneNumber": 1 },
+  { unique: true, sparse: true },
 );
 
 export const User = mongoose.model<IUser>("User", UserSchema);

@@ -141,4 +141,8 @@ dist
 # SvelteKit build / generate output
 .svelte-kit
 
+# Firebase Service Account Credentials
+*firebase-adminsdk*.json
+firebase-service-account.json
+
 # End of https://www.toptal.com/developers/gitignore/api/node

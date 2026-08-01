@@ -14,6 +14,7 @@ import {
   dashboardDataService,
   getWishlistService,
   toggleWishlistService,
+  getUserVerificationsService,
 } from "../service/user.service";
 import { catchAsync } from "../utils/catchAsync";
 import { AppError } from "../utils/AppError";
@@ -119,5 +120,12 @@ export const toggleWishlist = catchAsync(
     res
       .status(200)
       .json({ success: true, data: result, message: result.message });
+  },
+);
+
+export const getUserVerifications = catchAsync(
+  async (req: Request, res: Response) => {
+    const data = await getUserVerificationsService(req.userId!);
+    res.status(200).json({ success: true, data });
   },
 );

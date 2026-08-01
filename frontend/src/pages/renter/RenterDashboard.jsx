@@ -7,6 +7,8 @@ import { Link, useNavigate } from "react-router-dom";
 import homeRedirect from "../../hooks/homeRedirect";
 import useAuth from "../../hooks/authHook";
 
+import VerificationBadges from "../../components/common/VerificationBadges";
+
 export default function RenterDashboard() {
   homeRedirect();
   const navigate = useNavigate();
@@ -14,6 +16,23 @@ export default function RenterDashboard() {
   const [upcomingRentals, setUpcomingRentals] = useState(0);
   const [wishlist, setWishlist] = useState(0);
   const [bookings, setBookings] = useState([]);
+  const [verifications, setVerifications] = useState(null);
+  const [trustScore, setTrustScore] = useState(50);
+
+  const fetchVerifications = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/user/me/verifications`, {
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setVerifications(data.data.verifications);
+        setTrustScore(data.data.trustScore);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   // Fetching Stats from Backend
   const fetchStats = async () => {
@@ -50,6 +69,7 @@ export default function RenterDashboard() {
 
   useEffect(() => {
     fetchStats();
+    fetchVerifications();
   }, []);
 
   const stats = [
@@ -84,6 +104,11 @@ export default function RenterDashboard() {
       <div className="max-w-[1400px] mx-auto px-6 py-8">
 
         <DashboardHeader userName={name} />
+
+        {/* Verification Badges */}
+        <div className="mb-8">
+          <VerificationBadges badges={verifications?.badges} onRefresh={fetchVerifications} />
+        </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

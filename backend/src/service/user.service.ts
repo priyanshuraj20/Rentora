@@ -56,6 +56,25 @@ export const getUserProfileService = async (userId: string) => {
       state: user.address?.state!,
     },
     profileImage: user.profileImage!,
+    trustScore: user.trustScore ?? 50,
+    isVerified: user.isVerified ?? false,
+    verifications: {
+      email: {
+        isVerified: user.isVerified ?? false,
+        verifiedAt: user.verifications?.email?.verifiedAt || (user.isVerified ? user.createdAt : undefined),
+      },
+      phone: {
+        isVerified: user.verifications?.phone?.isVerified ?? false,
+        phoneNumber: user.verifications?.phone?.phoneNumber || user.phone,
+        verifiedAt: user.verifications?.phone?.verifiedAt,
+      },
+      govtId: {
+        status: user.verifications?.govtId?.status ?? "none",
+        provider: user.verifications?.govtId?.provider,
+        documentType: user.verifications?.govtId?.documentType,
+        verifiedAt: user.verifications?.govtId?.verifiedAt,
+      },
+    },
   };
 
   if (user.roles === "renter") {
@@ -350,4 +369,40 @@ export const toggleWishlistService = async (userId: string, itemId: string) => {
   await user.save();
 
   return { message, isWishlisted };
+};
+
+export const getUserVerificationsService = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const emailVerified = user.isVerified ?? false;
+  const phoneVerified = user.verifications?.phone?.isVerified ?? false;
+  const govtIdStatus = user.verifications?.govtId?.status ?? "none";
+
+  return {
+    verifications: {
+      email: {
+        isVerified: emailVerified,
+        verifiedAt: user.verifications?.email?.verifiedAt || (emailVerified ? user.createdAt : undefined),
+      },
+      phone: {
+        isVerified: phoneVerified,
+        phoneNumber: user.verifications?.phone?.phoneNumber || user.phone,
+        verifiedAt: user.verifications?.phone?.verifiedAt,
+      },
+      govtId: {
+        status: govtIdStatus,
+        provider: user.verifications?.govtId?.provider,
+        documentType: user.verifications?.govtId?.documentType,
+        verifiedAt: user.verifications?.govtId?.verifiedAt,
+      },
+    },
+    badges: {
+      isEmailVerified: emailVerified,
+      isPhoneVerified: phoneVerified,
+      isIdentityVerified: govtIdStatus === "verified",
+    },
+  };
 };
