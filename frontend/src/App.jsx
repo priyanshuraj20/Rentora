@@ -10,6 +10,7 @@ import OwnerLayout from "./layouts/OwnerLayout";
 import GuestHome from "./pages/guest/GuestHome";
 import Explore from "./pages/guest/Explore";
 import ItemDetail from "./pages/guest/ItemDetail";
+import Features from "./pages/guest/Features";
 
 import RenterDashboard from "./pages/renter/RenterDashboard";
 import RenterExplore from "./pages/renter/RenterExplore";
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="/" element={<GuestHome />} />
             <Route path="/role-redirect" element={<RoleRedirect />} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/features" element={<Features />} />
             <Route path="/item/:id" element={<ItemDetail />} />
           </Route>
 

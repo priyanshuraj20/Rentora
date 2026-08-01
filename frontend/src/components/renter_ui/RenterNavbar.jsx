@@ -85,6 +85,9 @@ const RenterNavbar = () => {
                         <NavLink to="/renter_explore" className={navItemClass}>
                             Browse Items
                         </NavLink>
+                        <NavLink to="/features" className={navItemClass}>
+                            Features
+                        </NavLink>
                     </nav>
                 </div>
 

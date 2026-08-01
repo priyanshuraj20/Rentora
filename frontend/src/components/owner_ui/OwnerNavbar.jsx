@@ -88,6 +88,10 @@ const OwnerNavbar = () => {
                         <NavLink to="/messages" className={navItemClass}>
                             Messages
                         </NavLink>
+
+                        <NavLink to="/features" className={navItemClass}>
+                            Features
+                        </NavLink>
                     </nav>
                 </div>
 

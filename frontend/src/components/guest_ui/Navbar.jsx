@@ -52,6 +52,9 @@ const Navbar = () => {
             <NavLink to="/explore" className={navItemClass}>
               Explore
             </NavLink>
+            <NavLink to="/features" className={navItemClass}>
+              Features
+            </NavLink>
             <a
               href="#how-it-works"
               className="px-4 py-2 rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 transition-all cursor-pointer"

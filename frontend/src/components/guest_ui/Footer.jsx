@@ -45,9 +45,9 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold mb-5 text-text-primary text-sm uppercase tracking-wider">Marketplace</h4>
             <ul className="space-y-3 text-sm text-text-secondary">
-              <li><a className="hover:text-primary transition-colors" href="#">Browse Items</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">How it Works</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Verification</a></li>
+              <li><a className="hover:text-primary transition-colors" href="/explore">Browse Items</a></li>
+              <li><a className="hover:text-primary transition-colors" href="/#how-it-works">How it Works</a></li>
+              <li><a className="hover:text-primary transition-colors" href="/features">Features Overview</a></li>
               <li><a className="hover:text-primary transition-colors" href="#">Rentora Pro</a></li>
             </ul>
           </div>
