@@ -85,6 +85,15 @@ app.use("/api/v1/messages", messageRouter);
 // so our 404 AppErrors below won't spam Sentry as "errors".
 Sentry.setupExpressErrorHandler(app);
 
+// -------------------- ROOT ENDPOINT --------------------
+app.get("/", (_req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: "Rentora API is running 🚀",
+    version: "1.0.0",
+  });
+});
+
 // -------------------- 404 HANDLER --------------------
 app.use((req, _res, next) => {
   next(new AppError(`Route ${req.originalUrl} not found`, 404));
