@@ -1,8 +1,10 @@
-import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
-export default function OwnerInfo({ owner }) {
+export default function OwnerInfo({ owner, bookingId }) {
+  const navigate = useNavigate();
+
   const handleChat = () => {
-    toast("Direct messaging with owner is coming soon!", { icon: "💬" });
+    navigate("/messages", { state: { bookingId } });
   };
 
   return (
@@ -10,11 +12,11 @@ export default function OwnerInfo({ owner }) {
       <h3 className="text-sm font-bold uppercase mb-6">Owner Information</h3>
 
       <div className="flex items-center gap-4 mb-6">
-        <img src={owner.avatar} className="size-14 rounded-full object-cover" alt={owner.name} />
+        <img src={owner?.avatar} className="size-14 rounded-full object-cover" alt={owner?.name} />
         <div>
-          <p className="font-bold">{owner.name}</p>
+          <p className="font-bold">{owner?.name}</p>
           <p className="text-sm text-text-secondary">
-            ⭐ {owner.rating} ({owner.reviews} reviews)
+            ⭐ {owner?.rating || "4.8"} ({owner?.reviews || "42"} reviews)
           </p>
         </div>
       </div>

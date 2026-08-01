@@ -307,7 +307,7 @@ export default function RentalDetails() {
           isSubmitting={isPaymentSubmitting}
         />
         <div className="flex flex-col gap-6">
-          <OwnerInfo owner={rental.owner} />
+          <OwnerInfo owner={rental.owner} bookingId={rental.id} />
           <RentalPolicies policies={rental.policies} />
         </div>
       </div>

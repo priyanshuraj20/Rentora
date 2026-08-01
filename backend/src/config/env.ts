@@ -32,7 +32,13 @@ const envSchema = z.object({
 
   RAZORPAY_KEY_ID: z.string().min(1, "RAZORPAY_KEY_ID is required"),
   RAZORPAY_KEY_SECRET: z.string().min(1, "RAZORPAY_KEY_SECRET is required"),
-  RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
+
+  SMTP_HOST: z.string().default("smtp.gmail.com"),
+  SMTP_PORT: z.coerce.number().default(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  MAIL_USER: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
 });
 
 // Parse once at startup. If anything is missing/wrong, app crashes HERE

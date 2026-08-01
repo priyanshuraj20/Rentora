@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { Send, MessageSquare, ShieldCheck, Search, CheckCheck, Bell, Loader2 } from "lucide-react";
 import useAuth from "../../hooks/authHook";
 import { useSocket } from "../../context/SocketContext";
@@ -6,6 +7,9 @@ import { useSocket } from "../../context/SocketContext";
 export default function Messages() {
   const { user } = useAuth();
   const { socket } = useSocket();
+  const location = useLocation();
+  const targetBookingId = location.state?.bookingId;
+
   const [conversations, setConversations] = useState([]);
   const [activeConvId, setActiveConvId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -64,8 +68,9 @@ export default function Messages() {
           });
 
           setConversations(mappedConvs);
-          if (mappedConvs.length > 0 && !activeConvId) {
-            setActiveConvId(mappedConvs[0].id);
+          if (mappedConvs.length > 0) {
+            const matched = targetBookingId && mappedConvs.some((c) => c.id === targetBookingId);
+            setActiveConvId(matched ? targetBookingId : mappedConvs[0].id);
           }
         }
       } catch (err) {
@@ -76,7 +81,7 @@ export default function Messages() {
     };
 
     fetchConversations();
-  }, [user]);
+  }, [user, targetBookingId]);
 
   // 2. Load Persisted Chat Messages for Selected Booking
   useEffect(() => {
