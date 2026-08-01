@@ -1,106 +1,175 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
 import AuthController from "../../auth/AuthController";
-import { IndianRupee, ArrowRight } from "lucide-react";
+import { ArrowRight, Star, ShieldCheck, Zap, IndianRupee } from "lucide-react";
 
 const Hero = () => {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState("login");
+  const [realItems, setRealItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const openAuth = (mode) => {
     setAuthMode(mode);
     setAuthOpen(true);
   };
 
+  useEffect(() => {
+    const fetchHeroItems = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/explore?limit=4`);
+        const data = await res.json();
+        if (data.status === "success" || data.success) {
+          const list = data.items || data.data || [];
+          setRealItems(list.slice(0, 4));
+        }
+      } catch (err) {
+        console.error("Failed to fetch hero items", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHeroItems();
+  }, []);
+
   return (
-    <section className="relative min-h-[670px] flex flex-col items-center justify-center text-center px-6 overflow-hidden bg-app">
+    <section className="relative min-h-[620px] flex items-center bg-app py-12 lg:py-20 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6 w-full relative z-10">
+        <div className="grid lg:grid-cols-12 gap-12 lg:gap-10 items-center">
 
-      {/* Subtle radial glow to match the image vibe */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px]" />
-      </div>
+          {/* ================= Left Column: Hero Text ================= */}
+          <div className="lg:col-span-6 xl:col-span-6 text-left flex flex-col items-start">
+            
+            {/* Headline */}
+            <h1 className="font-serif text-4xl sm:text-6xl lg:text-[72px] font-normal leading-[1.05] mb-6 tracking-tight text-text-primary">
+              Don't Buy It. <br />
+              <span className="italic bg-gradient-to-r from-primary via-secondary-accent to-primary bg-clip-text text-transparent pb-1 block">
+                Rent It Right Next Door.
+              </span>
+            </h1>
 
-      {/* ================= Floating Cards (Left) ================= */}
-      <div className="absolute top-[35%] -left-12 hidden xl:block animate-[float_4s_ease-in-out_infinite] z-0">
-        <div className="bg-card p-4 rounded-[32px] border border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] w-64 -rotate-12 translate-x-10">
-          <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-4 bg-black/40">
-            <img
-              src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600"
-              alt="Camera Gear"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="flex justify-between items-center px-1">
-            <span className="text-[12px] font-bold text-text-primary tracking-wide">
-              Camera Rig Pro
-            </span>
-            <span className="text-[11px] font-black text-white/90 flex items-center"><IndianRupee className="size-3" />500/day</span>
-          </div>
-        </div>
-      </div>
+            {/* Subtext */}
+            <p className="text-base sm:text-lg text-text-secondary mb-8 leading-relaxed font-normal max-w-xl">
+              Borrow cameras, tools, bikes, camping gear, and more from verified neighbors in your area. Or turn your unused items into passive income.
+            </p>
 
-      {/* ================= Floating Cards (Right) ================= */}
-      <div className="absolute bottom-[20%] -right-8 hidden xl:block animate-[float_5s_ease-in-out_infinite] z-0">
-        <div className="bg-card p-6 rounded-[32px] border border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] w-60 rotate-12 relative overflow-hidden">
-          <div className="flex items-center space-x-4 mb-5">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-black shadow-[0_0_20px_rgba(126,252,232,0.4)]">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3.5 w-full sm:w-auto mb-10">
+              <Link
+                to="/explore"
+                className="group bg-primary text-text-primary px-7 py-3.5 rounded-xl font-semibold text-base hover:bg-primary-hover active:scale-95 transition-all flex items-center justify-center gap-2.5 shadow-md"
+              >
+                Start Browsing
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+
+              <button
+                onClick={() => openAuth('register')}
+                className="bg-surface px-7 py-3.5 rounded-xl font-semibold text-base border border-divider hover:bg-white/5 transition-all text-text-primary active:scale-95 cursor-pointer flex items-center justify-center"
+              >
+                List Your Gear
+              </button>
             </div>
-            <div className="text-left">
-              <p className="text-[9px] uppercase font-black tracking-widest text-text-muted leading-tight mb-1">
-                Trusted Owner
-              </p>
-              <p className="text-sm font-bold text-text-primary">Vivek Singh</p>
+
+            {/* Trust Pill Indicators */}
+            <div className="flex items-center gap-6 pt-6 border-t border-divider w-full flex-wrap">
+              <div className="flex items-center gap-2 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                <ShieldCheck className="size-4 text-success" />
+                <span>100% Protected</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                <Zap className="size-4 text-primary" />
+                <span>Instant Approval</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                <Star className="size-4 text-warning fill-warning" />
+                <span>4.9 Community Rating</span>
+              </div>
             </div>
+
           </div>
-          <div className="h-1.5 w-full bg-divider rounded-full overflow-hidden">
-            <div className="h-full bg-primary w-[95%] shadow-[0_0_8px_rgba(126,252,232,0.6)]" />
+
+          {/* ================= Right Column: Real DB Items Grid (No Outer Box) ================= */}
+          <div className="lg:col-span-6 xl:col-span-6">
+            
+            {/* Header Title */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-success" />
+                <span className="text-xs font-bold text-text-primary uppercase tracking-wider">
+                  Available Near You
+                </span>
+              </div>
+              <Link to="/explore" className="text-xs font-semibold text-primary hover:underline">
+                Explore All Items →
+              </Link>
+            </div>
+
+            {/* Real Items Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {loading ? (
+                // Loading Skeletons
+                [1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-surface border border-divider rounded-2xl p-3 h-52 animate-pulse" />
+                ))
+              ) : (
+                realItems.map((item) => {
+                  const itemId = item._id || item.id;
+                  const itemImg = Array.isArray(item.images) && item.images.length > 0
+                    ? item.images[0]
+                    : (item.image || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600");
+                  const itemPrice = item.dailyPrice ?? item.pricing?.daily ?? item.pricePerDay ?? item.price ?? 0;
+                  const itemRating = item.avgRating || item.rating || (item.reviewsCount > 0 ? 4.9 : "New");
+                  const reviewCount = item.totalReviews || item.reviewsCount || item.reviews || 0;
+
+                  return (
+                    <Link
+                      key={itemId}
+                      to={`/item/${itemId}`}
+                      className="group bg-surface border border-divider rounded-2xl p-3 flex flex-col justify-between hover:border-primary/50 transition-all duration-300 shadow-sm"
+                    >
+                      {/* Image */}
+                      <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-card border border-divider">
+                        <img
+                          src={itemImg}
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        {item.category && (
+                          <span className="absolute top-2 left-2 bg-app/80 text-text-primary text-[10px] font-bold px-2 py-0.5 rounded-md border border-divider uppercase tracking-wider">
+                            {item.category}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Details */}
+                      <div>
+                        <h4 className="text-xs font-bold text-text-primary tracking-tight line-clamp-1 group-hover:text-primary transition-colors">
+                          {item.title}
+                        </h4>
+
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-divider">
+                          <span className="text-[10px] text-text-muted flex items-center gap-1 font-medium">
+                            <Star className="size-3 text-warning fill-warning" />
+                            {itemRating} {reviewCount > 0 ? `(${reviewCount})` : ''}
+                          </span>
+
+                          <span className="text-xs font-bold text-primary flex items-center">
+                            <IndianRupee className="size-3" />
+                            {itemPrice}
+                            <span className="text-[9px] text-text-muted font-normal ml-0.5">/day</span>
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+
           </div>
-          {/* Bottom accent line from design */}
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20 blur-[2px]" />
-        </div>
-      </div>
-
-      {/* ================= Hero Content ================= */}
-      <div className="relative z-10 max-w-6xl mx-auto py-12 flex flex-col items-center">
-
-        {/* Heading */}
-        <h1 className="text-6xl md:text-8xl lg:text-[110px] font-[900] leading-[0.95] mb-10 tracking-tight text-text-primary">
-          Rent Anything. <br />
-          <span className="bg-gradient-to-r from-primary via-[#42a8f8] to-primary bg-clip-text text-transparent animate-gradient pb-4 block">
-            Anytime. Locally.
-          </span>
-        </h1>
-
-        {/* Subtext */}
-        <p className="text-lg md:text-xl xl:text-2xl text-text-secondary max-w-3xl mx-auto mb-16 leading-relaxed font-medium px-4">
-          The ultra-modern marketplace for high-end gear. Access premium equipment without the ownership burden. Curated by experts, trusted by locals.
-        </p>
-
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-8 justify-center w-full max-w-xl px-4">
-
-          {/* Primary Button */}
-          <Link
-            to="/explore"
-            className="group flex-1 bg-primary text-app px-10 py-5 rounded-full font-black text-lg hover:scale-[1.03] active:scale-95 transition-all flex items-center justify-center gap-3"
-          >
-            Start Browsing
-            <ArrowRight />
-          </Link>
-
-          {/* Secondary Button */}
-          <button
-            onClick={() => openAuth('register')}
-            className="flex-1 bg-surface px-10 py-5 rounded-full font-black text-lg border border-white/10 hover:bg-white/10 transition-all text-text-primary active:scale-95 shadow-xl"
-          >
-            List Your Gear
-          </button>
 
         </div>
-
       </div>
 
       <AuthController
@@ -108,7 +177,6 @@ const Hero = () => {
         onClose={() => setAuthOpen(false)}
         defaultMode={authMode}
       />
-
     </section>
   );
 };

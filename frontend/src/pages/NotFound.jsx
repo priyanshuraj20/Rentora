@@ -27,7 +27,7 @@ export const NotFound = () => {
             {[...Array(6)].map((_, i) => (
                 <div
                     key={i}
-                    className="absolute rounded-full bg-bright/20"
+                    className="absolute rounded-full bg-primary/20"
                     style={{
                         width: `${8 + i * 6}px`,
                         height: `${8 + i * 6}px`,
@@ -41,7 +41,7 @@ export const NotFound = () => {
 
             {/* Large background glow */}
             <div
-                className="absolute w-[500px] h-[500px] rounded-full bg-bright/5 blur-3xl"
+                className="absolute w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl"
                 style={{ animation: "pulse-ring 4s ease-in-out infinite" }}
             />
 
@@ -53,26 +53,23 @@ export const NotFound = () => {
                     className="mb-6"
                     style={{ animation: "fade-up 0.6s ease-out" }}
                 >
-                    <h1
-                        className="text-[160px] md:text-[200px] font-black leading-none tracking-tighter text-transparent bg-clip-text select-none bg-bright"
-                        
-                    >
+                    <h1 className="text-[140px] md:text-[180px] font-black font-serif leading-none tracking-tight text-primary select-none drop-shadow-md">
                         404
                     </h1>
                 </div>
 
                 {/* Divider line */}
                 <div
-                    className="w-20 h-1 bg-gradient-to-r from-transparent via-bright to-transparent mx-auto mb-8 rounded-full"
+                    className="w-16 h-1 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mb-8 rounded-full"
                     style={{ animation: "fade-up 0.6s ease-out 0.15s both" }}
                 />
 
                 {/* Message */}
                 <div style={{ animation: "fade-up 0.6s ease-out 0.3s both" }}>
-                    <h2 className="text-2xl md:text-3xl font-bold text-text-primary mb-3 tracking-tight">
+                    <h2 className="text-2xl md:text-3xl font-bold font-serif text-text-primary mb-3 tracking-tight">
                         Page not found
                     </h2>
-                    <p className="text-text-secondary text-base md:text-lg leading-relaxed max-w-md mx-auto">
+                    <p className="text-text-secondary text-sm md:text-base leading-relaxed max-w-md mx-auto">
                         The page you're looking for doesn't exist or has been moved.
                         Let's get you back on track.
                     </p>
@@ -80,30 +77,30 @@ export const NotFound = () => {
 
                 {/* Action Buttons */}
                 <div
-                    className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-10"
+                    className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8"
                     style={{ animation: "fade-up 0.6s ease-out 0.5s both" }}
                 >
                     <button
                         onClick={() => navigate(-1)}
-                        className="group flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-surface border border-divider text-text-secondary hover:text-text-primary hover:border-bright/40 hover:bg-elevated transition-all text-sm font-bold w-full sm:w-auto justify-center"
+                        className="group flex items-center gap-2 px-5 py-2.5 rounded-xl bg-surface border border-divider text-text-secondary hover:text-text-primary hover:border-primary/40 transition-all text-xs font-semibold w-full sm:w-auto justify-center cursor-pointer"
                     >
-                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                        <ArrowLeft size={15} className="group-hover:-translate-x-1 transition-transform" />
                         Go Back
                     </button>
 
                     <button
                         onClick={() => navigate("/")}
-                        className="group flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-bright text-app hover:bg-bright/85 active:scale-[0.98] transition-all text-sm font-bold w-full sm:w-auto justify-center shadow-lg shadow-bright/20"
+                        className="group flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-text-primary hover:bg-primary-hover active:scale-[0.98] transition-all text-xs font-semibold w-full sm:w-auto justify-center cursor-pointer shadow-md"
                     >
-                        <Home size={16} />
+                        <Home size={15} />
                         Back to Home
                     </button>
 
                     <button
                         onClick={() => navigate("/explore")}
-                        className="group flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-surface border border-divider text-text-secondary hover:text-text-primary hover:border-bright/40 hover:bg-elevated transition-all text-sm font-bold w-full sm:w-auto justify-center"
+                        className="group flex items-center gap-2 px-5 py-2.5 rounded-xl bg-surface border border-divider text-text-secondary hover:text-text-primary hover:border-primary/40 transition-all text-xs font-semibold w-full sm:w-auto justify-center cursor-pointer"
                     >
-                        <Search size={16} className="group-hover:scale-110 transition-transform" />
+                        <Search size={15} className="group-hover:scale-110 transition-transform" />
                         Explore
                     </button>
                 </div>

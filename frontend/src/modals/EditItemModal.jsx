@@ -183,16 +183,16 @@ export default function EditItemModal({ item, onClose, onSubmit }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={onClose}>
             <div
-                className="bg-surface w-full max-w-2xl rounded-2xl shadow-2xl shadow-black/40 relative animate-[modalIn_0.25s_ease-out]"
+                className="bg-surface w-full max-w-2xl rounded-3xl shadow-2xl relative animate-[modalIn_0.15s_ease-out] border border-divider"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-5 border-b border-divider">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-bright/10">
-                            <Package size={20} className="text-bright" />
+                        <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
+                            <Package size={20} className="text-primary" />
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-text-primary tracking-tight">Edit Item</h2>
@@ -482,11 +482,11 @@ export default function EditItemModal({ item, onClose, onSubmit }) {
                     <button
                         onClick={handleSave}
                         disabled={isUploading}
-                        className="px-6 py-2.5 rounded-xl text-sm font-bold bg-bright text-app hover:bg-bright/85 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="px-6 py-2.5 rounded-xl text-xs font-semibold bg-primary text-text-primary hover:bg-primary-hover active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer shadow-md"
                     >
                         {isUploading ? (
                             <>
-                                <div className="w-4 h-4 border-2 border-app/30 border-t-app rounded-full animate-spin" />
+                                <div className="w-4 h-4 border-2 border-text-primary/30 border-t-text-primary rounded-full animate-spin" />
                                 <span>Saving...</span>
                             </>
                         ) : (

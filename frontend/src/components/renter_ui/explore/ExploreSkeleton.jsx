@@ -2,14 +2,14 @@ import Skeleton from "../../common/Skeleton";
 
 const ExploreSkeleton = () => {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-divider bg-card shadow-[0_12px_32px_rgba(0,0,0,0.35)]">
+    <div className="group relative overflow-hidden rounded-2xl border border-divider bg-surface shadow-sm">
       {/* Image Skeleton */}
-      <div className="px-3 pt-3">
-        <Skeleton className="h-44 w-full rounded-xl" />
+      <div className="p-3">
+        <Skeleton className="h-48 w-full rounded-2xl" />
       </div>
 
       {/* Content Skeleton */}
-      <div className="px-4 pb-4 pt-4">
+      <div className="px-5 pb-5 pt-2">
         {/* Title + Rating Skeleton */}
         <div className="flex items-center justify-between">
           <Skeleton className="h-5 w-3/4" />

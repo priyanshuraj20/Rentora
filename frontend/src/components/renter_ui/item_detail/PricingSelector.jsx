@@ -14,22 +14,22 @@ const PricingSelector = ({ pricing }) => {
   );
 
   return (
-    <div className="mt-6 flex justify-between items-center border-b-1 border-divider pb-7">
+    <div className="mt-6 flex justify-between items-center border-b border-divider pb-6">
 
       {/* Price display */}
       <div className="min-w-[140px]">
-        <p className="text-sm text-text-secondary mb-1">Starting at</p>
+        <p className="text-xs text-text-muted mb-1 font-medium">Starting at</p>
 
-        <p className="text-2xl font-bold text-bright">
+        <p className="text-2xl font-bold text-primary">
           ₹{priceMap[selectedPlan].value}
-          <span className="text-sm text-text-secondary ml-1">
+          <span className="text-xs text-text-muted ml-1 font-normal">
             /{priceMap[selectedPlan].label}
           </span>
         </p>
       </div>
 
       {/* Selector */}
-      <div className="mt-4 flex gap-0.5 bg-app p-1 rounded-xl border-1 border-divider">
+      <div className="flex gap-1 bg-app p-1 rounded-xl border border-divider">
         {availablePlans.map((plan) => {
             const isActive = selectedPlan === plan;
 
@@ -37,11 +37,11 @@ const PricingSelector = ({ pricing }) => {
               <button
                 key={plan}
                 onClick={() => setSelectedPlan(plan)}
-                className={`cursor-pointer rounded-lg px-4 py-1.5 text-xs transition
+                className={`cursor-pointer rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all
                 ${
                   isActive
-                    ? "bg-bright text-black border-1 border-bright"
-                    : "border-1 border-app"
+                    ? "bg-primary text-text-primary shadow-sm"
+                    : "text-text-secondary hover:text-text-primary"
                 }
               `}
               >

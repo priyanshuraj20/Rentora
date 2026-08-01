@@ -1,15 +1,14 @@
 import { Link } from "react-router-dom";
+
 export default function RentalCard({ rental }) {
-  
-  console.log(rental.id)
   return (
     <Link to={`/rentals/${rental.id}`} className="block">
-      <div className="bg-surface border-2 border-app/80 rounded-xl overflow-hidden hover:border-bright/40 transition-all">
+      <div className="bg-surface border border-divider rounded-3xl overflow-hidden hover:border-primary/40 transition-all duration-300 shadow-sm group">
         <div
-          className="relative h-48 bg-cover bg-center"
+          className="relative h-48 bg-cover bg-center bg-card border-b border-divider"
           style={{ backgroundImage: `url(${rental.image})` }}
         >
-          <span className="absolute top-4 left-4 bg-accent/90 text-background-dark text-[10px] font-black px-3 py-1 rounded-full uppercase">
+          <span className="absolute top-4 left-4 bg-primary text-text-primary text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
             {rental.badge}
           </span>
         </div>
@@ -17,37 +16,21 @@ export default function RentalCard({ rental }) {
         <div className="p-5 space-y-4">
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="text-lg font-bold hover:text-bright transition-colors">
+              <h3 className="text-base font-bold text-text-primary group-hover:text-primary transition-colors line-clamp-1">
                 {rental.title}
               </h3>
               <p className="text-text-secondary text-xs flex items-center gap-1 mt-1">
-                <span className="material-symbols-outlined text-sm">
+                <span className="material-symbols-outlined text-sm text-text-muted">
                   calendar_today
                 </span>
                 {rental.startDate} — {rental.endDate}
               </p>
             </div>
 
-            <p className="text-bright font-bold">₹{rental.price}</p>
-          </div>
-
-          <div className="flex justify-around border-t border-divider pt-4">
-            {["chat_bubble", "event_repeat", "cancel"].map((icon) => (
-              <button
-                key={icon}
-                className="flex flex-col items-center text-text-secondary/50"
-              >
-                <div className="size-10 rounded-full bg-app flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[20px]">
-                    {icon}
-                  </span>
-                </div>
-              </button>
-            ))}
+            <p className="text-primary font-bold text-base">₹{rental.price}</p>
           </div>
         </div>
       </div>
     </Link>
-
   );
 }

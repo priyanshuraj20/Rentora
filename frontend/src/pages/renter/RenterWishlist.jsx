@@ -1,8 +1,7 @@
 import WishlistHeader from "../../components/renter_ui/wishlist/WishlistHeader";
 import WishlistTabs from "../../components/renter_ui/wishlist/WishlistTabs";
 import WishlistGrid from "../../components/renter_ui/wishlist/WishlistGrid";
-import { useState, useEffect, useMemo } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, HeartOff } from "lucide-react";
 
 export default function RenterWishlist() {
     const [wishlistItems, setWishlistItems] = useState([]);
@@ -36,7 +35,6 @@ export default function RenterWishlist() {
 
     const handleRemoveFromWishlist = async (itemId) => {
         try {
-            // Fetch CSRF Token
             const csrfRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
                 method: "GET",
                 credentials: "include"
@@ -61,7 +59,6 @@ export default function RenterWishlist() {
         }
     };
 
-
     const filteredItems = useMemo(() => {
         if (activeTab === "available") {
             return wishlistItems.filter((item) => item.available);
@@ -72,7 +69,7 @@ export default function RenterWishlist() {
     if (loading) {
         return (
             <div className="flex-1 flex items-center justify-center min-h-[400px]">
-                <Loader2 className="w-10 h-10 animate-spin text-app" />
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -80,11 +77,11 @@ export default function RenterWishlist() {
     if (error) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] text-text-primary px-4">
-                <p className="text-xl font-semibold mb-2">Oops!</p>
-                <p className="text-text-secondary">{error}</p>
+                <p className="text-xl font-bold mb-2">Oops!</p>
+                <p className="text-text-secondary text-sm">{error}</p>
                 <button 
                     onClick={fetchWishlist}
-                    className="mt-4 px-6 py-2 bg-app text-white rounded-lg hover:bg-app/90 transition-colors"
+                    className="mt-4 px-6 py-2.5 bg-primary text-text-primary font-semibold text-xs rounded-xl hover:bg-primary-hover transition-colors shadow-sm cursor-pointer"
                 >
                     Try Again
                 </button>
@@ -93,8 +90,8 @@ export default function RenterWishlist() {
     }
 
     return (
-        <main className="flex-1 overflow-y-auto bg-background-dark">
-            <div className="max-w-[1200px] mx-auto px-8 py-10">
+        <main className="flex-1 overflow-y-auto bg-app min-h-screen">
+            <div className="max-w-[1200px] mx-auto px-6 py-8">
                 <WishlistHeader
                     title="Your Saved Items"
                     subtitle="Premium gear waiting for your next project."
@@ -104,11 +101,15 @@ export default function RenterWishlist() {
                 <WishlistTabs activeTab={activeTab} onChange={setActiveTab} />
 
                 {filteredItems.length === 0 ? (
-                    <div className="text-center py-20 bg-card rounded-2xl border border-divider">
-                        <p className="text-text-secondary text-lg">
+                    <div className="text-center py-16 px-4 bg-surface rounded-3xl border border-divider max-w-md mx-auto shadow-sm">
+                        <div className="w-14 h-14 rounded-2xl bg-card border border-divider flex items-center justify-center mx-auto mb-4 text-text-muted">
+                            <HeartOff size={24} />
+                        </div>
+                        <h3 className="text-base font-bold text-text-primary mb-1">Your wishlist is empty</h3>
+                        <p className="text-xs text-text-secondary">
                             {activeTab === "available" 
                                 ? "No available items in your wishlist right now." 
-                                : "Your wishlist is empty. Explore and save some items!"}
+                                : "Explore available items and tap the heart icon to save them!"}
                         </p>
                     </div>
                 ) : (
@@ -118,4 +119,3 @@ export default function RenterWishlist() {
         </main>
     );
 }
-

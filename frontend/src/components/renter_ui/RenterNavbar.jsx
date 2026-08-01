@@ -1,7 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import useAuth from "../../hooks/authHook";
-import logo from "../../assets/logo.png";
+import logo from "../../assets/logo.svg";
 import toast from "react-hot-toast";
 
 import NotificationBell from "../common/NotificationBell";
@@ -51,30 +51,28 @@ const RenterNavbar = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-
     const navItemClass = ({ isActive }) =>
         [
-            "flex items-center gap-3 px-5 py-3 rounded-2xl transition-all duration-200",
-            "text-sm font-medium",
+            "flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 text-sm font-medium",
             isActive
-                ? "bg-bright text-app"
+                ? "bg-primary text-text-primary font-semibold shadow-sm"
                 : "text-text-secondary hover:text-text-primary hover:bg-white/5",
         ].join(" ");
 
     return (
-        <header className="sticky top-0 w-full z-50 border-b border-divider bg-app">
-            <div className="max-w-[1450px] mx-auto px-6 h-20 flex items-center justify-between">
+        <header className="sticky top-0 w-full z-50 border-b border-divider bg-app/95 shadow-md">
+            <div className="max-w-[1450px] mx-auto px-6 h-[72px] flex items-center justify-between">
 
                 {/* Left: Brand + Nav */}
                 <div className="flex items-center gap-10">
-                    <Link to="/renter" className="flex items-center gap-2">
-                        <img src={logo} alt="logo" width="35px" />
-                        <h2 className="text-2xl font-bold text-text-primary">
-                            Rent<span className="text-bright">ora</span>
+                    <Link to="/renter" className="flex items-center gap-2.5 group">
+                        <img src={logo} alt="logo" width="34px" height="34px" className="rounded-xl transition-transform group-hover:scale-105 shadow-sm" />
+                        <h2 className="text-2xl font-bold text-text-primary tracking-tight">
+                            Rent<span className="text-primary">ora</span>
                         </h2>
                     </Link>
 
-                    <nav className="hidden md:flex items-center gap-4">
+                    <nav className="hidden md:flex items-center gap-2">
                         <NavLink to="/rentals" className={navItemClass}>
                             Rentals
                         </NavLink>
@@ -96,16 +94,16 @@ const RenterNavbar = () => {
 
                     {/* Profile Button */}
                     <button
-                        className="flex items-center gap-3 text-left hover:bg-white/5 p-2 rounded-2xl transition-all"
+                        className="flex items-center gap-3 text-left hover:bg-white/5 p-1.5 px-2.5 rounded-xl transition-all border border-transparent hover:border-divider cursor-pointer"
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     >
                         <div className="flex flex-col">
-                            <span className="text-md text-text-primary font-medium">
+                            <span className="text-sm text-text-primary font-semibold">
                                 {name}
                             </span>
                         </div>
 
-                        <div className="w-10 h-10 rounded-full bg-card border border-divider overflow-hidden flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-full bg-card border border-divider overflow-hidden flex items-center justify-center">
                             {avatarUrl && avatarUrl !== "undefined" ? (
                                 <img
                                     src={avatarUrl}
@@ -120,10 +118,10 @@ const RenterNavbar = () => {
 
                     {/* Dropdown Menu */}
                     {isDropdownOpen && (
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-divider rounded-2xl shadow-xl py-2 z-50 overflow-hidden">
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-divider rounded-2xl shadow-2xl py-1.5 z-50 overflow-hidden animate-[modalIn_150ms_ease-out]">
                             <button
                                 onClick={handleSignOut}
-                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-error hover:bg-error/10 transition-colors"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-error/10 transition-colors cursor-pointer"
                             >
                                 <span className="material-symbols-outlined text-lg">logout</span>
                                 <span className="font-medium">Sign Out</span>

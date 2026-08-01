@@ -128,12 +128,12 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
   };
 
   return (
-    <div className="mb-6 max-w-3xl mx-auto bg-surface/90 border border-app/80 rounded-2xl p-3.5 shadow-lg flex flex-wrap items-center justify-between gap-3 text-xs">
+    <div className="mb-6 max-w-2xl mx-auto bg-surface border border-divider rounded-2xl p-3 shadow-md flex flex-wrap items-center justify-between gap-3 text-xs">
       
       {/* Current Location Indicator & City Selector */}
       <div className="relative flex items-center gap-2 flex-1 min-w-[240px]">
-        <div className="flex items-center gap-1.5 bg-card px-3 py-2 rounded-xl border border-divider text-bright font-bold">
-          <MapPin className="size-4 shrink-0 text-bright" />
+        <div className="flex items-center gap-1.5 bg-card px-3 py-2 rounded-xl border border-divider text-primary font-semibold">
+          <MapPin className="size-4 shrink-0 text-primary" />
           <span className="truncate max-w-[180px]">
             {locationState.label || "Select Location"}
           </span>
@@ -142,10 +142,10 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
         <button
           type="button"
           onClick={() => setShowCityMenu(!showCityMenu)}
-          className="flex items-center gap-1 bg-white/5 hover:bg-white/10 text-text-primary px-3 py-2 rounded-xl transition-all cursor-pointer font-semibold border border-divider"
+          className="flex items-center gap-1 bg-white/5 hover:bg-white/10 text-text-primary px-3 py-2 rounded-xl transition-all cursor-pointer font-medium border border-divider"
         >
           Change City
-          <ChevronDown className="size-3.5" />
+          <ChevronDown className="size-3.5 text-text-muted" />
         </button>
 
         {/* Dropdown Menu for Manual City Selection */}
@@ -155,7 +155,7 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
               <span>Select City</span>
               <button
                 onClick={() => setShowCityMenu(false)}
-                className="text-text-secondary hover:text-white"
+                className="text-text-muted hover:text-text-primary"
               >
                 ✕
               </button>
@@ -167,18 +167,18 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
                 value={customCityInput}
                 onChange={(e) => setCustomCityInput(e.target.value)}
                 placeholder="Enter city (e.g. Patna)..."
-                className="w-full bg-card border border-divider rounded-xl px-3 py-1.5 text-xs text-text-primary outline-none focus:border-bright"
+                className="w-full bg-app border border-divider rounded-xl px-3 py-1.5 text-xs text-text-primary outline-none focus:border-primary"
               />
               <button
                 type="submit"
-                className="bg-bright text-app font-bold px-3 py-1.5 rounded-xl shrink-0"
+                className="bg-primary text-text-primary font-semibold px-3 py-1.5 rounded-xl shrink-0 cursor-pointer"
               >
                 Set
               </button>
             </form>
 
             <div className="space-y-1">
-              <p className="text-[10px] uppercase font-bold text-text-secondary tracking-wider mb-1">
+              <p className="text-[10px] uppercase font-semibold text-text-muted tracking-wider mb-1">
                 Popular Cities
               </p>
               <div className="grid grid-cols-2 gap-1.5 max-h-44 overflow-y-auto pr-1">
@@ -187,10 +187,10 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
                     key={c}
                     type="button"
                     onClick={() => handleSelectCity(c)}
-                    className={`text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors flex items-center justify-between ${
+                    className={`text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors flex items-center justify-between cursor-pointer ${
                       locationState.city?.toLowerCase() === c.toLowerCase()
-                        ? "bg-bright/20 text-bright font-bold"
-                        : "hover:bg-card text-text-primary"
+                        ? "bg-primary/15 text-primary font-bold"
+                        : "hover:bg-app text-text-primary"
                     }`}
                   >
                     <span>{c}</span>
@@ -211,7 +211,7 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
           type="button"
           onClick={handleUseGPS}
           disabled={isLocating}
-          className="flex items-center gap-1.5 bg-bright/10 hover:bg-bright/20 text-bright border border-bright/30 px-3 py-2 rounded-xl transition-all cursor-pointer font-bold disabled:opacity-50"
+          className="flex items-center gap-1.5 bg-primary/15 hover:bg-primary/25 text-primary border border-primary/30 px-3 py-2 rounded-xl transition-all cursor-pointer font-semibold disabled:opacity-50"
         >
           <Navigation className={`size-3.5 ${isLocating ? "animate-spin" : ""}`} />
           {isLocating ? "Locating..." : "Use My Location"}
@@ -219,11 +219,11 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
 
         {/* Radius Selector */}
         <div className="flex items-center gap-1 bg-card px-2.5 py-1.5 rounded-xl border border-divider">
-          <span className="text-text-secondary text-[11px] font-medium">Radius:</span>
+          <span className="text-text-muted text-[11px] font-medium">Radius:</span>
           <select
             value={selectedRadius}
             onChange={(e) => onRadiusChange(Number(e.target.value))}
-            className="bg-transparent text-text-primary font-bold outline-none cursor-pointer text-xs"
+            className="bg-transparent text-text-primary font-semibold outline-none cursor-pointer text-xs"
           >
             {RADIUS_OPTIONS.map((r) => (
               <option key={r} value={r} className="bg-surface text-text-primary">

@@ -8,7 +8,6 @@ import { Link } from "react-router-dom";
 import homeRedirect from "../../hooks/homeRedirect";
 import useAuth from "../../hooks/authHook";
 
-
 const OwnerDashboard = () => {
   homeRedirect();
 
@@ -20,11 +19,10 @@ const OwnerDashboard = () => {
   // Fetching Stats from Backend
   const fetchStats = async () => {
     try {
-
       const csrf = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
         method: "GET",
         credentials: "include"
-      })
+      });
 
       const csrfData = await csrf.json();
 
@@ -35,28 +33,24 @@ const OwnerDashboard = () => {
           "X-CSRF-Token": csrfData.csrfToken
         },
         credentials: "include"
-      })
+      });
 
       const data = await response.json();
-      console.log("data", data.data)
 
       setActiveRentals(data.data.activeRentals);
       setTotalListings(data.data.totalListings);
       setTotalEarnings(data.data.totalEarnings);
       setRentals(data.data.rentals || []);
 
-    }
-    catch (error) {
+    } catch (error) {
       console.log(error);
     }
-  }
-
+  };
 
   useEffect(() => {
     fetchStats();
   }, []);
 
-  // Fetching user names from useAuth()
   const { user } = useAuth();
 
   const stats = [
@@ -75,15 +69,10 @@ const OwnerDashboard = () => {
     {
       id: 3,
       title: "Total Earnings",
-      value: totalEarnings,
+      value: `₹${totalEarnings}`,
       icon: ""
     }
   ];
-
-
-  /* ===============================
-     HANDLERS (Connect Router Later)
-  ================================ */
 
   const quickActions = [
     { id: 1, icon: "add_circle", label: "Add New Item", to: "listings" },
@@ -92,54 +81,47 @@ const OwnerDashboard = () => {
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="max-w-[1400px] mx-auto px-8 py-10">
+    <div className="flex-1 overflow-y-auto bg-app min-h-screen">
+      <div className="max-w-[1400px] mx-auto px-6 py-8">
 
         <WelcomeSection user={user} />
 
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {stats.map((stat) => (
             <StatsCard key={stat.id} {...stat} />
           ))}
         </div>
 
-    
         <div className="grid grid-cols-12 gap-8">
-
           <div className="col-span-12 lg:col-span-8 flex flex-col h-full">
             {rentals?.length > 0 ? (
               <RentalsSection rentals={rentals} />
             ) : (
-              <div className="flex-1 bg-surface border border-app/40 rounded-2xl p-12 text-center flex flex-col items-center justify-center min-h-full">
-                <div className="w-24 h-24 bg-bright/10 rounded-full flex items-center justify-center mb-6 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-bright/20 to-transparent blur-xl"></div>
-                  <span className="material-symbols-outlined text-6xl text-bright relative">
+              <div className="flex-1 bg-surface border border-divider rounded-3xl p-10 text-center flex flex-col items-center justify-center min-h-[320px] shadow-sm">
+                <div className="w-16 h-16 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-3xl text-primary">
                     inventory_2
                   </span>
                 </div>
                 
-                <h3 className="text-2xl font-black text-text-primary mb-2 tracking-tight">
+                <h3 className="text-xl font-bold text-text-primary mb-1">
                   No Active Rentals Yet
                 </h3>
                 
-                <p className="text-text-secondary text-sm max-w-sm mb-8 leading-relaxed font-medium">
+                <p className="text-text-secondary text-xs max-w-sm mb-6 leading-relaxed">
                   Your rental dashboard looks a bit empty. List your items and watch the rentals roll in!
                 </p>
                 
-                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                  <Link
-                    to="/listings"
-                    className="flex items-center justify-center gap-2 bg-bright text-surface px-8 py-4 rounded-[1.25rem] font-black hover:scale-[1.01] active:scale-99 transition-all cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined font-bold">add_circle</span>
-                    List New Item
-                  </Link>
-                </div>
+                <Link
+                  to="/listings"
+                  className="flex items-center justify-center gap-2 bg-primary text-text-primary px-6 py-3 rounded-xl font-semibold text-sm hover:bg-primary-hover active:scale-95 transition-all cursor-pointer shadow-sm"
+                >
+                  <span className="material-symbols-outlined text-lg">add_circle</span>
+                  List New Item
+                </Link>
               </div>
             )}
           </div>
-
 
           <div className="col-span-12 lg:col-span-4">
             <QuickActions actions={quickActions} />

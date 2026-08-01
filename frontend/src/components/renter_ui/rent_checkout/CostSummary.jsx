@@ -54,8 +54,8 @@ export default function CostSummary({ item, startDate, endDate, onRequestBooking
   };
 
   return (
-    <div className="bg-surface border border-app/80 rounded-xl p-6 space-y-4">
-      <h4 className="font-extrabold text-lg ">{item.title}</h4>
+    <div className="bg-surface border border-divider rounded-3xl p-6 space-y-4 shadow-sm">
+      <h4 className="font-bold text-lg text-text-primary">{item.title}</h4>
 
       <Row label={`Rental (${pricingLabel})`} value={`₹${rentalFee}`} />
       <Row
@@ -75,13 +75,13 @@ export default function CostSummary({ item, startDate, endDate, onRequestBooking
         />
       )}
 
-      <div className="border-t border-white/10 pt-3 flex justify-between font-bold">
+      <div className="border-t border-divider pt-3 flex justify-between font-bold text-text-primary text-base">
         <span>Estimated Total</span>
-        <span>₹{total}</span>
+        <span className="text-primary">₹{total}</span>
       </div>
 
       {protection.included && (
-        <div className="text-xs text-emerald-400 bg-emerald-500/10 p-3 rounded-lg">
+        <div className="text-xs text-success bg-success/15 border border-success/30 p-3 rounded-xl font-medium">
           ✓ Protection included up to ₹{protection.coverageAmount}
         </div>
       )}
@@ -89,10 +89,10 @@ export default function CostSummary({ item, startDate, endDate, onRequestBooking
       <button
         onClick={handleRequest}
         disabled={isSubmitting || !hasDates}
-        className={`w-full py-3 rounded-xl bg-bright text-surface font-black uppercase tracking-widest text-sm transition-all active:scale-95 ${
+        className={`w-full py-3.5 rounded-xl bg-primary text-text-primary font-semibold tracking-wide text-xs uppercase transition-all shadow-md ${
           isSubmitting || !hasDates
             ? "opacity-50 cursor-not-allowed"
-            : "hover:bg-bright/90 cursor-pointer shadow-lg shadow-bright/20"
+            : "hover:bg-primary-hover cursor-pointer active:scale-95"
         }`}
       >
         {isSubmitting ? "Sending Request..." : "Request from Owner →"}
@@ -105,7 +105,7 @@ function Row({ label, value, highlight }) {
   return (
     <div
       className={`flex justify-between text-xs ${
-        highlight ? "text-emerald-400" : "opacity-80"
+        highlight ? "text-success font-semibold" : "text-text-secondary"
       }`}
     >
       <span>{label}</span>

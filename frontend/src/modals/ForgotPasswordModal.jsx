@@ -82,16 +82,16 @@ export default function ForgotPasswordModal({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-surface border border-surface-border rounded-2xl w-full max-w-md p-6 relative shadow-2xl">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50">
+      <div className="bg-surface border border-divider rounded-3xl w-full max-w-md p-6 relative shadow-2xl animate-[modalIn_150ms_ease-out]">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-text-secondary hover:text-white cursor-pointer"
+          className="absolute top-4 right-4 text-text-muted hover:text-text-primary cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-xl font-bold text-white mb-2">Reset Password</h2>
+        <h2 className="text-xl font-bold text-text-primary mb-1">Reset Password</h2>
         <p className="text-xs text-text-secondary mb-6">
           {step === 1 ? "Enter your email to receive a password reset OTP" : "Enter the OTP sent to your email and your new password"}
         </p>
@@ -99,16 +99,16 @@ export default function ForgotPasswordModal({ onClose }) {
         {step === 1 ? (
           <form onSubmit={handleSendOTP} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1">Email Address</label>
+              <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 w-4 h-4 text-text-secondary" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
-                  className="w-full bg-app border border-surface-border rounded-xl pl-10 pr-3 py-2.5 text-sm text-white focus:outline-none focus:border-bright"
+                  className="w-full bg-app border border-divider rounded-xl pl-10 pr-3 py-2.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
                 />
               </div>
             </div>
@@ -116,7 +116,7 @@ export default function ForgotPasswordModal({ onClose }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-bright text-white py-3 rounded-xl font-semibold hover:bg-bright/90 transition-colors disabled:opacity-50 cursor-pointer"
+              className="w-full bg-primary text-text-primary py-3 rounded-xl font-semibold hover:bg-primary-hover transition-colors disabled:opacity-50 cursor-pointer shadow-md text-xs"
             >
               {loading ? "Sending OTP..." : "Send Reset OTP"}
             </button>
@@ -124,9 +124,9 @@ export default function ForgotPasswordModal({ onClose }) {
         ) : (
           <form onSubmit={handleResetPassword} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1">6-Digit OTP</label>
+              <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">6-Digit OTP</label>
               <div className="relative">
-                <KeyRound className="absolute left-3 top-3 w-4 h-4 text-text-secondary" />
+                <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                 <input
                   type="text"
                   required
@@ -134,15 +134,15 @@ export default function ForgotPasswordModal({ onClose }) {
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
                   placeholder="123456"
-                  className="w-full bg-app border border-surface-border rounded-xl pl-10 pr-3 py-2.5 text-sm text-white focus:outline-none focus:border-bright tracking-widest font-mono"
+                  className="w-full bg-app border border-divider rounded-xl pl-10 pr-3 py-2.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary tracking-widest font-mono transition-colors"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1">New Password</label>
+              <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">New Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 w-4 h-4 text-text-secondary" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                 <input
                   type="password"
                   required
@@ -150,7 +150,7 @@ export default function ForgotPasswordModal({ onClose }) {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-app border border-surface-border rounded-xl pl-10 pr-3 py-2.5 text-sm text-white focus:outline-none focus:border-bright"
+                  className="w-full bg-app border border-divider rounded-xl pl-10 pr-3 py-2.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
                 />
               </div>
             </div>
@@ -158,7 +158,7 @@ export default function ForgotPasswordModal({ onClose }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-bright text-white py-3 rounded-xl font-semibold hover:bg-bright/90 transition-colors disabled:opacity-50 cursor-pointer"
+              className="w-full bg-primary text-text-primary py-3 rounded-xl font-semibold hover:bg-primary-hover transition-colors disabled:opacity-50 cursor-pointer shadow-md text-xs"
             >
               {loading ? "Resetting..." : "Reset Password"}
             </button>

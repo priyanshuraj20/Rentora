@@ -1,5 +1,5 @@
 /* Fonts */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined");
 
 /* Tailwind v4 entry */
@@ -8,49 +8,68 @@
 /* Design tokens */
 @theme {
   /* App surfaces */
-  --color-app: #121417;
-  --color-surface: #1c1f26;
-  --color-card: #151b23;
-  --color-elevated: #1b222c;
-  --color-divider: #2a2e36;
-  --color-bright: #2fb7a4;
-  --color-primary: #2fb7a4;
+  --color-app: #1a1613;
+  --color-surface: #211c17;
+  --color-card: #26201a;
+  --color-elevated: #2d2720;
+  --color-divider: rgba(255, 255, 255, 0.08);
+  --color-bright: #e8734a;
+  --color-primary: #e8734a;
+  --color-primary-hover: #d66239;
 
   /* Text */
-  --color-text-primary: #e6eaf0;
-  --color-text-secondary: #a8b0be;
-  --color-text-muted: #6e7685;
-  --color-text-disabled: #4b5260;
+  --color-text-primary: #f7f0e8;
+  --color-text-secondary: #b8b0a8;
+  --color-text-muted: #8c837a;
+  --color-text-disabled: #5e564e;
 
   /* Accent */
-  --color-accent: #222e63;
-  --color-accent-hover: #222e63cc;
-  --color-accent-soft: #1c3a3a;
+  --color-accent: #e8734a;
+  --color-accent-hover: #d66239;
+  --color-accent-soft: rgba(232, 115, 74, 0.12);
+  --color-secondary-accent: #d4a24c;
 
   /* Status */
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
+  --color-success: #4caf6d;
+  --color-warning: #ffb545;
+  --color-error: #ef5350;
 
   /* Typography */
-  --font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: Outfit, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: Fraunces, Georgia, serif;
 }
 
 /* Base styles */
 @layer base {
   body {
-    @apply bg-app text-text-primary font-sans;
+    @apply bg-app text-text-primary font-sans antialiased;
+    background-color: #1a1613;
+    color: #f7f0e8;
+  }
+
+  /* Prevent browser default light blue autofill background */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #26201a inset !important;
+    -webkit-text-fill-color: #f7f0e8 !important;
+    transition: background-color 5000s ease-in-out 0s;
   }
 }
 
 /* Global Utilities */
 @layer utilities {
   .glass-panel {
-    @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl;
+    @apply bg-[#211c17]/80 backdrop-blur-xl border border-white/10 shadow-2xl;
   }
 
-  .teal-glow {
-    background: radial-gradient(circle at 50% 50%, rgba(47, 183, 164, 0.08) 0%, transparent 70%);
+  .warm-glow {
+    background: radial-gradient(circle at 50% 50%, rgba(232, 115, 74, 0.1) 0%, transparent 70%);
+  }
+
+  .amber-glow {
+    background: radial-gradient(circle at 50% 50%, rgba(212, 162, 76, 0.08) 0%, transparent 70%);
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -62,20 +81,19 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.2);
   }
 
   @keyframes modalIn {
     from {
       opacity: 0;
-      transform: scale(0.95) translateY(10px);
+      transform: scale(0.97) translateY(8px);
     }
-
     to {
       opacity: 1;
       transform: scale(1) translateY(0);
@@ -83,30 +101,20 @@
   }
 
   @keyframes float {
-
-    0%,
-    100% {
+    0%, 100% {
       transform: translateY(0px);
     }
-
     50% {
-      transform: translateY(-20px);
+      transform: translateY(-12px);
     }
   }
 
   @keyframes gradient {
-
-    0%,
-    100% {
+    0%, 100% {
       background-position: 0% center;
     }
-
     50% {
       background-position: 100% center;
-    }
-
-    100% {
-      background-position: 0% center;
     }
   }
 
@@ -128,7 +136,7 @@
     background: linear-gradient(
       90deg,
       rgba(255, 255, 255, 0.03) 25%,
-      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.07) 50%,
       rgba(255, 255, 255, 0.03) 75%
     );
     background-size: 200% 100%;
@@ -137,12 +145,3 @@
     overflow: hidden;
   }
 }
-
-/* Optional: Material Symbols tuning
-.material-symbols-outlined {
-  font-variation-settings:
-    'FILL' 0,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
-} */

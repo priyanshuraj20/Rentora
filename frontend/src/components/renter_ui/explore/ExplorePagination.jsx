@@ -27,24 +27,24 @@ const ExplorePagination = ({ currentPage, totalPages, onPageChange }) => {
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="p-2 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors hover:cursor-pointer"
+        className="p-2 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-colors hover:bg-white/5 cursor-pointer text-text-secondary hover:text-text-primary"
         aria-label="Previous Page"
       >
-        <ChevronLeft className="w-5 h-5 text-gray-700 hover:text-white" />
+        <ChevronLeft className="w-5 h-5" />
       </button>
 
       <div className="flex items-center gap-1 mx-2">
         {visiblePages.map((p, index) => (
           <React.Fragment key={index}>
             {p === "..." ? (
-              <span className="w-8 flex justify-center text-gray-400 font-bold">...</span>
+              <span className="w-8 flex justify-center text-text-muted font-bold">...</span>
             ) : (
               <button
                 onClick={() => onPageChange(p)}
-                className={`w-9 h-9 rounded-lg text-sm font-semibold transition-all hover:cursor-pointer ${
+                className={`w-9 h-9 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                   currentPage === p
-                    ? "bg-bright text-app"
-                    : "text-gray-600 hover:text-white"
+                    ? "bg-primary text-text-primary shadow-sm"
+                    : "text-text-secondary hover:text-text-primary hover:bg-white/5"
                 }`}
               >
                 {p}
@@ -57,10 +57,10 @@ const ExplorePagination = ({ currentPage, totalPages, onPageChange }) => {
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="p-2 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors hover:cursor-pointer"
+        className="p-2 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-colors hover:bg-white/5 cursor-pointer text-text-secondary hover:text-text-primary"
         aria-label="Next Page"
       >
-        <ChevronRight className="w-5 h-5 text-gray-700 hover:text-white" />
+        <ChevronRight className="w-5 h-5" />
       </button>
     </div>
   );

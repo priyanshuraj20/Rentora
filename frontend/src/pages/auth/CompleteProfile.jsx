@@ -98,156 +98,125 @@ export default function CompleteProfile({ switchMode }) {
       return;
     }
 
-    if (!/^\d{10}$/.test(formData.phone)) {
-      toast.error("Please enter a valid 10-digit mobile number");
-      return;
-    }
-
-
+    setLoading(true);
     try {
-      setLoading(true);
 
-      // Fetching info from pincode
-      const pinRes = await fetch(`https://api.postalpincode.in/pincode/${pincode}`)
-      const pinData = await pinRes.json();
-
-      if (!pinData || pinData[0].Status !== "Success") {
-        throw new Error("Invalid Pincode or service unavailable");
-      }
-
-      const district = pinData[0].PostOffice[0].District;
-      const state = pinData[0].PostOffice[0].State;
-
-
-      // CSRF Token
-      const csrftoken = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
-        method: "GET",
-        credentials: "include"
-      })
-      const csrfData = await csrftoken.json();
-      if (!csrfData || !csrfData.csrfToken) {
-        throw new Error("CSRF Token not found");
-      }
-
-
-      //POST the details 
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/user/me/profile`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": csrfData.csrfToken
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            name: formData.fullName,
-            phone: formData.phone,
-            roles: intent,
-            address: {
-              district: district,
-              state: state,
-              pincode: pincode
-            },
-            profileImage: profileImage ? await convertImage(profileImage) : previewUrl
-          })
+      // Step 1 : profileImage upload to Cloudinary (If new image selected)
+      let uploadedImageUrl = previewUrl;
+      if (profileImage) {
+        uploadedImageUrl = await convertImage(profileImage);
+        if (!uploadedImageUrl) {
+          toast.error("Failed to upload image");
+          return;
         }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Something went wrong");
       }
-      switchMode("success");
-      toast.success("Profile Completed Successfully 🚀");
 
-    } catch (error) {
-      console.error(error.message);
-      toast.error(error.message);
+      // Step 2 : Complete profile backend call
+      const csrfRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
+        method: "GET",
+        credentials: "include",
+      });
+      const csrfData = await csrfRes.json();
+
+      const roleSelected = intent === "owner" ? "owner" : "renter";
+      const payload = {
+        name: formData.fullName,
+        phone: formData.phone,
+        address: { pincode: pincode },
+        role: roleSelected,
+        profileImage: uploadedImageUrl,
+      };
+
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/user/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfData.csrfToken,
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.message || "Failed to update profile");
+      }
+
+      toast.success("Profile updated successfully 🎉");
+      // Page reload to refresh Auth Context & Cookie state, triggering automatic role-redirect
+      window.location.href = roleSelected === "owner" ? "/owner" : "/renter";
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-0 overflow-y-auto">
+    <form onSubmit={handleSubmit} className="w-full bg-app py-8">
 
-        {/* LEFT */}
-        <div className="bg-app/80 p-8 flex flex-col items-center justify-center space-y-8 border-r border-white/5">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleImageChange}
+        accept="image/*"
+        className="hidden"
+      />
 
-          <div className="relative group cursor-pointer" onClick={triggerFileInput}>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageChange}
-              accept="image/*"
-              className="hidden"
-            />
-            <div className="flex h-32 w-32 items-center justify-center rounded-full bg-zinc-800 border-2 border-dashed border-zinc-700 group-hover:border-bright transition-colors overflow-hidden">
-              {previewUrl ? (
-                <img src={previewUrl} alt="Profile Preview" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-16 h-16 text-zinc-600 group-hover:scale-110 group-hover:text-bright transition-all" />
-              )}
+      <div className="mx-auto max-w-xl px-4">
+        {/* Main Card */}
+        <div className="rounded-3xl bg-surface border border-divider p-8 shadow-2xl space-y-6">
+
+          {/* Header */}
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-text-primary tracking-tight">Complete Profile</h1>
+            <p className="mt-1 text-sm text-text-secondary">
+              Set up your avatar, details and account preferences
+            </p>
+          </div>
+
+          {/* Avatar Upload */}
+          <div className="flex justify-center">
+            <div className="relative cursor-pointer group" onClick={triggerFileInput}>
+              <div className="h-24 w-24 rounded-full border-2 border-primary/40 bg-card overflow-hidden flex items-center justify-center shadow-md">
+                {previewUrl ? (
+                  <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
+                ) : (
+                  <User className="h-10 w-10 text-text-muted" />
+                )}
+              </div>
+              <div className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-text-primary shadow-md">
+                <Camera className="h-4 w-4" />
+              </div>
             </div>
-            <button
-              type="button"
-              className="absolute bottom-1 right-1 rounded-full bg-bright p-2.5 shadow-lg hover:bg-bright transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                triggerFileInput();
-              }}
-            >
-              <Camera className="w-4 h-4 text-surface hover:cursor-pointer" />
-            </button>
           </div>
 
-          <div className="text-center space-y-1">
-            <p className="text-[10px] font-bold tracking-[0.2em] text-zinc-500 uppercase">
-              Profile Identity
-            </p>
-            <p className="text-xs text-zinc-400">Upload a professional photo</p>
-          </div>
-
-          <div className="w-full space-y-3 pt-4">
-            <p className="text-[10px] font-bold tracking-[0.2em] text-zinc-500 uppercase ml-1 mb-2">
-              I am here to...
-            </p>
-
-            <IntentCard
-              active={intent === "renter"}
-              title="Rent Items"
-              subtitle="Browse and rent assets locally"
-              icon={<ShoppingBasket className="w-5 h-5" />}
-              onClick={() => setIntent("renter")}
-            />
-
-            <IntentCard
-              active={intent === "owner"}
-              title="List Assets"
-              subtitle="Earn money by sharing your items"
-              icon={<TrendingUp className="w-5 h-5" />}
-              onClick={() => setIntent("owner")}
-            />
-          </div>
-        </div>
-
-        {/* RIGHT */}
-        <div className="p-8 space-y-6 bg-card">
-
-          <div>
-            <h2 className="text-3xl font-extrabold text-white tracking-tight">
-              Complete Profile
-            </h2>
-            <p className="text-text-secondary text-sm mt-1">
-              Fill in your details to join the community
-            </p>
-          </div>
-
+          {/* Intent Selector */}
           <div className="space-y-2">
+            <label className="text-xs font-semibold tracking-wider text-text-secondary uppercase">
+              I WANT TO
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <IntentCard
+                active={intent === "renter"}
+                title="Rent Items"
+                subtitle="Browse & borrow"
+                icon={<ShoppingBasket className="w-4 h-4" />}
+                onClick={() => setIntent("renter")}
+              />
+              <IntentCard
+                active={intent === "owner"}
+                title="List Items"
+                subtitle="Earn from gear"
+                icon={<TrendingUp className="w-4 h-4" />}
+                onClick={() => setIntent("owner")}
+              />
+            </div>
+          </div>
 
+          {/* Form Fields */}
+          <div className="space-y-4 pt-2">
             <Input
               label="FULL NAME"
               name="fullName"
@@ -267,33 +236,31 @@ export default function CompleteProfile({ switchMode }) {
             />
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold tracking-wider text-text-secondary uppercase ml-1">
+              <label className="text-xs font-semibold tracking-wider text-text-secondary uppercase">
                 PHONE NUMBER
               </label>
               <div className="relative group">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary w-4 h-4 group-focus-within:text-emerald-500 transition-colors" />
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted w-4 h-4" />
                 <input
                   type="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
                   maxLength="10"
-                  className="w-full rounded-2xl bg-app border-2 border-card px-11 py-3.5 text-white placeholder:text-text-secondary focus:outline-none focus:border-bright transition-all font-medium"
+                  className="w-full rounded-xl bg-app border border-divider px-11 py-3 text-text-primary text-sm placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors font-normal"
                   placeholder="10-digit mobile number"
                 />
               </div>
             </div>
           </div>
 
-
-
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-2xl bg-bright hover:bg-bright/80 py-4 font-bold text-app shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-10"
+            className="w-full rounded-xl bg-primary hover:bg-primary-hover py-3.5 font-semibold text-text-primary shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-8 text-sm cursor-pointer"
           >
             <span>{loading ? "Processing..." : "Complete Setup"}</span>
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-4 h-4" />
           </button>
 
         </div>
@@ -309,18 +276,18 @@ function IntentCard({ active, title, subtitle, icon, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-2xl p-4 text-left transition-all ${active
-        ? "border-2 border-bright bg-bright/10"
-        : "bg-app border border-zinc-700/50 hover:bg-zinc-800"
-        } flex items-center gap-4`}
+      className={`w-full rounded-xl p-3.5 text-left transition-all cursor-pointer ${active
+        ? "border-2 border-primary bg-primary/10"
+        : "bg-app border border-divider hover:bg-white/5"
+        } flex items-center gap-3`}
     >
-      <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${active ? "bg-bright text-white" : "bg-zinc-700 text-zinc-500"
+      <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${active ? "bg-primary text-text-primary" : "bg-card text-text-muted"
         }`}>
         {icon}
       </div>
       <div>
-        <p className="font-bold text-sm text-white">{title}</p>
-        <p className="text-[11px] text-zinc-500 font-medium">{subtitle}</p>
+        <p className="font-bold text-sm text-text-primary">{title}</p>
+        <p className="text-xs text-text-muted font-normal">{subtitle}</p>
       </div>
     </button>
   );
@@ -329,11 +296,11 @@ function IntentCard({ active, title, subtitle, icon, onClick }) {
 function Input({ label, placeholder, icon, name, value, onChange, ...props }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-[10px] font-bold tracking-wider text-text-secondary uppercase ml-1">
+      <label className="text-xs font-semibold tracking-wider text-text-secondary uppercase">
         {label}
       </label>
       <div className="relative group">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">
           {icon}
         </div>
         <input
@@ -342,7 +309,7 @@ function Input({ label, placeholder, icon, name, value, onChange, ...props }) {
           onChange={onChange}
           placeholder={placeholder}
           {...props}
-          className="w-full rounded-2xl bg-app border-2 border-card px-11 py-3.5 text-white placeholder:text-text-secondary focus:outline-none focus:border-bright"
+          className="w-full rounded-xl bg-app border border-divider px-11 py-3 text-text-primary text-sm placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
         />
       </div>
     </div>

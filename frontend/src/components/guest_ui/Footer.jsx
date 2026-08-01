@@ -1,18 +1,18 @@
-import logo from "../../assets/logo.png";
+import logo from "../../assets/logo.svg";
 
 export default function Footer() {
   return (
-    <footer className="bg-deep-dark border-t border-divider pt-20 pb-10">
+    <footer className="bg-surface border-t border-divider pt-16 pb-10">
       <div className="max-w-[1280px] mx-auto px-6">
 
         {/* TOP GRID */}
-        <div className="grid md:grid-cols-4 gap-12 mb-20">
+        <div className="grid md:grid-cols-4 gap-10 mb-16">
 
           {/* BRAND */}
           <div>
-            <div className="flex items-center gap-3 mb-6">
-              <img src={logo} alt="logo" width="35px" />
-              <h2 className="text-lg font-bold text-white">
+            <div className="flex items-center gap-2.5 mb-5">
+              <img src={logo} alt="logo" width="34px" height="34px" className="rounded-xl shadow-sm" />
+              <h2 className="text-xl font-bold text-text-primary">
                 Rentora
               </h2>
             </div>
@@ -22,17 +22,17 @@ export default function Footer() {
               convenience, and community sustainability.
             </p>
 
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               <a
                 href="#"
-                className="w-8 h-8 rounded-full border border-border-custom flex items-center justify-center text-text-secondary hover:text-white hover:bg-accent/10 transition"
+                className="w-8 h-8 rounded-xl border border-divider flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-white/5 transition"
               >
                 <span className="material-symbols-outlined text-sm">share</span>
               </a>
 
               <a
                 href="#"
-                className="w-8 h-8 rounded-full border border-border-custom flex items-center justify-center text-text-secondary hover:text-white hover:bg-accent/10 transition"
+                className="w-8 h-8 rounded-xl border border-divider flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-white/5 transition"
               >
                 <span className="material-symbols-outlined text-sm">
                   alternate_email
@@ -43,48 +43,48 @@ export default function Footer() {
 
           {/* MARKETPLACE */}
           <div>
-            <h4 className="font-bold mb-6 text-white">Marketplace</h4>
-            <ul className="space-y-4 text-sm text-text-secondary">
-              <li><a className="hover:text-accent" href="#">Browse Items</a></li>
-              <li><a className="hover:text-accent" href="#">How it Works</a></li>
-              <li><a className="hover:text-accent" href="#">Verification</a></li>
-              <li><a className="hover:text-accent" href="#">Rent It Pro</a></li>
+            <h4 className="font-semibold mb-5 text-text-primary text-sm uppercase tracking-wider">Marketplace</h4>
+            <ul className="space-y-3 text-sm text-text-secondary">
+              <li><a className="hover:text-primary transition-colors" href="#">Browse Items</a></li>
+              <li><a className="hover:text-primary transition-colors" href="#">How it Works</a></li>
+              <li><a className="hover:text-primary transition-colors" href="#">Verification</a></li>
+              <li><a className="hover:text-primary transition-colors" href="#">Rentora Pro</a></li>
             </ul>
           </div>
 
           {/* COMPANY */}
           <div>
-            <h4 className="font-bold mb-6 text-white">Company</h4>
-            <ul className="space-y-4 text-sm text-text-secondary">
-              <li><a className="hover:text-accent" href="#">About Us</a></li>
-              <li><a className="hover:text-accent" href="#">Impact Report</a></li>
-              <li><a className="hover:text-accent" href="#">Careers</a></li>
-              <li><a className="hover:text-accent" href="#">Press</a></li>
+            <h4 className="font-semibold mb-5 text-text-primary text-sm uppercase tracking-wider">Company</h4>
+            <ul className="space-y-3 text-sm text-text-secondary">
+              <li><a className="hover:text-primary transition-colors" href="#">About Us</a></li>
+              <li><a className="hover:text-primary transition-colors" href="#">Impact Report</a></li>
+              <li><a className="hover:text-primary transition-colors" href="#">Careers</a></li>
+              <li><a className="hover:text-primary transition-colors" href="#">Press</a></li>
             </ul>
           </div>
 
           {/* SUPPORT */}
           <div>
-            <h4 className="font-bold mb-6 text-white">Support</h4>
-            <ul className="space-y-4 text-sm text-text-secondary">
-              <li><a className="hover:text-accent" href="#">Help Center</a></li>
-              <li><a className="hover:text-accent" href="#">Safety Rules</a></li>
-              <li><a className="hover:text-accent" href="#">Terms of Service</a></li>
-              <li><a className="hover:text-accent" href="#">Privacy Policy</a></li>
+            <h4 className="font-semibold mb-5 text-text-primary text-sm uppercase tracking-wider">Support</h4>
+            <ul className="space-y-3 text-sm text-text-secondary">
+              <li><a className="hover:text-primary transition-colors" href="#">Help Center</a></li>
+              <li><a className="hover:text-primary transition-colors" href="#">Safety Rules</a></li>
+              <li><a className="hover:text-primary transition-colors" href="#">Terms of Service</a></li>
+              <li><a className="hover:text-primary transition-colors" href="#">Privacy Policy</a></li>
             </ul>
           </div>
 
         </div>
 
         {/* BOTTOM BAR */}
-        <div className="pt-8 border-t border-border-custom flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-text-secondary text-xs">
-            © 2024 Rentora Marketplace. All rights reserved.
+        <div className="pt-6 border-t border-divider flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-text-muted text-xs">
+            © 2026 Rentora Marketplace. All rights reserved.
           </p>
 
-          <div className="flex gap-8 text-xs text-text-secondary">
-            <a className="hover:text-accent" href="#">English (US)</a>
-            <a className="hover:text-accent" href="#">INR (₹)</a>
+          <div className="flex gap-6 text-xs text-text-muted">
+            <a className="hover:text-primary transition-colors" href="#">English (US)</a>
+            <a className="hover:text-primary transition-colors" href="#">INR (₹)</a>
           </div>
         </div>
 

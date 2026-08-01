@@ -184,10 +184,9 @@ export default function OwnerListings() {
                 <div className="flex justify-between items-center bg-transparent">
                     <InventoryTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-                    <button className="bg-bright hover:bg-bright/80 active:scale-95 text-app px-5 py-2.5 rounded-2xl font-bold text-sm flex items-center gap-2 transition-all 
-                    hover:cursor-pointer"
+                    <button className="bg-primary hover:bg-primary-hover active:scale-95 text-text-primary px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all cursor-pointer shadow-sm"
                         onClick={() => setIsAddModalOpen(true)}>
-                        <Plus size={16} strokeWidth={3} />
+                        <Plus size={16} strokeWidth={2.5} />
                         New Item
                     </button>
                 </div>

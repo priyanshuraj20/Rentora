@@ -2,26 +2,28 @@ import { Link } from "react-router-dom";
 
 export default function QuickActions({ actions }) {
   return (
-    <div className="p-6 bg-surface rounded-2xl border-1 border-app/80">
-      <h3 className="text-lg font-bold mb-6">Quick Actions</h3>
+    <div className="p-6 bg-surface rounded-2xl border border-divider shadow-sm">
+      <h3 className="text-base font-bold text-text-primary mb-5">Quick Actions</h3>
 
-      {actions.map((action) => (
-        <Link key={action.id} to={action.to}>
-          <button
-            className="w-full flex justify-between items-center p-4 bg-accent/20 hover:bg-accent/40 rounded-2xl mb-3"
-          >
-            <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-bright">
-                {action.icon}
+      <div className="space-y-2.5">
+        {actions.map((action) => (
+          <Link key={action.id} to={action.to} className="block">
+            <button
+              className="w-full flex justify-between items-center p-3.5 bg-card hover:bg-white/5 border border-divider rounded-2xl transition-all cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-primary text-xl">
+                  {action.icon}
+                </span>
+                <span className="font-semibold text-xs text-text-primary group-hover:text-primary transition-colors">{action.label}</span>
+              </div>
+              <span className="material-symbols-outlined text-text-muted text-lg group-hover:translate-x-0.5 transition-transform">
+                chevron_right
               </span>
-              <span className="font-semibold">{action.label}</span>
-            </div>
-            <span className="material-symbols-outlined text-text-secondary">
-              chevron_right
-            </span>
-          </button>
-        </Link>
-      ))}
+            </button>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

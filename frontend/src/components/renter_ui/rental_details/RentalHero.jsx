@@ -2,15 +2,15 @@ export default function RentalHero({ rental }) {
   const getStatusBadgeStyle = (status, paymentStatus) => {
     const s = status?.toLowerCase();
     if (s === "approved" || paymentStatus === "pending") {
-      return "bg-amber-500/10 text-amber-400 border-amber-500/30";
+      return "bg-warning/15 text-warning border-warning/30";
     }
     if (s === "confirmed" || s === "ongoing" || s === "completed") {
-      return "bg-[#162a29] text-emerald-400 border-emerald-500/30";
+      return "bg-success/15 text-success border-success/30";
     }
     if (s === "rejected" || s === "cancelled") {
-      return "bg-red-500/10 text-red-400 border-red-500/30";
+      return "bg-error/15 text-error border-error/30";
     }
-    return "bg-yellow-500/10 text-yellow-500 border-yellow-500/30";
+    return "bg-warning/15 text-warning border-warning/30";
   };
 
   const getDisplayStatus = (status, paymentStatus) => {
@@ -22,9 +22,9 @@ export default function RentalHero({ rental }) {
   };
 
   return (
-    <div className="bg-surface border-1 border-app/80 rounded-2xl overflow-hidden">
+    <div className="bg-surface border border-divider rounded-3xl overflow-hidden shadow-sm">
       <div className="flex flex-col md:flex-row">
-        <div className="md:w-1/3 h-48 md:h-auto">
+        <div className="md:w-1/3 h-48 md:h-auto bg-card border-r border-divider">
           <img
             src={
               rental.image && rental.image !== "undefined"
@@ -38,9 +38,9 @@ export default function RentalHero({ rental }) {
 
         <div className="p-6 md:w-2/3 flex flex-col justify-between">
           <div>
-            <div className="flex flex-wrap items-center gap-3 mb-2">
+            <div className="flex flex-wrap items-center gap-3 mb-3">
               <span
-                className={`text-xs font-bold border rounded-xl py-1 px-3 ${getStatusBadgeStyle(
+                className={`text-[10px] font-bold uppercase tracking-wider border rounded-full py-1 px-3 ${getStatusBadgeStyle(
                   rental.status,
                   rental.paymentStatus
                 )}`}
@@ -48,20 +48,20 @@ export default function RentalHero({ rental }) {
                 {getDisplayStatus(rental.status, rental.paymentStatus)}
               </span>
             </div>
-            <h1 className="text-2xl font-black text-text-primary mb-1">
+            <h1 className="text-2xl font-bold text-text-primary mb-1 tracking-tight">
               {rental.title}
             </h1>
-            <p className="text-text-secondary text-sm">{rental.location}</p>
+            <p className="text-text-secondary text-xs">{rental.location}</p>
           </div>
 
-          <div className="mt-6 flex justify-between border-t border-divider/20 pt-4">
-            <p className="text-sm text-text-secondary">
+          <div className="mt-6 flex justify-between border-t border-divider pt-4">
+            <p className="text-xs text-text-secondary">
               Rental Type:{" "}
-              <span className="font-bold uppercase text-text-primary">
+              <span className="font-semibold uppercase text-text-primary">
                 {rental.rentalType}
               </span>
             </p>
-            <p className="text-xs text-text-secondary">
+            <p className="text-xs text-text-muted">
               Requested on {rental.agreementDate}
             </p>
           </div>

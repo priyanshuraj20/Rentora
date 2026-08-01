@@ -67,113 +67,113 @@ export default function OwnerEarnings() {
   const netPayout = grossEarnings - platformFee;
 
   return (
-    <main className="min-h-screen bg-app px-6 md:px-12 py-10 max-w-[1400px] mx-auto space-y-8">
+    <main className="min-h-screen bg-app px-6 md:px-12 py-8 max-w-[1400px] mx-auto space-y-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight">Earnings & Analytics</h1>
-          <p className="text-text-secondary text-lg mt-1 font-medium">
+          <h1 className="text-3xl font-bold text-text-primary tracking-tight">Earnings & Analytics</h1>
+          <p className="text-text-secondary text-sm mt-1">
             Real-time revenue metrics, platform fee deductions, and payout history.
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-surface border border-divider/20 px-4 py-2.5 rounded-xl">
-          <ShieldCheck className="text-bright size-5" />
-          <span className="text-sm font-bold text-white">Razorpay Direct Bank Transfers</span>
+        <div className="flex items-center gap-2 bg-surface border border-divider px-4 py-2 rounded-xl">
+          <ShieldCheck className="text-primary size-4" />
+          <span className="text-xs font-semibold text-text-primary">Razorpay Direct Bank Transfers</span>
         </div>
       </div>
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-surface border border-divider/20 rounded-2xl p-6 relative overflow-hidden">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-text-secondary text-xs font-bold uppercase tracking-wider">Gross Revenue</span>
-            <div className="size-10 rounded-xl bg-bright/10 flex items-center justify-center text-bright">
-              <DollarSign size={20} />
+        <div className="bg-surface border border-divider rounded-3xl p-6 relative overflow-hidden shadow-sm">
+          <div className="flex justify-between items-start mb-3">
+            <span className="text-text-muted text-xs font-semibold uppercase tracking-wider">Gross Revenue</span>
+            <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+              <DollarSign size={18} />
             </div>
           </div>
-          <p className="text-3xl font-black text-white">₹{grossEarnings.toLocaleString()}</p>
-          <p className="text-xs text-bright mt-2 flex items-center gap-1 font-bold">
-            <TrendingUp size={14} /> From {paidBookings.length} paid rentals
+          <p className="text-3xl font-extrabold text-text-primary">₹{grossEarnings.toLocaleString()}</p>
+          <p className="text-xs text-primary mt-2 flex items-center gap-1 font-semibold">
+            <TrendingUp size={13} /> From {paidBookings.length} paid rentals
           </p>
         </div>
 
-        <div className="bg-surface border border-divider/20 rounded-2xl p-6 relative overflow-hidden">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-text-secondary text-xs font-bold uppercase tracking-wider">Net Owner Payout (90%)</span>
-            <div className="size-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-              <ArrowUpRight size={20} />
+        <div className="bg-surface border border-divider rounded-3xl p-6 relative overflow-hidden shadow-sm">
+          <div className="flex justify-between items-start mb-3">
+            <span className="text-text-muted text-xs font-semibold uppercase tracking-wider">Net Owner Payout (90%)</span>
+            <div className="size-9 rounded-xl bg-success/15 flex items-center justify-center text-success">
+              <ArrowUpRight size={18} />
             </div>
           </div>
-          <p className="text-3xl font-black text-emerald-400">₹{netPayout.toLocaleString()}</p>
-          <p className="text-xs text-emerald-400/80 mt-2 font-medium">Net earnings transferred</p>
+          <p className="text-3xl font-extrabold text-success">₹{netPayout.toLocaleString()}</p>
+          <p className="text-xs text-success/80 mt-2 font-medium">Net earnings transferred</p>
         </div>
 
-        <div className="bg-surface border border-divider/20 rounded-2xl p-6 relative overflow-hidden">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-text-secondary text-xs font-bold uppercase tracking-wider">Platform Fee (10%)</span>
-            <div className="size-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400">
-              <CreditCard size={20} />
+        <div className="bg-surface border border-divider rounded-3xl p-6 relative overflow-hidden shadow-sm">
+          <div className="flex justify-between items-start mb-3">
+            <span className="text-text-muted text-xs font-semibold uppercase tracking-wider">Platform Fee (10%)</span>
+            <div className="size-9 rounded-xl bg-warning/15 flex items-center justify-center text-warning">
+              <CreditCard size={18} />
             </div>
           </div>
-          <p className="text-3xl font-black text-amber-400">₹{platformFee.toLocaleString()}</p>
-          <p className="text-xs text-amber-400/80 mt-2 font-medium">Platform commission</p>
+          <p className="text-3xl font-extrabold text-warning">₹{platformFee.toLocaleString()}</p>
+          <p className="text-xs text-warning/80 mt-2 font-medium">Platform commission</p>
         </div>
 
-        <div className="bg-surface border border-divider/20 rounded-2xl p-6 relative overflow-hidden">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-text-secondary text-xs font-bold uppercase tracking-wider">Active Inventory</span>
-            <div className="size-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
-              <CheckCircle2 size={20} />
+        <div className="bg-surface border border-divider rounded-3xl p-6 relative overflow-hidden shadow-sm">
+          <div className="flex justify-between items-start mb-3">
+            <span className="text-text-muted text-xs font-semibold uppercase tracking-wider">Active Inventory</span>
+            <div className="size-9 rounded-xl bg-secondary-accent/15 flex items-center justify-center text-secondary-accent">
+              <CheckCircle2 size={18} />
             </div>
           </div>
-          <p className="text-3xl font-black text-white">{stats.totalListings || 0}</p>
-          <p className="text-xs text-text-secondary mt-2 font-medium">Listings generating income</p>
+          <p className="text-3xl font-extrabold text-text-primary">{stats.totalListings || 0}</p>
+          <p className="text-xs text-text-muted mt-2 font-medium">Listings generating income</p>
         </div>
       </div>
 
       {/* Transaction Table */}
-      <div className="bg-surface border border-divider/20 rounded-2xl p-6 space-y-6">
-        <div className="flex justify-between items-center border-b border-divider/20 pb-4">
-          <h2 className="text-xl font-bold text-white">Live Transaction & Settlement Log</h2>
-          <span className="text-xs font-bold text-bright bg-bright/10 px-3 py-1 rounded-full">
+      <div className="bg-surface border border-divider rounded-3xl p-6 space-y-6 shadow-sm">
+        <div className="flex justify-between items-center border-b border-divider pb-4">
+          <h2 className="text-lg font-bold text-text-primary">Live Transaction & Settlement Log</h2>
+          <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-3 py-1 rounded-full uppercase tracking-wider">
             Database Synchronized
           </span>
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-text-secondary font-medium">Fetching database records...</div>
+          <div className="text-center py-12 text-text-muted font-medium text-sm">Fetching database records...</div>
         ) : paidBookings.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-divider/10 text-text-secondary text-xs uppercase tracking-wider">
-                  <th className="pb-3 font-bold">Item Title</th>
-                  <th className="pb-3 font-bold">Renter Name</th>
-                  <th className="pb-3 font-bold">Rental Dates</th>
-                  <th className="pb-3 font-bold">Gross Price</th>
-                  <th className="pb-3 font-bold">Net Payout</th>
-                  <th className="pb-3 font-bold">Payment Status</th>
+                <tr className="border-b border-divider text-text-muted uppercase tracking-wider">
+                  <th className="pb-3 font-semibold">Item Title</th>
+                  <th className="pb-3 font-semibold">Renter Name</th>
+                  <th className="pb-3 font-semibold">Rental Dates</th>
+                  <th className="pb-3 font-semibold">Gross Price</th>
+                  <th className="pb-3 font-semibold">Net Payout</th>
+                  <th className="pb-3 font-semibold">Payment Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-divider/10">
+              <tbody className="divide-y divide-divider">
                 {paidBookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-app/40 transition-colors">
-                    <td className="py-4 font-bold text-white flex items-center gap-3">
+                  <tr key={b.id} className="hover:bg-white/5 transition-colors">
+                    <td className="py-3.5 font-bold text-text-primary flex items-center gap-3">
                       {b.item?.image && (
-                        <img src={b.item.image} alt={b.item.title} className="size-10 rounded-lg object-cover" />
+                        <img src={b.item.image} alt={b.item.title} className="size-9 rounded-xl object-cover border border-divider" />
                       )}
                       <span>{b.item?.title || "Rental Item"}</span>
                     </td>
-                    <td className="py-4 text-text-primary font-medium">{b.renterInfo?.name || "Renter"}</td>
-                    <td className="py-4 text-text-secondary text-xs">
+                    <td className="py-3.5 text-text-primary font-medium">{b.renterInfo?.name || "Renter"}</td>
+                    <td className="py-3.5 text-text-secondary">
                       {new Date(b.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} —{" "}
                       {new Date(b.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </td>
-                    <td className="py-4 font-bold text-white">₹{b.totalAmount}</td>
-                    <td className="py-4 font-bold text-emerald-400">₹{Math.round(b.totalAmount * 0.9)}</td>
-                    <td className="py-4">
-                      <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] uppercase font-bold px-2.5 py-1 rounded-md flex items-center gap-1 w-fit">
-                        <CheckCircle2 size={12} /> {b.paymentStatus?.toUpperCase() || "PAID"}
+                    <td className="py-3.5 font-bold text-text-primary">₹{b.totalAmount}</td>
+                    <td className="py-3.5 font-bold text-success">₹{Math.round(b.totalAmount * 0.9)}</td>
+                    <td className="py-3.5">
+                      <span className="bg-success/15 text-success border border-success/30 text-[10px] uppercase font-bold px-2.5 py-1 rounded-full flex items-center gap-1 w-fit">
+                        <CheckCircle2 size={11} /> {b.paymentStatus?.toUpperCase() || "PAID"}
                       </span>
                     </td>
                   </tr>
@@ -183,9 +183,9 @@ export default function OwnerEarnings() {
           </div>
         ) : (
           <div className="text-center py-16 space-y-3">
-            <Clock className="size-12 text-text-secondary mx-auto opacity-50" />
-            <p className="text-lg font-bold text-white">No Paid Rentals Found</p>
-            <p className="text-sm text-text-secondary max-w-sm mx-auto">
+            <Clock className="size-10 text-text-muted mx-auto" />
+            <p className="text-base font-bold text-text-primary">No Paid Rentals Found</p>
+            <p className="text-xs text-text-secondary max-w-sm mx-auto">
               Once renters complete payments for your item requests, your dynamic earnings log will update here.
             </p>
           </div>

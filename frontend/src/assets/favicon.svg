@@ -1,0 +1,10 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="200" rx="44" fill="#e8734a"/>
+  <text x="85" y="165" font-family="'Outfit', 'Arial', sans-serif" font-size="150" font-weight="700" fill="#f7f0e8" text-anchor="middle">R</text>
+  <path d="M 132 155 A 34 34 0 1 1 160 125" fill="none" stroke="#f7f0e8" stroke-width="7" stroke-linecap="round" marker-end="url(#arrow)"/>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#f7f0e8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+</svg>
