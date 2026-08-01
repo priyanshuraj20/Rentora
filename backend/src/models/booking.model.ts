@@ -36,6 +36,7 @@ export interface IBooking extends Document {
 
   booking_status:
     | "pending"
+    | "approved"
     | "confirmed"
     | "ongoing"
     | "completed"
@@ -112,7 +113,7 @@ const BookingSchema: Schema<IBooking> = new Schema(
       serviceFee: { type: Number, default: 0 },
       tax: { type: Number, default: 0 },
 
-      platformFee: { type: Number, default: 49 },
+      platformFee: { type: Number, default: 0 },
       ownerEarning: { type: Number, required: true },
 
       totalAmount: { type: Number, required: true },
@@ -126,7 +127,7 @@ const BookingSchema: Schema<IBooking> = new Schema(
 
     booking_status: {
       type: String,
-      enum: ["pending", "confirmed", "ongoing", "completed", "cancelled"],
+      enum: ["pending", "approved", "confirmed", "ongoing", "completed", "cancelled", "rejected"],
       default: "pending",
     },
 

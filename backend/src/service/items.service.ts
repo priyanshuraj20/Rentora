@@ -9,6 +9,8 @@ import {
 import z from "zod";
 import logger from "../config/logger";
 import { ROLE } from "../validators/auth.schema";
+import { addElasticSyncJob } from "../queues/elasticSync.queue";
+import { geocodeCityOrAddress } from "../utils/geocoder";
 
 function ensureOwner(role: ROLE) {
   if (role !== ROLE.OWNER) {
@@ -90,7 +92,7 @@ export const addItemService = async (
 ) => {
   logger.info("Creating new item", { userId });
 
-  const user = await User.findById(userId).select("roles").lean();
+  const user = await User.findById(userId).select("roles address").lean();
 
   if (!user) {
     logger.error("User not found while creating item", { userId });
@@ -99,15 +101,44 @@ export const addItemService = async (
 
   ensureOwner(user.roles as ROLE);
 
-  const item = await Item.create({
+  const locData = (data as any).location || {};
+  const city = locData.city || user.address?.district || user.address?.state;
+  const district = locData.district || user.address?.district || "";
+  const state = locData.state || user.address?.state || "";
+  const pincode = locData.pincode || user.address?.pincode || "";
+
+  if (!city) {
+    throw new AppError(
+      "Please update your profile address or specify a pickup location before publishing a listing.",
+      400,
+    );
+  }
+
+  const geocoded = await geocodeCityOrAddress(city, state, district);
+
+  const itemData: any = {
     ownerId: userId,
     ...data,
-  });
+    location: {
+      city,
+      district,
+      state,
+      pincode,
+      coordinates: {
+        type: "Point" as const,
+        coordinates: locData.coordinates?.coordinates || geocoded.coordinates,
+      },
+    },
+  };
+
+  const item: any = await Item.create(itemData);
 
   logger.info("Item created successfully", {
     userId,
     itemId: item._id,
   });
+
+  await addElasticSyncJob("INDEX_ITEM", item._id.toString());
 
   return item;
 };
@@ -122,9 +153,38 @@ export const updateItemService = async (
 
   ensureOwner(role);
 
+  const existingItem = await Item.findOne({ _id: itemId, ownerId: userId });
+  if (!existingItem) {
+    throw new AppError("Item not found", 404);
+  }
+
+  const updatePayload: any = { ...data };
+
+  if ((data as any).location) {
+    const loc = (data as any).location;
+    const city = loc.city || existingItem.location?.city;
+    const state = loc.state || existingItem.location?.state;
+    const district = loc.district || existingItem.location?.district;
+    const pincode = loc.pincode || existingItem.location?.pincode;
+
+    if (city) {
+      const geocoded = await geocodeCityOrAddress(city, state, district);
+      updatePayload.location = {
+        city,
+        district: district || "",
+        state: state || "",
+        pincode: pincode || "",
+        coordinates: {
+          type: "Point" as const,
+          coordinates: loc.coordinates?.coordinates || geocoded.coordinates,
+        },
+      };
+    }
+  }
+
   const item = await Item.findOneAndUpdate(
     { _id: itemId, ownerId: userId, status: { $ne: "rented" } },
-    { $set: data },
+    { $set: updatePayload },
     { new: true, runValidators: true },
   );
 
@@ -134,6 +194,8 @@ export const updateItemService = async (
   }
 
   logger.info("Item updated successfully", { itemId });
+
+  await addElasticSyncJob("INDEX_ITEM", item._id.toString());
 
   return item;
 };
@@ -163,6 +225,8 @@ export const pauseItemService = async (
   await item.save();
 
   logger.info("Item paused successfully", { itemId });
+
+  await addElasticSyncJob("INDEX_ITEM", item._id.toString());
 };
 
 export const deleteItemService = async (
@@ -189,6 +253,8 @@ export const deleteItemService = async (
   await Item.deleteOne({ _id: itemId, ownerId: userId });
 
   logger.info("Item deleted successfully", { itemId });
+
+  await addElasticSyncJob("DELETE_ITEM", itemId);
 };
 
 export const activateItemService = async (
@@ -216,4 +282,6 @@ export const activateItemService = async (
   await item.save();
 
   logger.info("Item activated successfully", { itemId });
+
+  await addElasticSyncJob("INDEX_ITEM", item._id.toString());
 };

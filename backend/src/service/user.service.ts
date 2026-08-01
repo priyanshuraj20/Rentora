@@ -180,7 +180,10 @@ export const dashboardDataService = async (userId: string) => {
       ownerId: userId,
     });
 
-    const recentRentals = await Booking.find({ owner_id: userId })
+    const recentRentals = await Booking.find({
+      owner_id: userId,
+      payment_status: "paid",
+    })
       .populate("item_id", "title images category rating")
       .populate("renter_id", "name profileImage")
       .sort({ createdAt: -1 })
@@ -234,7 +237,7 @@ export const dashboardDataService = async (userId: string) => {
 
     const formattedBookings = recentBookings.map((booking: any) => ({
       id: booking._id.toString(),
-      status: booking.booking_status === "ongoing" ? "active" : "upcoming",
+      status: booking.booking_status,
       title: booking.item_id?.title || "Unknown Item",
       dateRange: `${new Date(booking.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${new Date(booking.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
       category: booking.item_id?.category || "Uncategorized",

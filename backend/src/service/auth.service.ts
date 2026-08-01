@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { User } from "../models/user.model";
 import logger from "../config/logger";
 import { userInterface } from "../controllers/auth.controller";
@@ -6,6 +7,7 @@ import { OTP } from "../models/OTP.model";
 import { sendOTP } from "../utils/sendEmails";
 import { AppError } from "../utils/AppError";
 import { TokenPayload } from "../utils/generateTokens";
+import { env } from "@config/env";
 
 export const registerService = async (userData: {
   email: string;
@@ -164,4 +166,85 @@ export const MeService = async (id: string | undefined) => {
   logger.info("User profile fetched successfully", { userId: id });
 
   return userResponse;
+};
+
+export const refreshTokenService = async (
+  refreshToken: string,
+): Promise<TokenPayload> => {
+  logger.info("Token refresh attempt");
+
+  if (!refreshToken) {
+    throw new AppError("Refresh token missing. Please login again", 401);
+  }
+
+  let decoded: TokenPayload;
+  try {
+    decoded = jwt.verify(
+      refreshToken,
+      env.JWT_REFRESH_SECRET,
+    ) as TokenPayload;
+  } catch (error) {
+    logger.warn("Invalid or expired refresh token", { error });
+    throw new AppError(
+      "Invalid or expired refresh token. Please login again",
+      401,
+    );
+  }
+
+  const user = await User.findById(decoded.userId);
+  if (!user) {
+    logger.warn("User not found during token refresh", {
+      userId: decoded.userId,
+    });
+    throw new AppError("User not found. Please login again", 401);
+  }
+
+  return {
+    userId: user._id.toString(),
+    userRole: user.roles,
+  };
+};
+
+export const sendPasswordResetOTPService = async (email: string) => {
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new AppError("No account found with this email address", 404);
+  }
+
+  await sendOTPService(email);
+};
+
+export const resetPasswordService = async (data: {
+  email: string;
+  otp: string;
+  newPassword: string;
+}) => {
+  const user = await User.findOne({ email: data.email });
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const latestOTP = await OTP.findOne({ email: data.email }).sort({
+    createdAt: -1,
+  });
+  if (!latestOTP) {
+    throw new AppError("OTP not found or expired", 400);
+  }
+
+  if (new Date() > latestOTP.expiresAt) {
+    throw new AppError("OTP has expired", 400);
+  }
+
+  const isOtpValid = await bcrypt.compare(data.otp, latestOTP.otp);
+  if (!isOtpValid) {
+    throw new AppError("Invalid OTP", 400);
+  }
+
+  const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+  user.password = hashedPassword;
+  await user.save();
+
+  await OTP.deleteMany({ email: data.email });
+
+  return true;
 };

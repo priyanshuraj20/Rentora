@@ -1,4 +1,4 @@
-import mongoose, { Types } from "mongoose";
+import { Types } from "mongoose";
 import { Item } from "../models/item.model";
 import { AppError } from "../utils/AppError";
 import { esClient, ITEMS_INDEX } from "../config/elasticSearch";
@@ -7,25 +7,66 @@ import type { QueryDslQueryContainer } from "@elastic/elasticsearch/lib/api/type
 import { Booking } from "../models/booking.model";
 import { BookingStatus } from "../validators/booking.validator";
 
+export function calculateDistanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const R = 6371; // Earth radius in kilometers
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
+
 export interface SearchParams {
   q?: string;
   category?: string;
   city?: string;
   minPrice?: number;
   maxPrice?: number;
+  lat?: number;
+  lng?: number;
+  radius?: number;
   page?: number;
   limit?: number;
 }
 
 // ─────────────────────────────────────────────────────
-// Get all items
+// Get all items (Location-Aware)
 // ─────────────────────────────────────────────────────
 
-export const getAllItemsService = async (page = 1, limit = 10) => {
-  logger.info("Fetching items list", { page, limit });
+export const getAllItemsService = async (
+  page = 1,
+  limit = 10,
+  lat?: number,
+  lng?: number,
+  radius?: number,
+  city?: string,
+) => {
+  logger.info("Fetching items list", { page, limit, lat, lng, radius, city });
 
-  // Typed as Record<string, any> to prevent Mongoose overload type errors
-  const query: Record<string, any> = { status: "active" };
+  const query: Record<string, any> = { status: "active", isActive: true };
+
+  if (lat !== undefined && lng !== undefined) {
+    const radiusKm = radius || 50;
+    const radiusInRadians = radiusKm / 6378.1;
+    query["location.coordinates"] = {
+      $geoWithin: {
+        $centerSphere: [[lng, lat], radiusInRadians],
+      },
+    };
+  } else if (city && city.trim()) {
+    query["location.city"] = new RegExp(`^${city.trim()}$`, "i");
+  }
+
   const skip = (page - 1) * limit;
 
   const totalItems = await Item.countDocuments(query);
@@ -45,15 +86,34 @@ export const getAllItemsService = async (page = 1, limit = 10) => {
     };
   }
 
-  const formattedItems = items.map((i: any) => ({
-    id: i._id.toString(),
-    title: i.title,
-    image: i.images?.[0] ?? null,
-    dailyPrice: i.price?.daily ?? 0,
-    category: i.category,
-    discount: i.discount?.daily ?? null,
-    rating: i.rating?.average ?? 0,
-  }));
+  const formattedItems = items.map((i: any) => {
+    let distanceKm: number | null = null;
+    if (lat !== undefined && lng !== undefined && i.location?.coordinates?.coordinates) {
+      const [itemLng, itemLat] = i.location.coordinates.coordinates;
+      distanceKm = calculateDistanceKm(lat, lng, itemLat, itemLng);
+    }
+
+    return {
+      id: i._id.toString(),
+      title: i.title,
+      image: i.images?.[0] ?? null,
+      dailyPrice: i.price?.daily ?? 0,
+      category: i.category,
+      discount: i.discount?.daily ?? null,
+      rating: i.rating?.average ?? 0,
+      location: i.location ? {
+        city: i.location.city,
+        district: i.location.district,
+        state: i.location.state,
+        pincode: i.location.pincode,
+      } : null,
+      distanceKm,
+    };
+  });
+
+  if (lat !== undefined && lng !== undefined) {
+    formattedItems.sort((a, b) => (a.distanceKm ?? 99999) - (b.distanceKm ?? 99999));
+  }
 
   logger.info("Items fetched successfully", {
     totalItems,
@@ -93,7 +153,13 @@ export const getItemByIdService = async (id: string) => {
   // Fetch confirmed and ongoing bookings to block dates
   const bookings = await Booking.find({
     item_id: id,
-    booking_status: { $in: [BookingStatus.CONFIRMED, BookingStatus.ONGOING] },
+    booking_status: {
+      $in: [
+        BookingStatus.APPROVED,
+        BookingStatus.CONFIRMED,
+        BookingStatus.ONGOING,
+      ],
+    },
   })
     .select("start_date end_date")
     .lean();
@@ -174,6 +240,31 @@ export const indexItemToES = async (item: any) => {
   }
 };
 
+export const deleteItemFromES = async (itemId: string) => {
+  logger.info("Deleting item from ElasticSearch", { itemId });
+
+  try {
+    await esClient.delete({
+      index: ITEMS_INDEX,
+      id: itemId,
+    });
+
+    logger.info("Item deleted from ElasticSearch successfully", { itemId });
+  } catch (error: any) {
+    if (error?.meta?.statusCode === 404) {
+      logger.info("Item already deleted from ElasticSearch", { itemId });
+      return;
+    }
+
+    logger.error("ElasticSearch deletion failed", {
+      itemId,
+      error,
+    });
+
+    throw error;
+  }
+};
+
 // ─────────────────────────────────────────────────────
 // ElasticSearch Search
 // ─────────────────────────────────────────────────────
@@ -182,6 +273,9 @@ export const searchItemsService = async ({
   q,
   category,
   city,
+  lat,
+  lng,
+  radius,
   minPrice,
   maxPrice,
   page = 1,
@@ -191,6 +285,9 @@ export const searchItemsService = async ({
     query: q,
     category,
     city,
+    lat,
+    lng,
+    radius,
     minPrice,
     maxPrice,
     page,
@@ -199,102 +296,176 @@ export const searchItemsService = async ({
 
   const from = (page - 1) * limit;
 
-  const filters: object[] = [
-    { term: { isActive: true } },
-    { term: { status: "active" } },
-  ];
-
-  if (category) {
-    filters.push({ term: { category } });
-  }
-
-  if (minPrice !== undefined || maxPrice !== undefined) {
-    const range: Record<string, number> = {};
-
-    if (minPrice !== undefined) range.gte = minPrice;
-    if (maxPrice !== undefined) range.lte = maxPrice;
-
-    filters.push({ range: { dailyPrice: range } });
-  }
-
-  const esQuery: QueryDslQueryContainer = q
-    ? {
-        bool: {
-          must: [
-            {
-              multi_match: {
-                query: q,
-                fields: ["title^3", "category^2"],
-                fuzziness: "AUTO",
-                operator: "or",
-              },
-            },
-          ],
-          filter: filters as QueryDslQueryContainer[],
-        },
-      }
-    : {
-        bool: {
-          must: [{ match_all: {} }],
-          filter: filters as QueryDslQueryContainer[],
-        },
-      };
-
+  // 1. Attempt Elasticsearch search first
   try {
+    const filters: object[] = [
+      { term: { isActive: true } },
+      { term: { status: "active" } },
+    ];
+    if (category) filters.push({ term: { category } });
+
+    const esQuery: QueryDslQueryContainer = q
+      ? {
+          bool: {
+            must: [
+              {
+                multi_match: {
+                  query: q,
+                  fields: ["title^3", "category^2", "description"],
+                  fuzziness: "AUTO",
+                  operator: "or",
+                },
+              },
+            ],
+            filter: filters as QueryDslQueryContainer[],
+          },
+        }
+      : {
+          bool: {
+            must: [{ match_all: {} }],
+            filter: filters as QueryDslQueryContainer[],
+          },
+        };
+
     const result = await esClient.search({
       index: ITEMS_INDEX,
       from,
       size: limit,
       query: esQuery,
-      sort: q
-        ? [{ _score: { order: "desc" } }]
-        : [{ rating: { order: "desc" } }],
+      sort: q ? [{ _score: { order: "desc" } }] : [{ rating: { order: "desc" } }],
     });
 
     const hits = result.hits.hits;
-
     const total =
       typeof result.hits.total === "number"
         ? result.hits.total
         : (result.hits.total?.value ?? 0);
 
-    const items = hits.map((hit) => {
-      const src = hit._source as any;
+    if (hits.length > 0 || !q) {
+      const items = hits.map((hit) => {
+        const src = hit._source as any;
+        return {
+          id: hit._id,
+          title: src.title,
+          image: src.image ?? src.images?.[0] ?? null,
+          dailyPrice: src.dailyPrice ?? src.price?.daily ?? 0,
+          category: src.category,
+          discount: src.discountDaily ?? null,
+          rating: src.rating ?? 5.0,
+          location: src.location,
+          score: hit._score ?? null,
+        };
+      });
+
+      logger.info("ElasticSearch search completed", {
+        totalResults: total,
+        returned: items.length,
+        page,
+      });
 
       return {
-        id: hit._id,
-        title: src.title,
-        image: src.image ?? null,
-        dailyPrice: src.dailyPrice,
-        category: src.category,
-        discount: src.discountDaily ?? null,
-        rating: src.rating,
-        location: src.location,
-        score: hit._score ?? null,
+        items,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: from + hits.length < total,
       };
+    }
+  } catch (error) {
+    logger.warn("ElasticSearch search unavailable or empty, falling back to MongoDB query", {
+      error: (error as any).message,
     });
+  }
 
-    logger.info("Search completed", {
-      totalResults: total,
-      returned: items.length,
-      page,
-    });
+  // 2. Fallback to MongoDB Query if Elasticsearch is empty/unavailable
+  const mongoQuery: Record<string, any> = {
+    status: "active",
+    isActive: true,
+  };
+
+  if (q && q.trim()) {
+    const regex = new RegExp(q.trim(), "i");
+    mongoQuery.$or = [
+      { title: regex },
+      { category: regex },
+      { description: regex },
+      { subCategory: regex },
+    ];
+  }
+
+  if (lat !== undefined && lng !== undefined) {
+    const radiusKm = radius || 50;
+    const radiusInRadians = radiusKm / 6378.1;
+    mongoQuery["location.coordinates"] = {
+      $geoWithin: {
+        $centerSphere: [[lng, lat], radiusInRadians],
+      },
+    };
+  } else if (city && city.trim()) {
+    mongoQuery["location.city"] = new RegExp(`^${city.trim()}$`, "i");
+  }
+
+  if (category) {
+    mongoQuery.category = category;
+  }
+
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    mongoQuery["price.daily"] = {};
+    if (minPrice !== undefined) mongoQuery["price.daily"].$gte = minPrice;
+    if (maxPrice !== undefined) mongoQuery["price.daily"].$lte = maxPrice;
+  }
+
+  const skip = (page - 1) * limit;
+  const total = await Item.countDocuments(mongoQuery);
+  const items = await Item.find(mongoQuery)
+    .sort({ _id: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const formattedItems = items.map((i: any) => {
+    let distanceKm: number | null = null;
+    if (lat !== undefined && lng !== undefined && i.location?.coordinates?.coordinates) {
+      const [itemLng, itemLat] = i.location.coordinates.coordinates;
+      distanceKm = calculateDistanceKm(lat, lng, itemLat, itemLng);
+    }
 
     return {
-      items,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-      hasNextPage: from + hits.length < total,
+      id: i._id.toString(),
+      title: i.title,
+      image: i.images?.[0] ?? null,
+      dailyPrice: i.price?.daily ?? 0,
+      category: i.category,
+      discount: i.discount?.daily ?? null,
+      rating: i.rating?.average ?? 5.0,
+      location: i.location ? {
+        city: i.location.city,
+        district: i.location.district,
+        state: i.location.state,
+        pincode: i.location.pincode,
+      } : null,
+      distanceKm,
     };
-  } catch (error) {
-    logger.error("ElasticSearch query failed", {
-      query: q,
-      category,
-      error,
-    });
+  });
 
-    throw new AppError("Search service failed", 500);
+  if (lat !== undefined && lng !== undefined) {
+    formattedItems.sort((a, b) => (a.distanceKm ?? 99999) - (b.distanceKm ?? 99999));
   }
+
+  logger.info("MongoDB fallback search completed", {
+    query: q,
+    totalResults: total,
+    returned: formattedItems.length,
+    page,
+  });
+
+  return {
+    items: formattedItems,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+    hasNextPage: skip + items.length < total,
+  };
 };

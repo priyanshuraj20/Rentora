@@ -1,15 +1,18 @@
 import { Booking } from "../models/booking.model";
 import { Item } from "../models/item.model";
+import "../models/user.model";
 import { AppError } from "../utils/AppError";
 import { BookingStatus } from "../validators/booking.validator";
 import mongoose from "mongoose";
 import { emailQueue, bookingStatusQueue } from "../queues/email.queue";
+import { createNotificationService } from "./notification.service";
 import logger from "../config/logger";
+import { calculatePricing } from "../utils/pricing.calculator";
 
 export const getBookingService = async (userId: string, userRole: string) => {
   logger.info("Fetching bookings", { userId, userRole });
 
-  const filter =
+  const filter: Record<string, any> =
     userRole === "owner" ? { owner_id: userId } : { renter_id: userId };
 
   const bookings = await Booking.find(filter)
@@ -92,7 +95,13 @@ export const createBookingService = async (userId: string, booking: any) => {
 
   const existingBooking = await Booking.findOne({
     item_id: booking.itemId,
-    booking_status: { $ne: BookingStatus.CANCELLED },
+    booking_status: {
+      $in: [
+        BookingStatus.APPROVED,
+        BookingStatus.CONFIRMED,
+        BookingStatus.ONGOING,
+      ],
+    },
     start_date: { $lt: endDate },
     end_date: { $gt: startDate },
   });
@@ -119,14 +128,14 @@ export const createBookingService = async (userId: string, booking: any) => {
       (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
     ) + 1; // Including start date
 
-  const pricing = {
-    ...booking.pricing,
-    appliedPricing:
-      totalDays >= 30 ? "monthly" : totalDays >= 7 ? "weekly" : "daily",
-    subtotal: booking.pricing.baseRate - (booking.pricing.discountApplied || 0),
-    ownerEarning:
-      (booking.pricing.baseRate - (booking.pricing.discountApplied || 0)) * 0.9, // 10% platform fee example
-  };
+  const pricing = calculatePricing({
+    baseRate: booking.pricing.baseRate,
+    discountApplied: booking.pricing.discountApplied,
+    securityDeposit: booking.pricing.securityDeposit,
+    serviceFee: booking.pricing.serviceFee,
+    tax: booking.pricing.tax,
+    totalDays,
+  });
 
   const newBooking = await Booking.create({
     renter_id: userId,
@@ -145,7 +154,15 @@ export const createBookingService = async (userId: string, booking: any) => {
     itemId: booking.itemId,
   });
 
-  return true;
+  await createNotificationService({
+    userId: item.ownerId.toString(),
+    title: "New Booking Request 📦",
+    message: `You have received a new booking request for ${item.title}.`,
+    type: "booking_request",
+    link: "/bookings",
+  });
+
+  return newBooking;
 };
 
 export const getBookingIdService = async (
@@ -176,7 +193,7 @@ export const acceptBookingService = async (
   userId: string,
   bookingId: string,
 ) => {
-  logger.info("Accepting booking", { bookingId, ownerId: userId });
+  logger.info("Accepting booking", { bookingId, userId });
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -193,10 +210,18 @@ export const acceptBookingService = async (
       throw new AppError("Booking not found or already processed", 404);
     }
 
-    booking.booking_status = BookingStatus.CONFIRMED;
+    booking.booking_status = BookingStatus.APPROVED;
     await booking.save({ session });
 
-    logger.info("Booking confirmed", { bookingId });
+    logger.info("Booking approved", { bookingId });
+
+    await createNotificationService({
+      userId: booking.renter_id.toString(),
+      title: "Booking Approved! 🥳",
+      message: "Your rental booking request was approved by the owner. Please complete payment to confirm.",
+      type: "booking_accepted",
+      link: `/rentals/${booking._id}`,
+    });
 
     await emailQueue.add("sendBookingAcceptedEmail", {
       renter_id: booking.renter_id,
@@ -333,6 +358,14 @@ export const rejectBookingService = async (
   await booking.save();
 
   logger.info("Booking rejected", { bookingId });
+
+  await createNotificationService({
+    userId: booking.renter_id.toString(),
+    title: "Booking Request Declined ❌",
+    message: `Your booking request was declined. Reason: ${rejectMessage}`,
+    type: "booking_rejected",
+    link: "/rentals",
+  });
 };
 
 export const completeBookingService = async (
@@ -369,5 +402,14 @@ export const completeBookingService = async (
   await booking.save();
 
   logger.info("Booking completed", { bookingId });
+
+  await createNotificationService({
+    userId: booking.renter_id.toString(),
+    title: "Rental Completed! 🎉",
+    message: "Your rental agreement has been marked as completed. Thank you!",
+    type: "booking_completed",
+    link: `/rentals/${booking._id}`,
+  });
+
   return true;
 };

@@ -13,6 +13,20 @@ export const itemValidationSchema = z.object({
   }),
   securityDeposit: z.number().min(1, "Security deposit is required"),
   images: z.array(z.string()).min(1, "Images are required").optional(),
+  location: z
+    .object({
+      city: z.string().optional(),
+      district: z.string().optional(),
+      state: z.string().optional(),
+      pincode: z.string().optional(),
+      coordinates: z
+        .object({
+          type: z.literal("Point").optional(),
+          coordinates: z.tuple([z.number(), z.number()]).optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 export const updateItemSchema = z.object({
@@ -28,4 +42,18 @@ export const updateItemSchema = z.object({
     .optional(),
   securityDeposit: z.number().min(1).optional(),
   images: z.array(z.string()).min(1).optional(),
+  location: z
+    .object({
+      city: z.string().optional(),
+      district: z.string().optional(),
+      state: z.string().optional(),
+      pincode: z.string().optional(),
+      coordinates: z
+        .object({
+          type: z.literal("Point").optional(),
+          coordinates: z.tuple([z.number(), z.number()]).optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });

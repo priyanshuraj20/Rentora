@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import logger from "../config/logger";
 import {
   updateProfileSchema,
   updateAddressSchema,
@@ -22,7 +21,8 @@ import { AppError } from "../utils/AppError";
 export const createProfile = catchAsync(async (req: Request, res: Response) => {
   const validate = profileSchema.safeParse(req.body);
   if (!validate.success) {
-    throw new AppError(`Invalid Data ${validate.error.flatten()}`, 400);
+    const errorMsg = validate.error.issues.map((i) => i.message).join(". ");
+    throw new AppError(`Invalid Data: ${errorMsg}`, 400);
   }
 
   await userProfileService(req.userId!, validate.data);
@@ -39,7 +39,8 @@ export const getProfile = catchAsync(async (req: Request, res: Response) => {
 export const updateProfile = catchAsync(async (req: Request, res: Response) => {
   const validate = updateProfileSchema.safeParse(req.body);
   if (!validate.success) {
-    throw new AppError(`Invalid Data ${validate.error.flatten()}`, 400);
+    const errorMsg = validate.error.issues.map((i) => i.message).join(". ");
+    throw new AppError(`Invalid Data: ${errorMsg}`, 400);
   }
 
   await updateProfileService(req.userId!, validate.data);
@@ -50,7 +51,10 @@ export const updateProfile = catchAsync(async (req: Request, res: Response) => {
 
 export const updateProfileImage = catchAsync(
   async (req: Request, res: Response) => {
-    const { profileImage } = req.body;
+    const profileImage = req.file
+      ? (req.file as any).path
+      : req.body?.profileImage;
+
     if (!profileImage) {
       throw new AppError("Profile Image is required", 400);
     }
@@ -65,7 +69,8 @@ export const updateProfileImage = catchAsync(
 export const updateAddress = catchAsync(async (req: Request, res: Response) => {
   const validate = updateAddressSchema.safeParse(req.body);
   if (!validate.success) {
-    throw new AppError(`Invalid Data ${validate.error.flatten()}`, 400);
+    const errorMsg = validate.error.issues.map((i) => i.message).join(". ");
+    throw new AppError(`Invalid Data: ${errorMsg}`, 400);
   }
 
   await updateAddressService(req.userId!, validate.data);

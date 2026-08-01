@@ -93,6 +93,8 @@ router.get("/me/profile", VerifyUser, getProfile);
  */
 router.patch("/me/profile", VerifyUser, updateProfile);
 
+import { uploadSingleImage } from "../middlewares/upload.middleware";
+
 /**
  * @swagger
  * /user/me/avatar:
@@ -114,7 +116,12 @@ router.patch("/me/profile", VerifyUser, updateProfile);
  *       200:
  *         description: Profile image updated successfully
  */
-router.patch("/me/avatar", VerifyUser, updateProfileImage);
+router.patch(
+  "/me/avatar",
+  VerifyUser,
+  uploadSingleImage("profileImage"),
+  updateProfileImage,
+);
 
 /**
  * @swagger

@@ -52,10 +52,14 @@ export const globalErrorHandler = (
   if (err.name === "JsonWebTokenError") error = handleJWTError();
   if (err.name === "TokenExpiredError") error = handleJWTExpiredError();
 
-  // Operational errors (things we threw on purpose) → safe to show message
-  // Unknown/programming errors → generic message only
-  const statusCode = error.isOperational ? error.statusCode : 500;
-  const message = error.isOperational ? error.message : "Something went wrong";
+  // Operational errors (things we threw on purpose or expected 4xx client errors) → safe to show message
+  // Unknown/programming 5xx errors → generic message only
+  const isOperational =
+    error.isOperational ||
+    (error.statusCode && error.statusCode >= 400 && error.statusCode < 500);
+
+  const statusCode = isOperational ? error.statusCode : 500;
+  const message = isOperational ? error.message : "Something went wrong";
 
   return res.status(statusCode).json({ success: false, message });
 };

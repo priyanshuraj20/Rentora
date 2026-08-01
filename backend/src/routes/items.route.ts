@@ -8,6 +8,7 @@ import {
   activateItem,
 } from "../controllers/items.controller";
 import { VerifyUser } from "../middlewares/verifyUser";
+import { uploadMultipleImages } from "../middlewares/upload.middleware";
 const router = Router();
 
 /**
@@ -106,7 +107,7 @@ router.get("/", VerifyUser, getItemsByUser);
  *        201:
  *          description: Item added successfully
  */
-router.post("/", VerifyUser, addItem);
+router.post("/", VerifyUser, uploadMultipleImages("images", 5), addItem);
 
 /**
  * @swagger
@@ -144,8 +145,12 @@ router.post("/", VerifyUser, addItem);
  *     responses:
  *       200:
  *         description: Item updated successfully
+ *       404:
+ *         description: Item not found
+ *       422:
+ *         description: Invalid data
  */
-router.patch("/:id", VerifyUser, updateItem);
+router.patch("/:id", VerifyUser, uploadMultipleImages("images", 5), updateItem);
 
 /**
  * @swagger

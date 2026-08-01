@@ -7,6 +7,9 @@ import {
   sendOTP,
   verifyOTP,
   googleCallback,
+  refreshToken,
+  forgotPassword,
+  resetPassword,
 } from "../controllers/auth.controller";
 import passport from "passport";
 import { VerifyUser } from "../middlewares/verifyUser";
@@ -130,6 +133,20 @@ router.post("/logout", VerifyUser, logout);
 
 /**
  * @swagger
+ * /auth/refresh:
+ *   post:
+ *     summary: Refresh Access Token
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Access token refreshed successfully
+ *       401:
+ *         description: Refresh token missing or expired
+ */
+router.post("/refresh", refreshToken);
+
+/**
+ * @swagger
  * /auth/google:
  *   get:
  *     summary: Initiate Google OAuth
@@ -161,5 +178,8 @@ router.get(
   passport.authenticate("google", { session: false }),
   googleCallback,
 );
+
+router.post("/forgot-password", OTP_LIMITER, forgotPassword);
+router.post("/reset-password", resetPassword);
 
 export default router;

@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { catchAsync } from "../utils/catchAsync";
-import logger from "../config/logger";
 import {
   createBookingService,
   getBookingService,
@@ -26,14 +25,16 @@ export const getBookings = catchAsync(async (req: Request, res: Response) => {
 export const createBooking = catchAsync(async (req: Request, res: Response) => {
   const validate = createBookingSchema.safeParse(req.body);
   if (!validate.success) {
-    throw new AppError(`Invalid Data ${validate.error.flatten()}`, 400);
+    const errorMsg = validate.error.issues.map((i) => i.message).join(". ");
+    throw new AppError(`Invalid Data: ${errorMsg}`, 400);
   }
 
-  await createBookingService(req.userId!, validate.data);
+  const booking = await createBookingService(req.userId!, validate.data);
 
   res.status(201).json({
     success: true,
     message: "Booking created successfully",
+    booking,
   });
 });
 
@@ -61,10 +62,6 @@ export const acceptBooking = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const cancelBooking = catchAsync(async (req: Request, res: Response) => {
-  if (req.userRole !== "renter") {
-    throw new AppError("Forbidden: Only renter can cancel the booking", 403);
-  }
-
   const { cancelMessage } = req.body;
 
   if (!cancelMessage) {
@@ -92,10 +89,6 @@ export const cancelBooking = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const rejectBooking = catchAsync(async (req: Request, res: Response) => {
-  if (req.userRole !== "owner") {
-    throw new AppError("Forbidden: Only owner can reject the booking", 403);
-  }
-
   const { rejectMessage } = req.body;
 
   if (!rejectMessage) {
@@ -124,13 +117,6 @@ export const rejectBooking = catchAsync(async (req: Request, res: Response) => {
 
 export const completeBooking = catchAsync(
   async (req: Request, res: Response) => {
-    if (req.userRole !== "owner") {
-      throw new AppError(
-        "Forbidden: Only owner can mark the booking as completed",
-        403,
-      );
-    }
-
     await completeBookingService(req.userId!, req.params.id as string);
 
     res.status(200).json({

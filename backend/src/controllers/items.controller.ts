@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import logger from "../config/logger";
 import { AppError } from "../utils/AppError";
 import {
   getItemService,
@@ -43,7 +42,19 @@ export const getItemsByUser = catchAsync(
 export const updateItem = catchAsync(async (req: Request, res: Response) => {
   const itemId = req.params.id as string;
 
-  const validate = updateItemSchema.safeParse(req.body);
+  let images: string[] | undefined;
+  if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+    images = (req.files as any[]).map((f) => f.path);
+  } else if (req.file) {
+    images = [(req.file as any).path];
+  }
+
+  const payload = {
+    ...req.body,
+    ...(images && images.length > 0 ? { images } : {}),
+  };
+
+  const validate = updateItemSchema.safeParse(payload);
   if (!validate.success) {
     throw new AppError(
       `Invalid data ${validate.error.flatten().fieldErrors}`,
@@ -65,7 +76,21 @@ export const updateItem = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const addItem = catchAsync(async (req: Request, res: Response) => {
-  const validate = itemValidationSchema.safeParse(req.body);
+  let images: string[] = [];
+  if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+    images = (req.files as any[]).map((f) => f.path);
+  } else if (req.file) {
+    images = [(req.file as any).path];
+  } else if (req.body.images && Array.isArray(req.body.images)) {
+    images = req.body.images;
+  }
+
+  const payload = {
+    ...req.body,
+    ...(images.length > 0 ? { images } : {}),
+  };
+
+  const validate = itemValidationSchema.safeParse(payload);
   if (!validate.success) {
     throw new AppError(
       `Invalid data ${validate.error.flatten().fieldErrors}`,

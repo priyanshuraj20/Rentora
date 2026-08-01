@@ -50,6 +50,7 @@ export const createBookingSchema = z.object({
 
 export const enum BookingStatus {
   PENDING = "pending",
+  APPROVED = "approved",
   CONFIRMED = "confirmed",
   CANCELLED = "cancelled",
   COMPLETED = "completed",

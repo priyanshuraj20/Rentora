@@ -7,6 +7,9 @@ import {
   sendOTPService,
   verifyOTPService,
   MeService,
+  refreshTokenService,
+  sendPasswordResetOTPService,
+  resetPasswordService,
 } from "@service/auth.service";
 import { catchAsync } from "@utils/catchAsync";
 import { AppError } from "@utils/AppError";
@@ -34,9 +37,9 @@ const setAuthCookies = (res: Response, payload: TokenPayload) => {
   const cookieOptions = {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
-    sameSite: (env.NODE_ENV === "production" ? "none" : "strict") as
+    sameSite: (env.NODE_ENV === "production" ? "none" : "lax") as
       | "none"
-      | "strict",
+      | "lax",
   };
 
   res.cookie("accessToken", accessToken, {
@@ -54,10 +57,8 @@ export const register = catchAsync(async (req: Request, res: Response) => {
   const validate = registerSchema.safeParse(req.body);
 
   if (!validate.success) {
-    throw new AppError(
-      `Invalid data ${validate.error.flatten().fieldErrors}`,
-      400,
-    );
+    const errorMsg = validate.error.issues.map((i) => i.message).join(". ");
+    throw new AppError(`Invalid data: ${errorMsg}`, 400);
   }
 
   await registerService(validate.data);
@@ -87,10 +88,8 @@ export const verifyOTP = catchAsync(async (req: Request, res: Response) => {
   const validate = OTPValidator.safeParse(req.body);
 
   if (!validate.success) {
-    throw new AppError(
-      `Invalid data ${validate.error.flatten().fieldErrors}`,
-      400,
-    );
+    const errorMsg = validate.error.issues.map((i) => i.message).join(". ");
+    throw new AppError(`Invalid data: ${errorMsg}`, 400);
   }
 
   // Service returns user payload instead of JWT
@@ -108,10 +107,8 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   const validate = loginSchema.safeParse(req.body);
 
   if (!validate.success) {
-    throw new AppError(
-      `Invalid data ${validate.error.flatten().fieldErrors}`,
-      400,
-    );
+    const errorMsg = validate.error.issues.map((i) => i.message).join(". ");
+    throw new AppError(`Invalid data: ${errorMsg}`, 400);
   }
 
   // Service returns payload instead of token
@@ -143,9 +140,9 @@ export const logout = (_req: Request, res: Response) => {
   const cookieOptions = {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
-    sameSite: (env.NODE_ENV === "production" ? "none" : "strict") as
+    sameSite: (env.NODE_ENV === "production" ? "none" : "lax") as
       | "none"
-      | "strict",
+      | "lax",
   };
 
   res.clearCookie("accessToken", cookieOptions);
@@ -179,3 +176,65 @@ export const googleCallback = catchAsync(
     return res.redirect(`${env.CLIENT_URL}/role-redirect`);
   },
 );
+
+export const refreshToken = catchAsync(async (req: Request, res: Response) => {
+  const token = req.cookies?.refreshToken;
+
+  if (!token) {
+    throw new AppError("Refresh token missing. Please login again", 401);
+  }
+
+  const payload: TokenPayload = await refreshTokenService(token);
+
+  const accessToken = generateAccessToken(payload);
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: (env.NODE_ENV === "production" ? "none" : "lax") as
+      | "none"
+      | "lax",
+  };
+
+  res.cookie("accessToken", accessToken, {
+    ...cookieOptions,
+    maxAge: 15 * 60 * 1000, // 15 minutes
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Access token refreshed successfully",
+  });
+});
+
+export const forgotPassword = catchAsync(async (req: Request, res: Response) => {
+  const { email } = req.body;
+  if (!email) {
+    throw new AppError("Email is required", 400);
+  }
+
+  await sendPasswordResetOTPService(email);
+
+  res.status(200).json({
+    success: true,
+    message: "Password reset OTP sent to your email",
+  });
+});
+
+export const resetPassword = catchAsync(async (req: Request, res: Response) => {
+  const { email, otp, newPassword } = req.body;
+  if (!email || !otp || !newPassword) {
+    throw new AppError("Email, OTP, and new password are required", 400);
+  }
+
+  if (newPassword.length < 6) {
+    throw new AppError("Password must be at least 6 characters long", 400);
+  }
+
+  await resetPasswordService({ email, otp, newPassword });
+
+  res.status(200).json({
+    success: true,
+    message: "Password reset successfully. You can now login with your new password.",
+  });
+});

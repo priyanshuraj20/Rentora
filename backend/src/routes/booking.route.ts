@@ -9,6 +9,7 @@ import {
   completeBooking,
 } from "../controllers/booking.controller";
 import { VerifyUser } from "../middlewares/verifyUser";
+import { restrictTo } from "../middlewares/restrictTo";
 const router = Router();
 
 router.use(VerifyUser);
@@ -218,7 +219,7 @@ router.get("/:id", getBookingById);
  *       404:
  *         description: Booking not found
  */
-router.patch("/:id/approve", acceptBooking);
+router.patch("/:id/approve", restrictTo("owner"), acceptBooking);
 
 /**
  * @swagger
@@ -251,7 +252,7 @@ router.patch("/:id/approve", acceptBooking);
  *       404:
  *         description: Booking not found
  */
-router.patch("/:id/cancel", cancelBooking);
+router.patch("/:id/cancel", restrictTo("renter"), cancelBooking);
 
 /**
  * @swagger
@@ -284,7 +285,7 @@ router.patch("/:id/cancel", cancelBooking);
  *       404:
  *         description: Booking not found
  */
-router.patch("/:id/reject", rejectBooking);
+router.patch("/:id/reject", restrictTo("owner"), rejectBooking);
 
 /**
  * @swagger
@@ -306,6 +307,6 @@ router.patch("/:id/reject", rejectBooking);
  *       404:
  *         description: Booking not found
  */
-router.patch("/:id/complete", completeBooking);
+router.patch("/:id/complete", restrictTo("owner"), completeBooking);
 
 export default router;

@@ -32,6 +32,17 @@ export interface Item extends Document {
     unavailableDates: Date[];
   };
 
+  location?: {
+    city?: string;
+    district?: string;
+    state?: string;
+    pincode?: string;
+    coordinates?: {
+      type: "Point";
+      coordinates: [number, number];
+    };
+  };
+
   isActive: boolean;
   status: "active" | "paused" | "rented";
   totalBookings: number;
@@ -112,6 +123,17 @@ const ItemSchema: Schema<Item> = new Schema(
       default: "active",
     },
 
+    location: {
+      city: { type: String, trim: true },
+      district: { type: String, trim: true },
+      state: { type: String, trim: true },
+      pincode: { type: String, trim: true },
+      coordinates: {
+        type: { type: String, enum: ["Point"], default: "Point" },
+        coordinates: { type: [Number], default: [77.2090, 28.6139] },
+      },
+    },
+
     totalBookings: {
       type: Number,
       default: 0,
@@ -124,7 +146,8 @@ const ItemSchema: Schema<Item> = new Schema(
    Indexes (Important)
 ======================= */
 
-// Fast filtering by city & category
+// Fast filtering by location, city & category
+ItemSchema.index({ "location.coordinates": "2dsphere" });
 ItemSchema.index({ "location.city": 1 });
 ItemSchema.index({ category: 1 });
 ItemSchema.index({ title: "text" });
