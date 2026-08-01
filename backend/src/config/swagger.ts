@@ -4,7 +4,7 @@ export const swaggerOptions: swaggerJSDoc.Options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "RentItRight API",
+      title: "Rentora API",
       version: "1.0.0",
       description: "Backend API documentation",
     },

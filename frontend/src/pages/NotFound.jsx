@@ -113,7 +113,7 @@ export const NotFound = () => {
                     className="text-text-muted text-xs mt-12 tracking-wide"
                     style={{ animation: "fade-up 0.6s ease-out 0.7s both" }}
                 >
-                    Error 404 &middot; RentItRight
+                    Error 404 &middot; Rentora
                 </p>
             </div>
         </div>
