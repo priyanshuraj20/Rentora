@@ -46,6 +46,7 @@ These are the top engineering highlights that separate Rentora from a standard c
 | 💳 **Secure Payments** | Server-side amount calculation, HMAC SHA256 verification, idempotency |
 | ⚡ **Async Job Queues** | BullMQ + Redis for emails, ES sync, evidence purge, and automated booking transitions |
 | 🔒 **Enterprise Security** | JWT + Refresh Token Blacklist + Double CSRF + bcrypt + Account Suspension (`isBlocked`) |
+| 📊 **Error Monitoring** | Sentry APM integration with automated 500 error capture and user context binding |
 | 🏛 **Clean Architecture** | Controller → Service → Model separation, centralized pricing engine |
 | 🔔 **Live Notifications** | Real-time Socket.io notification delivery with unread badge counts |
 
@@ -81,6 +82,12 @@ These are the top engineering highlights that separate Rentora from a standard c
 - **Mandatory Return Condition Upload**: Owner cannot mark booking completed until return condition photos are uploaded via `PATCH /booking/:id/photos`
 - **Optional Pickup Condition Upload**: Renters can upload handover condition photos at pickup
 - **Automated 3-Day Asset Purge Queue**: Uploading return condition photos schedules a BullMQ delay job (`photoPurgeQueue`). After 3 days, `photoPurgeWorker` automatically destroys the Cloudinary assets and clears DB photo arrays to optimize storage overhead
+
+### 📊 Error Tracking & APM (Sentry)
+
+- **Automated Exception Capture**: `Sentry.setupExpressErrorHandler` captures uncaught 500 runtime exceptions & unhandled promise rejections
+- **User Context Tracing**: `Sentry.setUser({ id: userId })` attached during JWT verification for session-correlated crash reporting
+- **Environment Isolation**: Configured DSN with environment-aware sample rates (`tracesSampleRate`)
 
 ### 📦 Item Listing System (Owners)
 
@@ -249,6 +256,7 @@ graph TD
         Cloudinary["Cloudinary CDN"]
         Razorpay["Razorpay Gateway"]
         SocketServer["Socket.io Realtime Gateway"]
+        Sentry["Sentry Error APM"]
     end
 
     Client -->|HTTPS API Requests| API
@@ -268,6 +276,7 @@ graph TD
     Queue -->|Auto Transition| BookingWorker --> DB
     API -->|Upload Evidence & Listing Media| Cloudinary
     API -->|Verify Signature| Razorpay
+    API -->|Error Tracing & Crash Reports| Sentry
     SocketServer -->|Persist Messages| DB
     SocketServer -->|Emit Notifications| SocketClient
 ```
@@ -286,6 +295,7 @@ graph TD
 | BullMQ | Background job queue processing |
 | Elasticsearch v8 | Full-text fuzzy search engine |
 | Socket.io v4 | Real-time bidirectional WebSocket communication |
+| @sentry/node | Production APM, 500 error capture & user context tracing |
 | Razorpay Node SDK | Payment gateway integration |
 | Cloudinary Node SDK | Image upload and CDN delivery |
 | Resend | Transactional email delivery |
@@ -548,6 +558,8 @@ sequenceDiagram
 | HTTP Headers | Helmet middleware (CSP, HSTS, X-Frame-Options) |
 | Ownership Guards | Every mutation checks user ownership before proceeding |
 | Role Enforcement | `restrictTo(role)` middleware on every protected route |
+| Account Guards | `isBlocked` middleware check returning `403 Forbidden` for suspended users |
+| Error Monitoring | Sentry APM exception handling & `Sentry.setUser` session context binding |
 | XSS Safe Inputs | All user inputs sanitized before storage |
 
 ---
@@ -581,6 +593,8 @@ CLOUDINARY_API_SECRET=your_cloudinary_secret
 
 RESEND_API_KEY=your_resend_api_key
 REDIS_URL=redis://localhost:6379
+
+SENTRY_DSN=your_sentry_dsn_url
 ```
 
 Create a `.env` file inside `frontend/`:
