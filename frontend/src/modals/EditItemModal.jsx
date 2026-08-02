@@ -139,7 +139,17 @@ export default function EditItemModal({ item, onClose, onSubmit }) {
                 return;
             }
         } else {
-            if (!user?.address?.district && !user?.address?.state) {
+            const hasAddress = !!(
+                user?.address?.district ||
+                user?.address?.state ||
+                user?.address?.city ||
+                user?.address?.pincode ||
+                item?.location?.city ||
+                item?.location?.district ||
+                item?.location?.state ||
+                item?.location?.pincode
+            );
+            if (!hasAddress) {
                 toast.error("No profile address found. Please select 'Use Different Pickup Location' or update your profile.");
                 return;
             }
