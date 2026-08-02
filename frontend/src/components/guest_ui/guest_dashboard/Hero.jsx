@@ -115,10 +115,11 @@ const Hero = () => {
               ) : (
                 realItems.map((item) => {
                   const itemId = item._id || item.id;
-                  const itemImg = Array.isArray(item.images) && item.images.length > 0
-                    ? item.images[0]
-                    : (item.image || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600");
-                  const itemPrice = item.dailyPrice ?? item.pricing?.daily ?? item.pricePerDay ?? item.price ?? 0;
+                  const rawImg = (Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : item.image) || "";
+                  const itemImg = (typeof rawImg === "string" && (rawImg.startsWith("http") || rawImg.startsWith("/")))
+                    ? rawImg
+                    : "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600";
+                  const itemPrice = item.dailyPrice ?? item.price?.daily ?? item.pricing?.daily ?? item.pricePerDay ?? item.price ?? 0;
                   const itemRating = item.avgRating || item.rating || (item.reviewsCount > 0 ? 4.9 : "New");
                   const reviewCount = item.totalReviews || item.reviewsCount || item.reviews || 0;
 
@@ -133,6 +134,9 @@ const Hero = () => {
                         <img
                           src={itemImg}
                           alt={item.title}
+                          onError={(e) => {
+                            e.currentTarget.src = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600";
+                          }}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                         {item.category && (
