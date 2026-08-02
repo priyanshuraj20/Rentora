@@ -133,10 +133,19 @@ export default function Messages() {
       }
     };
 
+    const handleMessageSent = (confirmedMsg) => {
+      if (confirmedMsg.bookingId === activeConvId) {
+        setMessages((prev) => [...prev, confirmedMsg]);
+        setTimeout(scrollToBottom, 100);
+      }
+    };
+
     socket.on("receive_message", handleReceiveMessage);
+    socket.on("message_sent", handleMessageSent);
 
     return () => {
       socket.off("receive_message", handleReceiveMessage);
+      socket.off("message_sent", handleMessageSent);
     };
   }, [socket, activeConvId]);
 
@@ -157,38 +166,36 @@ export default function Messages() {
       createdAt: new Date().toISOString(),
     };
 
-    // Socket Emit
+    // Socket Emit (Backend persists message and emits "message_sent" back)
     if (socket) {
       socket.emit("send_message", newMsgPayload);
-    }
+    } else {
+      // HTTP Persistence Fallback (only when socket is disconnected)
+      try {
+        const csrfRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
+          method: "GET",
+          credentials: "include",
+        });
+        const csrfData = await csrfRes.json();
 
-    // HTTP Persistence Fallback
-    try {
-      const csrfRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
-        method: "GET",
-        credentials: "include",
-      });
-      const csrfData = await csrfRes.json();
+        await fetch(`${import.meta.env.VITE_BACKEND_URL}/messages`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfData.csrfToken,
+          },
+          body: JSON.stringify({
+            bookingId: activeConvId,
+            text: msgText,
+          }),
+          credentials: "include",
+        });
 
-      await fetch(`${import.meta.env.VITE_BACKEND_URL}/messages`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfData.csrfToken,
-        },
-        body: JSON.stringify({
-          bookingId: activeConvId,
-          text: msgText,
-        }),
-        credentials: "include",
-      });
-
-      if (!socket) {
         setMessages((prev) => [...prev, { ...newMsgPayload, id: Date.now() }]);
         setTimeout(scrollToBottom, 100);
+      } catch (err) {
+        console.error("HTTP send message error:", err);
       }
-    } catch (err) {
-      console.error("HTTP send message error:", err);
     }
   };
 
