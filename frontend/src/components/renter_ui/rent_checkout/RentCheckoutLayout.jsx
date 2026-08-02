@@ -20,7 +20,7 @@ export default function RentCheckoutLayout({ item, availability, user }) {
 
     if (!user?.address?.district || !user?.name) {
       toast.error("Please update your profile with name and address before booking.");
-      navigate("/renter/profile");
+      navigate("/?auth=success&mode=completeProfile");
       return;
     }
 
