@@ -13,7 +13,7 @@ import {
 } from "../controllers/auth.controller";
 import passport from "passport";
 import { VerifyUser } from "../middlewares/verifyUser";
-import { OTP_LIMITER } from "../middlewares/rateLimiter";
+import { OTP_LIMITER, AUTH_LIMITER } from "../middlewares/rateLimiter";
 
 const router = Router();
 
@@ -38,7 +38,7 @@ const router = Router();
  *       201:
  *         description: User registered successfully
  */
-router.post("/register", register);
+router.post("/register", AUTH_LIMITER, register);
 
 /**
  * @swagger
@@ -105,7 +105,7 @@ router.post("/verify-otp", verifyOTP);
  *       200:
  *         description: User logged in successfully
  */
-router.post("/login", login);
+router.post("/login", AUTH_LIMITER, login);
 
 /**
  * @swagger

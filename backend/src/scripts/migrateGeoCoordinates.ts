@@ -46,6 +46,7 @@ async function runMigration() {
     await item.save();
     updatedCount++;
     logger.info(`Updated item '${item.title}' (${item._id}) with city '${city}' -> [${geocoded.coordinates.join(", ")}]`);
+    await new Promise((resolve) => setTimeout(resolve, 1100));
   }
 
   logger.info(`Geo-Coordinates migration completed successfully. Updated ${updatedCount} items.`);

@@ -298,7 +298,10 @@ export const cancelBookingService = async (
 ) => {
   logger.info("Cancelling booking", { bookingId, userId, userRole });
 
-  const booking = await Booking.findOne({ _id: bookingId });
+  const booking = await Booking.findOne({
+    _id: bookingId,
+    $or: [{ renter_id: userId }, { owner_id: userId }],
+  });
 
   if (!booking) {
     logger.warn("Booking not found for cancellation", { bookingId });

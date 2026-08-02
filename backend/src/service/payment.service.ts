@@ -79,6 +79,15 @@ export class PaymentService {
       return { success: true, message: "Payment already verified" };
     }
 
+    const payment = await Payment.findOne({ booking_id: data.bookingId });
+    if (!payment || payment.transactionId !== data.orderId) {
+      throw new AppError("Payment order does not match this booking", 403);
+    }
+
+    if (booking.renter_id.toString() !== renterId) {
+      throw new AppError("Forbidden: You do not own this booking", 403);
+    }
+
     booking.payment_status = "paid";
     booking.booking_status = "confirmed";
     await booking.save();

@@ -252,7 +252,7 @@ router.patch("/:id/approve", restrictTo("owner"), acceptBooking);
  *       404:
  *         description: Booking not found
  */
-router.patch("/:id/cancel", restrictTo("renter"), cancelBooking);
+router.patch("/:id/cancel", restrictTo("renter", "owner"), cancelBooking);
 
 /**
  * @swagger

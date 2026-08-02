@@ -69,11 +69,11 @@ export const initSocket = (httpServer: HttpServer): Server => {
       "send_message",
       async (data: { bookingId: string; senderId?: string; text?: string; type?: "text" | "image" | "file" | "voice"; mediaUrl?: string }) => {
         try {
-          const senderId = socket.data.userId || data.senderId;
-          if (!senderId) {
-            socket.emit("error", { message: "Unauthorized socket action" });
+          if (!socket.data.userId) {
+            socket.emit("error", { message: "Unauthorized: no valid session" });
             return;
           }
+          const senderId = socket.data.userId;
 
           // 1. Persist message in MongoDB FIRST (includes membership authorization check)
           const savedMessage = await saveMessageService({
