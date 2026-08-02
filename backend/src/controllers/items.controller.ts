@@ -47,19 +47,44 @@ export const updateItem = catchAsync(async (req: Request, res: Response) => {
     images = (req.files as any[]).map((f) => f.path);
   } else if (req.file) {
     images = [(req.file as any).path];
+  } else if (req.body.images) {
+    images = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+  }
+
+  const rawBody: any = { ...req.body };
+
+  if (rawBody["price[daily]"] !== undefined || rawBody["price[weekly]"] !== undefined || rawBody["price[monthly]"] !== undefined) {
+    rawBody.price = {
+      daily: rawBody["price[daily]"] !== undefined ? Number(rawBody["price[daily]"]) : undefined,
+      weekly: rawBody["price[weekly]"] !== undefined ? Number(rawBody["price[weekly]"]) : undefined,
+      monthly: rawBody["price[monthly]"] !== undefined ? Number(rawBody["price[monthly]"]) : undefined,
+    };
+  }
+
+  if (rawBody["location[city]"] !== undefined || rawBody["location[district]"] !== undefined || rawBody["location[state]"] !== undefined || rawBody["location[pincode]"] !== undefined) {
+    rawBody.location = {
+      city: rawBody["location[city]"] || "",
+      district: rawBody["location[district]"] || "",
+      state: rawBody["location[state]"] || "",
+      pincode: rawBody["location[pincode]"] || "",
+    };
+  }
+
+  if (rawBody.securityDeposit !== undefined) {
+    rawBody.securityDeposit = Number(rawBody.securityDeposit);
   }
 
   const payload = {
-    ...req.body,
+    ...rawBody,
     ...(images && images.length > 0 ? { images } : {}),
   };
 
   const validate = updateItemSchema.safeParse(payload);
   if (!validate.success) {
-    throw new AppError(
-      `Invalid data ${validate.error.flatten().fieldErrors}`,
-      422,
-    );
+    const errorMsg = Object.entries(validate.error.flatten().fieldErrors)
+      .map(([field, errs]) => `${field}: ${(errs || []).join(", ")}`)
+      .join("; ");
+    throw new AppError(`Validation failed: ${errorMsg}`, 422);
   }
 
   await updateItemService(
@@ -81,21 +106,44 @@ export const addItem = catchAsync(async (req: Request, res: Response) => {
     images = (req.files as any[]).map((f) => f.path);
   } else if (req.file) {
     images = [(req.file as any).path];
-  } else if (req.body.images && Array.isArray(req.body.images)) {
-    images = req.body.images;
+  } else if (req.body.images) {
+    images = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+  }
+
+  const rawBody: any = { ...req.body };
+
+  if (rawBody["price[daily]"] !== undefined || rawBody["price[weekly]"] !== undefined || rawBody["price[monthly]"] !== undefined) {
+    rawBody.price = {
+      daily: rawBody["price[daily]"] !== undefined ? Number(rawBody["price[daily]"]) : undefined,
+      weekly: rawBody["price[weekly]"] !== undefined ? Number(rawBody["price[weekly]"]) : undefined,
+      monthly: rawBody["price[monthly]"] !== undefined ? Number(rawBody["price[monthly]"]) : undefined,
+    };
+  }
+
+  if (rawBody["location[city]"] !== undefined || rawBody["location[district]"] !== undefined || rawBody["location[state]"] !== undefined || rawBody["location[pincode]"] !== undefined) {
+    rawBody.location = {
+      city: rawBody["location[city]"] || "",
+      district: rawBody["location[district]"] || "",
+      state: rawBody["location[state]"] || "",
+      pincode: rawBody["location[pincode]"] || "",
+    };
+  }
+
+  if (rawBody.securityDeposit !== undefined) {
+    rawBody.securityDeposit = Number(rawBody.securityDeposit);
   }
 
   const payload = {
-    ...req.body,
+    ...rawBody,
     ...(images.length > 0 ? { images } : {}),
   };
 
   const validate = itemValidationSchema.safeParse(payload);
   if (!validate.success) {
-    throw new AppError(
-      `Invalid data ${validate.error.flatten().fieldErrors}`,
-      422,
-    );
+    const errorMsg = Object.entries(validate.error.flatten().fieldErrors)
+      .map(([field, errs]) => `${field}: ${(errs || []).join(", ")}`)
+      .join("; ");
+    throw new AppError(`Validation failed: ${errorMsg}`, 422);
   }
 
   await addItemService(req.userId!, validate.data);

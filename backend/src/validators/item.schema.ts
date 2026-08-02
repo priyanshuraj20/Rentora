@@ -7,11 +7,11 @@ export const itemValidationSchema = z.object({
     .min(10, "Description must be at least 10 characters long"),
   category: z.string().min(1, "Category is required"),
   price: z.object({
-    daily: z.number().min(1, "Daily price is required"),
-    weekly: z.number().min(1, "Weekly price is required"),
-    monthly: z.number().min(1, "Monthly price is required"),
+    daily: z.coerce.number().min(1, "Daily price is required"),
+    weekly: z.coerce.number().optional().default(0),
+    monthly: z.coerce.number().optional().default(0),
   }),
-  securityDeposit: z.number().min(1, "Security deposit is required"),
+  securityDeposit: z.coerce.number().min(0, "Security deposit is required"),
   images: z.array(z.string()).min(1, "Images are required").optional(),
   location: z
     .object({
@@ -35,13 +35,13 @@ export const updateItemSchema = z.object({
   category: z.string().optional(),
   price: z
     .object({
-      daily: z.number().min(1).optional(),
-      weekly: z.number().min(1).optional(),
-      monthly: z.number().min(1).optional(),
+      daily: z.coerce.number().min(1).optional(),
+      weekly: z.coerce.number().optional(),
+      monthly: z.coerce.number().optional(),
     })
     .optional(),
-  securityDeposit: z.number().min(1).optional(),
-  images: z.array(z.string()).min(1).optional(),
+  securityDeposit: z.coerce.number().optional(),
+  images: z.array(z.string()).optional(),
   location: z
     .object({
       city: z.string().optional(),
