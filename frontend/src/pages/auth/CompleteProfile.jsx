@@ -127,8 +127,8 @@ export default function CompleteProfile({ switchMode }) {
         profileImage: uploadedImageUrl,
       };
 
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/user/profile`, {
-        method: "PUT",
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/user/me/profile`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           "X-CSRF-Token": csrfData.csrfToken,
