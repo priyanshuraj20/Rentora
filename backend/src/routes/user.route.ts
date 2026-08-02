@@ -256,33 +256,4 @@ router.post("/wishlist/toggle", VerifyUser, toggleWishlist);
  */
 router.get("/me/verifications", VerifyUser, getUserVerifications);
 
-import { verifyPhoneFirebase } from "../controllers/verification.controller";
-
-/**
- * @swagger
- * /user/me/verification/phone-firebase:
- *   post:
- *     summary: Verify phone number using Firebase SMS OTP Token
- *     tags: [User]
- *     security:
- *       - cookieAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               idToken:
- *                 type: string
- *               phoneNumber:
- *                 type: string
- *     responses:
- *       200:
- *         description: Phone number verified successfully
- */
-import { phoneVerificationLimiter } from "../middlewares/rateLimiter.middleware";
-
-router.post("/me/verification/phone-firebase", VerifyUser, phoneVerificationLimiter, verifyPhoneFirebase);
-
 export default router;
