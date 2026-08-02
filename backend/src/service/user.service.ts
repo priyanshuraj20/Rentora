@@ -406,3 +406,31 @@ export const getUserVerificationsService = async (userId: string) => {
     },
   };
 };
+
+export const blockUserService = async (userId: string) => {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { isBlocked: true },
+    { new: true },
+  ).select("email isBlocked");
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  return user;
+};
+
+export const activateUserService = async (userId: string) => {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { isBlocked: false },
+    { new: true },
+  ).select("email isBlocked");
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  return user;
+};

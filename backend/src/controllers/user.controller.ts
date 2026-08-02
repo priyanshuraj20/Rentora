@@ -15,6 +15,8 @@ import {
   getWishlistService,
   toggleWishlistService,
   getUserVerificationsService,
+  blockUserService,
+  activateUserService,
 } from "../service/user.service";
 import { catchAsync } from "../utils/catchAsync";
 import { AppError } from "../utils/AppError";
@@ -129,3 +131,13 @@ export const getUserVerifications = catchAsync(
     res.status(200).json({ success: true, data });
   },
 );
+
+export const blockUser = catchAsync(async (req: Request, res: Response) => {
+  const user = await blockUserService(req.params.id as string);
+  res.status(200).json({ success: true, message: "User blocked", user });
+});
+
+export const activateUser = catchAsync(async (req: Request, res: Response) => {
+  const user = await activateUserService(req.params.id as string);
+  res.status(200).json({ success: true, message: "User activated", user });
+});

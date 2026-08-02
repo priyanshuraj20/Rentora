@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import BookingTabs from '../../components/owner_ui/bookings/BookingTabs';
 import BookingCard from '../../components/owner_ui/bookings/BookingCard';
+import BookingPhotoUploadModal from '../../components/common/BookingPhotoUploadModal';
 import toast from 'react-hot-toast';
 
 const OwnerBookings = () => {
   const [activeTab, setActiveTab] = useState('pending');
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [photoModalBookingId, setPhotoModalBookingId] = useState(null);
 
   const fetchBookings = async () => {
     setIsLoading(true);
@@ -100,8 +102,7 @@ const OwnerBookings = () => {
     }
   };
 
-  const handleComplete = async (id) => {
-    if (!window.confirm("Are you sure the item has been returned?")) return;
+  const executeComplete = async (id) => {
     try {
       const csrf = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
         method: "GET",
@@ -120,10 +121,24 @@ const OwnerBookings = () => {
       
       const data = await response.json();
       if (data.success) {
+        toast.success("Booking completed! 🎉");
         fetchBookings();
+      } else {
+        toast.error(data.message || "Failed to mark booking as completed.");
       }
     } catch (error) {
       console.error("Failed to complete booking:", error);
+    }
+  };
+
+  const handleComplete = (id) => {
+    const booking = bookings.find((b) => b.id === id);
+    if (booking && (!booking.returnPhotos || booking.returnPhotos.length === 0)) {
+      setPhotoModalBookingId(id);
+    } else {
+      if (window.confirm("Are you sure the item has been returned?")) {
+        executeComplete(id);
+      }
     }
   };
 
@@ -187,6 +202,19 @@ const OwnerBookings = () => {
           </div>
         </div>
       </div>
+
+      {photoModalBookingId && (
+        <BookingPhotoUploadModal
+          bookingId={photoModalBookingId}
+          type="return"
+          onClose={() => setPhotoModalBookingId(null)}
+          onSuccess={() => {
+            const idToComplete = photoModalBookingId;
+            setPhotoModalBookingId(null);
+            executeComplete(idToComplete);
+          }}
+        />
+      )}
     </main>
   );
 };

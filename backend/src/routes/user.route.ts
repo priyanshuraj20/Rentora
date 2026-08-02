@@ -11,7 +11,10 @@ import {
   getWishlist,
   toggleWishlist,
   getUserVerifications,
+  blockUser,
+  activateUser,
 } from "../controllers/user.controller";
+import { restrictTo } from "../middlewares/restrictTo";
 
 const router = Router();
 
@@ -255,5 +258,8 @@ router.post("/wishlist/toggle", VerifyUser, toggleWishlist);
  *         description: Verifications fetched successfully
  */
 router.get("/me/verifications", VerifyUser, getUserVerifications);
+
+router.patch("/:id/block", restrictTo("admin"), blockUser);
+router.patch("/:id/activate", restrictTo("admin"), activateUser);
 
 export default router;

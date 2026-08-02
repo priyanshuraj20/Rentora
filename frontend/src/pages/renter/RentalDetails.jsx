@@ -9,6 +9,7 @@ import OwnerInfo from "../../components/renter_ui/rental_details/OwnerInfo";
 import RentalPolicies from "../../components/renter_ui/rental_details/RentalPolicies";
 import RentalActions from "../../components/renter_ui/rental_details/RentalActions";
 import ActivityTimeline from "../../components/renter_ui/rental_details/ActivityTimeline";
+import BookingPhotoUploadModal from "../../components/common/BookingPhotoUploadModal";
 
 export default function RentalDetails() {
   const { rentalId } = useParams();
@@ -17,6 +18,7 @@ export default function RentalDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isPaymentSubmitting, setIsPaymentSubmitting] = useState(false);
+  const [showHandoverModal, setShowHandoverModal] = useState(false);
 
   const fetchRentalDetails = async () => {
     try {
@@ -69,6 +71,7 @@ export default function RentalDetails() {
         id: booking._id,
         status: booking.booking_status,
         paymentStatus: booking.payment_status || "pending",
+        handoverPhotos: booking.handoverPhotos || [],
         title: booking.item_id?.title || "Unknown Item",
         location: booking.address
           ? `${booking.address.district}, ${booking.address.state}`
@@ -105,6 +108,7 @@ export default function RentalDetails() {
           name: booking.owner_id?.name || "Private Owner",
           rating: 4.8,
           reviews: 42,
+          reputationTier: booking.owner_id?.reputationTier,
           avatar:
             booking.owner_id?.profileImage ||
             "https://ui-avatars.com/api/?name=" +
@@ -312,8 +316,36 @@ export default function RentalDetails() {
         </div>
       </div>
 
+      {(rental.status === "confirmed" || rental.status === "ongoing") &&
+        (!rental.handoverPhotos || rental.handoverPhotos.length === 0) && (
+          <div className="bg-surface border border-divider rounded-2xl p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold text-text-primary">Pickup Condition Photos</p>
+              <p className="text-xs text-text-secondary">Upload item condition photos at handover for protection.</p>
+            </div>
+            <button
+              onClick={() => setShowHandoverModal(true)}
+              className="bg-primary hover:bg-primary-hover text-text-primary px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer"
+            >
+              📷 Upload Pickup Photos
+            </button>
+          </div>
+        )}
+
       <RentalActions status={rental.status} />
       <ActivityTimeline timeline={rental.timeline} />
+
+      {showHandoverModal && (
+        <BookingPhotoUploadModal
+          bookingId={rental.id}
+          type="handover"
+          onClose={() => setShowHandoverModal(false)}
+          onSuccess={() => {
+            setShowHandoverModal(false);
+            fetchRentalDetails();
+          }}
+        />
+      )}
     </main>
   );
 }

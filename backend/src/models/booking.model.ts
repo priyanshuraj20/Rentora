@@ -49,6 +49,12 @@ export interface IBooking extends Document {
   isReviewedByRenter: boolean;
   isReviewedByOwner: boolean;
 
+  handoverPhotos: { url: string; publicId: string }[];
+  returnPhotos: { url: string; publicId: string }[];
+  handoverPhotosUploadedAt?: Date;
+  returnPhotosUploadedAt?: Date;
+  evidencePurgedAt?: Date;
+
   expiresAt?: Date;
 
   createdAt: Date;
@@ -149,6 +155,22 @@ const BookingSchema: Schema<IBooking> = new Schema(
       type: Boolean,
       default: false,
     },
+
+    handoverPhotos: [
+      {
+        url: { type: String, required: true },
+        publicId: { type: String, required: true },
+      },
+    ],
+    returnPhotos: [
+      {
+        url: { type: String, required: true },
+        publicId: { type: String, required: true },
+      },
+    ],
+    handoverPhotosUploadedAt: { type: Date },
+    returnPhotosUploadedAt: { type: Date },
+    evidencePurgedAt: { type: Date },
 
     expiresAt: {
       type: Date,

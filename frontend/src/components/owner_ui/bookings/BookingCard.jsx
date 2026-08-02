@@ -1,4 +1,5 @@
 import { Calendar, User, CheckCircle, XCircle, Clock, RotateCcw } from 'lucide-react';
+import TrustScoreBadge from '../../common/TrustScoreBadge';
 
 const BookingCard = ({ booking, onApprove, onReject, onComplete, onExtend, activeTab }) => {
   const { item, status, id, startDate, endDate, renterInfo } = booking;
@@ -55,8 +56,11 @@ const BookingCard = ({ booking, onApprove, onReject, onComplete, onExtend, activ
         </h3>
         
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-text-secondary text-xs">
+          <div className="flex items-center gap-2 text-text-secondary text-xs flex-wrap">
             <span className="font-medium">Renter: <span className="text-text-primary">{renterInfo?.name || 'Unknown Renter'}</span></span>
+            {renterInfo?.reputationTier && (
+              <TrustScoreBadge tier={renterInfo.reputationTier} />
+            )}
           </div>
 
           <div className="flex items-center gap-4 text-xs text-text-muted pt-1">

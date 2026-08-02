@@ -9,3 +9,7 @@
   export const bookingStatusQueue = new Queue("bookingStatusQueue", {
     connection: redisConnection as any,
   });
+
+  export const photoPurgeQueue = new Queue("photoPurgeQueue", {
+    connection: redisConnection as any,
+  });

@@ -8,6 +8,7 @@ import {
   cancelBookingService,
   rejectBookingService,
   completeBookingService,
+  uploadBookingPhotosService,
 } from "../service/booking.service";
 import { createBookingSchema } from "../validators/booking.validator";
 import { AppError } from "../utils/AppError";
@@ -125,3 +126,26 @@ export const completeBooking = catchAsync(
     });
   },
 );
+
+export const uploadBookingPhotos = catchAsync(async (req: Request, res: Response) => {
+  const { type } = req.body;
+
+  if (type !== "handover" && type !== "return") {
+    throw new AppError("Photo type must be 'handover' or 'return'", 400);
+  }
+
+  const files = (req.files as Express.Multer.File[]) || [];
+
+  const result = await uploadBookingPhotosService(
+    req.userId!,
+    req.params.id as string,
+    type,
+    files.map((f) => ({ path: f.path, filename: f.filename })),
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Photos uploaded successfully",
+    data: result,
+  });
+});

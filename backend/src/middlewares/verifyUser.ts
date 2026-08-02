@@ -5,6 +5,7 @@ import { catchAsync } from "@utils/catchAsync";
 import { AppError } from "@utils/AppError";
 import { env } from "@config/env";
 import { TokenPayload } from "@utils/generateTokens";
+import { User } from "@models/user.model";
 
 export const VerifyUser = catchAsync(
   async (req: Request, _res: Response, next: NextFunction) => {
@@ -24,6 +25,11 @@ export const VerifyUser = catchAsync(
 
     req.userId = decoded.userId;
     req.userRole = decoded.userRole;
+
+    const user = await User.findById(decoded.userId).select("isBlocked");
+    if (user?.isBlocked) {
+      throw new AppError("Your account has been suspended. Please contact support.", 403);
+    }
 
     //agar baad mein errror sentry will display in  its dashboard
     Sentry.setUser({ id: decoded.userId });

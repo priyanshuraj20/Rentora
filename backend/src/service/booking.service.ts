@@ -1,13 +1,14 @@
 import { Booking } from "../models/booking.model";
 import { Item } from "../models/item.model";
-import "../models/user.model";
+import { User } from "../models/user.model";
 import { AppError } from "../utils/AppError";
 import { BookingStatus } from "../validators/booking.validator";
 import mongoose from "mongoose";
-import { emailQueue, bookingStatusQueue } from "../queues/email.queue";
+import { emailQueue, bookingStatusQueue, photoPurgeQueue } from "../queues/email.queue";
 import { createNotificationService } from "./notification.service";
 import logger from "../config/logger";
 import { calculatePricing } from "../utils/pricing.calculator";
+import { getReputationTier } from "../utils/reputation";
 
 export const getBookingService = async (userId: string, userRole: string) => {
   logger.info("Fetching bookings", { userId, userRole });
@@ -20,8 +21,8 @@ export const getBookingService = async (userId: string, userRole: string) => {
       "item_id renter_id owner_id start_date end_date pricing booking_status payment_status createdAt",
     )
     .populate("item_id", "title images")
-    .populate("renter_id", "name profileImage")
-    .populate("owner_id", "name profileImage")
+    .populate("renter_id", "name profileImage trustScore")
+    .populate("owner_id", "name profileImage trustScore")
     .sort({ createdAt: -1 })
     .lean();
 
@@ -49,6 +50,7 @@ export const getBookingService = async (userId: string, userRole: string) => {
             id: renter._id?.toString(),
             name: renter.name,
             image: renter.profileImage,
+            reputationTier: getReputationTier(renter.trustScore),
           }
         : null,
       ownerInfo: owner
@@ -56,6 +58,7 @@ export const getBookingService = async (userId: string, userRole: string) => {
             id: owner._id?.toString(),
             name: owner.name,
             image: owner.profileImage,
+            reputationTier: getReputationTier(owner.trustScore),
           }
         : null,
       startDate: booking.start_date,
@@ -176,12 +179,26 @@ export const getBookingIdService = async (
     $or: [{ renter_id: userId }, { owner_id: userId }],
   })
     .populate("item_id", "title images category")
-    .populate("owner_id", "name email phone profileImage")
+    .populate("owner_id", "name email phone profileImage trustScore")
+    .populate("renter_id", "name email phone profileImage trustScore")
     .lean();
 
   if (!booking) {
     logger.warn("Booking not found", { bookingId, userId });
     throw new AppError("Booking not found", 404);
+  }
+
+  const owner = booking.owner_id as any;
+  const renter = booking.renter_id as any;
+
+  if (owner && typeof owner === "object") {
+    owner.reputationTier = getReputationTier(owner.trustScore);
+    delete owner.trustScore;
+  }
+
+  if (renter && typeof renter === "object") {
+    renter.reputationTier = getReputationTier(renter.trustScore);
+    delete renter.trustScore;
   }
 
   logger.info("Booking details fetched", { bookingId });
@@ -317,11 +334,21 @@ export const cancelBookingService = async (
     throw new AppError("Booking already finalized", 400);
   }
 
+  const wasCommitted = booking.booking_status === BookingStatus.APPROVED || booking.booking_status === BookingStatus.CONFIRMED;
+
   booking.booking_status = BookingStatus.CANCELLED;
   booking.cancelledBy = userRole;
   booking.cancellationReason = cancelMessage;
 
   await booking.save();
+
+  if (wasCommitted) {
+    const penalizedUserId = userRole === "renter" ? booking.renter_id : booking.owner_id;
+    await User.updateOne(
+      { _id: penalizedUserId, trustScore: { $gt: 0 } },
+      { $inc: { trustScore: -5 } },
+    );
+  }
 
   logger.info("Booking cancelled", { bookingId });
 
@@ -401,8 +428,24 @@ export const completeBookingService = async (
     );
   }
 
+  if (!booking.returnPhotos || booking.returnPhotos.length === 0) {
+    throw new AppError(
+      "Please upload return condition photos before marking this booking as completed",
+      400,
+    );
+  }
+
   booking.booking_status = BookingStatus.COMPLETED;
   await booking.save();
+
+  await User.updateOne(
+    { _id: booking.renter_id, trustScore: { $lt: 100 } },
+    { $inc: { trustScore: 2 } },
+  );
+  await User.updateOne(
+    { _id: booking.owner_id, trustScore: { $lt: 100 } },
+    { $inc: { trustScore: 2 } },
+  );
 
   logger.info("Booking completed", { bookingId });
 
@@ -415,4 +458,53 @@ export const completeBookingService = async (
   });
 
   return true;
+};
+
+export const uploadBookingPhotosService = async (
+  userId: string,
+  bookingId: string,
+  type: "handover" | "return",
+  files: { path: string; filename: string }[],
+) => {
+  logger.info("Uploading booking evidence photos", { bookingId, userId, type });
+
+  if (!files || files.length === 0) {
+    throw new AppError("At least one photo is required", 400);
+  }
+
+  const booking = await Booking.findOne({
+    _id: bookingId,
+    $or: [{ renter_id: userId }, { owner_id: userId }],
+  });
+
+  if (!booking) {
+    throw new AppError("Booking not found", 404);
+  }
+
+  const photos = files.map((f) => ({ url: f.path, publicId: f.filename }));
+
+  if (type === "handover") {
+    booking.handoverPhotos = photos;
+    booking.handoverPhotosUploadedAt = new Date();
+  } else {
+    booking.returnPhotos = photos;
+    booking.returnPhotosUploadedAt = new Date();
+  }
+
+  await booking.save();
+
+  if (type === "return") {
+    await photoPurgeQueue.add(
+      "purge-photos",
+      { bookingId: booking._id },
+      { delay: 3 * 24 * 60 * 60 * 1000 }, // 3 days
+    );
+  }
+
+  logger.info("Booking evidence photos uploaded", { bookingId, type, count: photos.length });
+
+  return {
+    type,
+    photos,
+  };
 };

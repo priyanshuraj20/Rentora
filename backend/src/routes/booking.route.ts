@@ -7,9 +7,11 @@ import {
   getBookings,
   rejectBooking,
   completeBooking,
+  uploadBookingPhotos,
 } from "../controllers/booking.controller";
 import { VerifyUser } from "../middlewares/verifyUser";
 import { restrictTo } from "../middlewares/restrictTo";
+import { uploadMultipleImages } from "../middlewares/upload.middleware";
 const router = Router();
 
 router.use(VerifyUser);
@@ -308,5 +310,7 @@ router.patch("/:id/reject", restrictTo("owner"), rejectBooking);
  *         description: Booking not found
  */
 router.patch("/:id/complete", restrictTo("owner"), completeBooking);
+
+router.patch("/:id/photos", uploadMultipleImages("photos", 5), uploadBookingPhotos);
 
 export default router;
