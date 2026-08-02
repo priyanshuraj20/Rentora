@@ -38,12 +38,14 @@ These are the top engineering highlights that separate Rentora from a standard c
 
 | Feature | Implementation |
 |---|---|
-| 📍 **Location-Aware Discovery** | MongoDB 2dsphere indexing + Haversine formula + GPS detection |
+| 📍 **Location-Aware Discovery** | Nominatim API geocoding + Redis caching + Haversine formula + MongoDB 2dsphere indexing |
+| 🛡️ **Trust & Reputation Engine** | Internal Trust Score tracking (+2 completion, -5 cancellation penalty) & public `reputationTier` mapping |
+| 📸 **Ephemeral Photo Evidence** | Handover/Return condition uploads with 3-day automated Cloudinary asset purge via BullMQ delay queues |
 | 🔍 **Zero-Downtime Search** | Elasticsearch fuzzy search with automatic MongoDB regex fallback |
-| 💬 **Real-Time Chat** | JWT-authenticated Socket.io room isolation per booking |
+| 💬 **Real-Time Chat** | JWT-authenticated Socket.io room isolation per booking + message acknowledgment handling |
 | 💳 **Secure Payments** | Server-side amount calculation, HMAC SHA256 verification, idempotency |
-| ⚡ **Async Job Queues** | BullMQ + Redis for emails, ES sync, and automated booking transitions |
-| 🔒 **Enterprise Security** | JWT + Refresh Token Blacklist + Double CSRF + bcrypt + Zod |
+| ⚡ **Async Job Queues** | BullMQ + Redis for emails, ES sync, evidence purge, and automated booking transitions |
+| 🔒 **Enterprise Security** | JWT + Refresh Token Blacklist + Double CSRF + bcrypt + Account Suspension (`isBlocked`) |
 | 🏛 **Clean Architecture** | Controller → Service → Model separation, centralized pricing engine |
 | 🔔 **Live Notifications** | Real-time Socket.io notification delivery with unread badge counts |
 
@@ -62,10 +64,23 @@ These are the top engineering highlights that separate Rentora from a standard c
 - **Role-Based Access Control**: Guest, Renter, Owner, Admin roles with strict middleware guards
 - **Profile Management**: Name, phone, profile image, address, city, district, state, pincode
 
-### 🛡️ Admin Controls
+### 🛡️ Admin Controls & Account Suspension
 
-- Block users — blocked users cannot login, list items, rent items, or use the marketplace
-- Activate users — restore full account access
+- **Account Block Middleware**: `isBlocked` flag checked during JWT verification; blocked users receive a `403 Forbidden` response and are prevented from logging in or using the marketplace
+- **Admin Management API**: `PATCH /user/:id/block` and `PATCH /user/:id/activate` restricted to `admin` role
+
+### 🛡️ Trust Score & Reputation System
+
+- **Automated Trust Scoring**: Internal user score (0–100 range) automatically updated based on rental lifecycle performance:
+  - `+2` score increment for both renter and owner upon successful booking completion (capped at 100)
+  - `-5` score penalty for canceling a committed (`APPROVED` / `CONFIRMED`) booking (floored at 0)
+- **Public Reputation Abstraction**: Unexposed raw score; server maps `trustScore` to public badges (`Top Community Member`, `Verified Member`, `Member`) returned in `reputationTier`
+
+### 📸 Photo Evidence & Auto-Purge Lifecycle
+
+- **Mandatory Return Condition Upload**: Owner cannot mark booking completed until return condition photos are uploaded via `PATCH /booking/:id/photos`
+- **Optional Pickup Condition Upload**: Renters can upload handover condition photos at pickup
+- **Automated 3-Day Asset Purge Queue**: Uploading return condition photos schedules a BullMQ delay job (`photoPurgeQueue`). After 3 days, `photoPurgeWorker` automatically destroys the Cloudinary assets and clears DB photo arrays to optimize storage overhead
 
 ### 📦 Item Listing System (Owners)
 
@@ -168,6 +183,7 @@ Real-time notifications via Socket.io for:
 | Email Queue | OTP, booking accepted/cancelled emails via Resend |
 | Elasticsearch Sync | Async index updates on listing create/update/delete |
 | Booking Status Worker | Auto-transition bookings to `ongoing` / `completed` by date |
+| Photo Purge Queue | 3-day delayed auto-deletion of evidence photos from Cloudinary & DB |
 
 - Automatic retry handling for failed jobs
 - Redis-backed concurrency management
@@ -203,31 +219,57 @@ Easily extendable to: password reset, payment receipt, review reminders.
 
 ```mermaid
 graph TD
-    Client["React Frontend (Vite)"]
-    API["Express HTTP Server (TypeScript)"]
-    Auth["JWT + CSRF Guard"]
-    SocketServer["Socket.io Realtime Gateway"]
-    Queue["BullMQ Queue Manager"]
-    DB[("MongoDB Instance (2dsphere)")]
-    Cache[("Redis Cache / Blacklist")]
-    ES[("Elasticsearch Engine")]
-    Cloudinary["Cloudinary CDN"]
-    Razorpay["Razorpay Gateway"]
-    Resend["Resend Email API"]
+    subgraph ClientLayer["Frontend Layer (React + Vite + Tailwind)"]
+        Client["Client App"]
+        SocketClient["Socket.io Client"]
+    end
 
-    Client -->|GPS / City & HTTPS| API
-    Client -->|WebSockets| SocketServer
+    subgraph SecurityGateway["API Gateway & Security Controls"]
+        API["Express HTTP Server (TypeScript)"]
+        Auth["JWT + CSRF Guard + isBlocked Guard"]
+    end
+
+    subgraph ServiceLayer["Domain Services & Engines"]
+        GeoEngine["Geocoder (Nominatim + Redis Cache)"]
+        TrustEngine["Trust Score Engine (+2 / -5)"]
+        PricingEngine["Centralized Pricing Engine"]
+    end
+
+    subgraph AsyncQueues["Background Job Queues (BullMQ)"]
+        Queue["BullMQ Queue Manager"]
+        PurgeWorker["Photo Purge Worker (3-Day Retention)"]
+        BookingWorker["Booking Status Worker"]
+        ESWorker["Elasticsearch Sync Worker"]
+    end
+
+    subgraph InfraStorage["Persistence & External Services"]
+        DB[("MongoDB (2dsphere Spatial)")]
+        Cache[("Redis Cache / Blacklist / Queue Broker")]
+        ES[("Elasticsearch Engine")]
+        Cloudinary["Cloudinary CDN"]
+        Razorpay["Razorpay Gateway"]
+        SocketServer["Socket.io Realtime Gateway"]
+    end
+
+    Client -->|HTTPS API Requests| API
+    SocketClient <-->|WebSockets| SocketServer
     API --> Auth
     Auth --> DB
-    API -->|GeoQuery $centerSphere| DB
+    API --> GeoEngine
+    GeoEngine -- "Cache / Rate Limit" --> Cache
+    GeoEngine --> DB
+    API --> TrustEngine
+    TrustEngine --> DB
+    API --> PricingEngine
     API -->|Async Jobs| Queue
     Queue -->|Redis Connection| Cache
-    Queue -->|Sync Index| ES
-    Queue -->|Email Jobs| Resend
-    API -->|Upload Media| Cloudinary
+    Queue -->|Sync Index| ESWorker --> ES
+    Queue -->|Photo Purge| PurgeWorker --> Cloudinary & DB
+    Queue -->|Auto Transition| BookingWorker --> DB
+    API -->|Upload Evidence & Listing Media| Cloudinary
     API -->|Verify Signature| Razorpay
     SocketServer -->|Persist Messages| DB
-    SocketServer -->|Emit Notifications| Client
+    SocketServer -->|Emit Notifications| SocketClient
 ```
 
 ---
@@ -421,7 +463,58 @@ graph LR
     D --> E[Email via Resend]
     D --> F[Elasticsearch Index Sync]
     D --> G[Booking Status Auto-Transition]
-    E & F & G --> H[Job completed / retried on failure]
+    D --> H[3-Day Photo Evidence Purge Worker]
+    E & F & G & H --> I[Job completed / retried on failure]
+```
+
+### 8. Photo Evidence Upload & Automated 3-Day Purge Lifecycle
+
+```mermaid
+sequenceDiagram
+    participant Owner as Owner / Renter
+    participant API as Booking API
+    participant CDN as Cloudinary CDN
+    participant Queue as BullMQ Delay Queue
+    participant Worker as Photo Purge Worker
+    participant DB as MongoDB
+
+    Owner->>API: PATCH /booking/:id/photos (multipart FormData)
+    API->>CDN: Upload evidence photos
+    CDN-->>API: Return publicId & URL
+    API->>DB: Save handoverPhotos / returnPhotos array
+    alt type == "return"
+        API->>Queue: Schedule purge-photos job (3-day delay)
+    end
+    API-->>Owner: 200 OK (Photos attached)
+    Note over Queue,Worker: 3 Days Pass...
+    Queue->>Worker: Trigger purge-photos job
+    Worker->>CDN: Destroy assets by publicId
+    Worker->>DB: Empty photo arrays & set evidencePurgedAt
+```
+
+### 9. Trust Score & Reputation Calculation Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API as Booking / User Service
+    participant Engine as Trust Score Engine
+    participant Mapper as Reputation Tier Mapper
+    participant DB as MongoDB
+
+    alt Booking Completed
+        API->>Engine: completeBookingService()
+        Engine->>DB: $inc trustScore +2 (capped at 100) for Renter & Owner
+    else Committed Booking Cancelled
+        API->>Engine: cancelBookingService()
+        Engine->>DB: $inc trustScore -5 (floored at 0) for Canceler
+    end
+
+    Client->>API: GET /booking or GET /user/me/profile
+    API->>DB: Fetch user document
+    API->>Mapper: getReputationTier(user.trustScore)
+    Mapper-->>API: "Top Community Member" / "Verified Member" / "Member"
+    API-->>Client: Return reputationTier (trustScore stripped / unexposed)
 ```
 
 ---

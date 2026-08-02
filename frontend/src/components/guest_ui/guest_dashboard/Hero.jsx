@@ -113,61 +113,105 @@ const Hero = () => {
                   <div key={i} className="bg-surface border border-divider rounded-2xl p-3 h-52 animate-pulse" />
                 ))
               ) : (
-                realItems.map((item) => {
-                  const itemId = item._id || item.id;
-                  const rawImg = (Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : item.image) || "";
-                  const itemImg = (typeof rawImg === "string" && (rawImg.startsWith("http") || rawImg.startsWith("/")))
-                    ? rawImg
-                    : "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600";
-                  const itemPrice = item.dailyPrice ?? item.price?.daily ?? item.pricing?.daily ?? item.pricePerDay ?? item.price ?? 0;
-                  const itemRating = item.avgRating || item.rating || (item.reviewsCount > 0 ? 4.9 : "New");
-                  const reviewCount = item.totalReviews || item.reviewsCount || item.reviews || 0;
+                (() => {
+                  const seenImages = new Set();
+                  const fallbackPool = [
+                    "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?q=80&w=600", // Cinema Lens
+                    "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600", // DSLR Camera
+                    "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?q=80&w=600", // Camera Tech
+                    "https://images.unsplash.com/photo-1571068316344-75bc76f77890?q=80&w=600", // Bicycle
+                    "https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=600", // Tools
+                    "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=600", // Furniture
+                  ];
 
-                  return (
-                    <Link
-                      key={itemId}
-                      to={`/item/${itemId}`}
-                      className="group bg-surface border border-divider rounded-2xl p-3 flex flex-col justify-between hover:border-primary/50 transition-all duration-300 shadow-sm"
-                    >
-                      {/* Image */}
-                      <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-card border border-divider">
-                        <img
-                          src={itemImg}
-                          alt={item.title}
-                          onError={(e) => {
-                            e.currentTarget.src = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600";
-                          }}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        {item.category && (
-                          <span className="absolute top-2 left-2 bg-app/80 text-text-primary text-[10px] font-bold px-2 py-0.5 rounded-md border border-divider uppercase tracking-wider">
-                            {item.category}
-                          </span>
-                        )}
-                      </div>
+                  return realItems.map((item, idx) => {
+                    const itemId = item._id || item.id;
+                    const rawImg = (Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : item.image) || "";
+                    let itemImg = (typeof rawImg === "string" && (rawImg.startsWith("http") || rawImg.startsWith("/")))
+                      ? rawImg
+                      : "";
 
-                      {/* Details */}
-                      <div>
-                        <h4 className="text-xs font-bold text-text-primary tracking-tight line-clamp-1 group-hover:text-primary transition-colors">
-                          {item.title}
-                        </h4>
+                    const titleLower = (item.title || "").toLowerCase();
 
-                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-divider">
-                          <span className="text-[10px] text-text-muted flex items-center gap-1 font-medium">
-                            <Star className="size-3 text-warning fill-warning" />
-                            {itemRating} {reviewCount > 0 ? `(${reviewCount})` : ''}
-                          </span>
+                    // Topic-specific image resolution if missing or duplicate
+                    if (!itemImg || seenImages.has(itemImg)) {
+                      if (titleLower.includes("lens") || titleLower.includes("cinema")) {
+                        itemImg = "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?q=80&w=600";
+                      } else if (titleLower.includes("dslr") || titleLower.includes("camera")) {
+                        itemImg = idx % 2 === 0
+                          ? "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600"
+                          : "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?q=80&w=600";
+                      } else if (titleLower.includes("cycle") || titleLower.includes("bike")) {
+                        itemImg = "https://images.unsplash.com/photo-1571068316344-75bc76f77890?q=80&w=600";
+                      }
+                    }
 
-                          <span className="text-xs font-bold text-primary flex items-center">
-                            <IndianRupee className="size-3" />
-                            {itemPrice}
-                            <span className="text-[9px] text-text-muted font-normal ml-0.5">/day</span>
-                          </span>
+                    // Strict deduplication fallback across the 4 cards
+                    if (!itemImg || seenImages.has(itemImg)) {
+                      for (const fallback of fallbackPool) {
+                        if (!seenImages.has(fallback)) {
+                          itemImg = fallback;
+                          break;
+                        }
+                      }
+                    }
+
+                    if (!itemImg) {
+                      itemImg = fallbackPool[idx % fallbackPool.length];
+                    }
+
+                    seenImages.add(itemImg);
+
+                    const itemPrice = item.dailyPrice ?? item.price?.daily ?? item.pricing?.daily ?? item.pricePerDay ?? item.price ?? 0;
+                    const itemRating = item.avgRating || item.rating || (item.reviewsCount > 0 ? 4.9 : "New");
+                    const reviewCount = item.totalReviews || item.reviewsCount || item.reviews || 0;
+
+                    return (
+                      <Link
+                        key={itemId}
+                        to={`/item/${itemId}`}
+                        className="group bg-surface border border-divider rounded-2xl p-3 flex flex-col justify-between hover:border-primary/50 transition-all duration-300 shadow-sm"
+                      >
+                        {/* Image */}
+                        <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-card border border-divider">
+                          <img
+                            src={itemImg}
+                            alt={item.title}
+                            onError={(e) => {
+                              e.currentTarget.src = fallbackPool[(idx + 1) % fallbackPool.length];
+                            }}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          {item.category && (
+                            <span className="absolute top-2 left-2 bg-app/80 text-text-primary text-[10px] font-bold px-2 py-0.5 rounded-md border border-divider uppercase tracking-wider">
+                              {item.category}
+                            </span>
+                          )}
                         </div>
-                      </div>
-                    </Link>
-                  );
-                })
+
+                        {/* Details */}
+                        <div>
+                          <h4 className="text-xs font-bold text-text-primary tracking-tight line-clamp-1 group-hover:text-primary transition-colors">
+                            {item.title}
+                          </h4>
+
+                          <div className="flex items-center justify-between mt-2 pt-2 border-t border-divider">
+                            <span className="text-[10px] text-text-muted flex items-center gap-1 font-medium">
+                              <Star className="size-3 text-warning fill-warning" />
+                              {itemRating} {reviewCount > 0 ? `(${reviewCount})` : ''}
+                            </span>
+
+                            <span className="text-xs font-bold text-primary flex items-center">
+                              <IndianRupee className="size-3" />
+                              {itemPrice}
+                              <span className="text-[9px] text-text-muted font-normal ml-0.5">/day</span>
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  });
+                })()
               )}
             </div>
 
