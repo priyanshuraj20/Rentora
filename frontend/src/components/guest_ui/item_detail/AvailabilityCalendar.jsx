@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import AuthController from "../../auth/AuthController";
+import useAuth from "../../../hooks/authHook";
 
 const WEEKDAYS = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 const MONTHS = [
@@ -7,7 +9,12 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December"
 ];
 
-export default function AvailabilityCalendar({ unavailableDates = [] }) {
+export default function AvailabilityCalendar({ unavailableDates = [], itemId }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const params = useParams();
+  const targetId = itemId || params.id;
+
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState("login");
   const today = new Date();
@@ -32,6 +39,15 @@ export default function AvailabilityCalendar({ unavailableDates = [] }) {
       setMonth(0); setYear(y => y + 1);
     } else {
       setMonth(m => m + 1);
+    }
+  };
+
+  const handleBookClick = () => {
+    if (!user) {
+      setAuthMode("login");
+      setAuthOpen(true);
+    } else if (targetId) {
+      navigate(`/renter/rent/${targetId}`);
     }
   };
 
@@ -77,22 +93,24 @@ export default function AvailabilityCalendar({ unavailableDates = [] }) {
       </div>
 
       <button
-        disabled
-        className="w-full mt-4 py-4 bg-surface text-text-muted font-black rounded-full cursor-not-allowed border border-white/5"
+        onClick={handleBookClick}
+        className="w-full mt-4 py-4 bg-primary hover:bg-primary-hover text-text-primary font-bold rounded-full transition-all shadow-md active:scale-95 cursor-pointer"
       >
-        Book Now
+        Request Booking
       </button>
 
-      <p className="text-xs text-center text-text-muted font-medium leading-relaxed">
-        <button className="text-primary hover:underline cursor-pointer font-bold"
-          onClick={() => {
-            setAuthMode("login");
-            setAuthOpen(true);
-          }}>
-          Sign in
-        </button>{" "}
-        to check specific dates and book this gear.
-      </p>
+      {!user && (
+        <p className="text-xs text-center text-text-muted font-medium leading-relaxed">
+          <button className="text-primary hover:underline cursor-pointer font-bold"
+            onClick={() => {
+              setAuthMode("login");
+              setAuthOpen(true);
+            }}>
+            Sign in
+          </button>{" "}
+          to check specific dates and book this gear.
+        </p>
+      )}
 
       <AuthController open={authOpen} onClose={() => setAuthOpen(false)} defaultMode={authMode} />
     </div>
