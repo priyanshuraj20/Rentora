@@ -9,6 +9,7 @@ import {
 } from "../validators/user.schema";
 import { AppError } from "../utils/AppError";
 import logger from "../config/logger";
+import { getReputationTier } from "../utils/reputation";
 
 export const userProfileService = async (
   userId: string,
@@ -56,7 +57,7 @@ export const getUserProfileService = async (userId: string) => {
       state: user.address?.state!,
     },
     profileImage: user.profileImage!,
-    trustScore: user.trustScore ?? 50,
+    reputationTier: getReputationTier(user.trustScore),
     isVerified: user.isVerified ?? false,
     verifications: {
       email: {

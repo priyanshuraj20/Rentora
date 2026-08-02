@@ -481,6 +481,14 @@ export const uploadBookingPhotosService = async (
     throw new AppError("Booking not found", 404);
   }
 
+  if (type === "handover" && booking.renter_id.toString() !== userId) {
+    throw new AppError("You are not authorized to upload this type of evidence", 403);
+  }
+
+  if (type === "return" && booking.owner_id.toString() !== userId) {
+    throw new AppError("You are not authorized to upload this type of evidence", 403);
+  }
+
   const photos = files.map((f) => ({ url: f.path, publicId: f.filename }));
 
   if (type === "handover") {
