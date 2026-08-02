@@ -46,11 +46,22 @@ export const initSocket = (httpServer: HttpServer): Server => {
 
     // Allow client to join dedicated room by emitting "join" event
     socket.on("join", (requestedUserId: string) => {
-      if (requestedUserId) {
-        socket.data.userId = requestedUserId;
-        socket.join(requestedUserId);
-        logger.info(`User ${requestedUserId} joined socket room via join event`);
+      if (!socket.data.userId) {
+        socket.emit("error", { message: "Unauthorized: no valid session" });
+        return;
       }
+      if (requestedUserId !== socket.data.userId) {
+        logger.warn("Blocked cross-user room join attempt", {
+          authenticatedUserId: socket.data.userId,
+          requestedUserId,
+        });
+        socket.emit("error", { message: "Forbidden" });
+        return;
+      }
+      socket.join(socket.data.userId);
+      logger.info(
+        `User ${socket.data.userId} joined socket room via join event`,
+      );
     });
 
     // -------------------- LIVE CHAT EVENT: SEND MESSAGE --------------------
