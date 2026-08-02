@@ -31,7 +31,7 @@ const ExploreCard = ({ item, isWishlisted, onToggleWishlist, linkPrefix = "/rent
         <div className="p-3">
           <div
             className="relative h-48 w-full rounded-2xl bg-card bg-cover bg-center overflow-hidden transition-transform duration-500 group-hover:scale-[1.02]"
-            style={{ backgroundImage: `url(${item.image})` }}
+            style={{ backgroundImage: `url(${item.image || item.images?.[0] || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=600"})` }}
           >
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
           </div>
