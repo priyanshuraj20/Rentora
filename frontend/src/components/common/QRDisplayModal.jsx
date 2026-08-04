@@ -59,15 +59,15 @@ export default function QRDisplayModal({ bookingId, type, onClose }) {
 
         <div className="bg-white p-4 rounded-xl inline-block mx-auto">
           {loading ? (
-            <div className="w-[200px] h-[200px] flex items-center justify-center text-sm text-black/50">
+            <div className="w-[250px] h-[250px] flex items-center justify-center text-sm text-black/50">
               Generating...
             </div>
           ) : expired ? (
-            <div className="w-[200px] h-[200px] flex items-center justify-center text-sm text-red-600 font-semibold">
+            <div className="w-[250px] h-[250px] flex items-center justify-center text-sm text-red-600 font-semibold">
               Expired
             </div>
           ) : (
-            <QRCodeSVG value={token} size={200} />
+            <QRCodeSVG value={token} size={250} />
           )}
         </div>
 
