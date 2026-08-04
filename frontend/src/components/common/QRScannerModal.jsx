@@ -16,7 +16,10 @@ export default function QRScannerModal({ bookingId, onSuccess, onClose }) {
           const size = Math.floor(minEdge * 0.75);
           return { width: size, height: size };
         },
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+        supportedScanTypes: [
+          Html5QrcodeScanType.SCAN_TYPE_CAMERA,
+          Html5QrcodeScanType.SCAN_TYPE_FILE
+        ],
       },
       false,
     );
