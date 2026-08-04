@@ -76,6 +76,7 @@ export default function RentalDetails() {
         status: booking.booking_status,
         paymentStatus: booking.payment_status || "pending",
         handoverPhotos: booking.handoverPhotos || [],
+        returnPhotos: booking.returnPhotos || [],
         title: booking.item_id?.title || "Unknown Item",
         location: booking.address
           ? `${booking.address.district}, ${booking.address.state}`
@@ -335,6 +336,40 @@ export default function RentalDetails() {
             </button>
           </div>
         )}
+
+      {((rental.handoverPhotos && rental.handoverPhotos.length > 0) || (rental.returnPhotos && rental.returnPhotos.length > 0)) && (
+        <div className="bg-surface border border-divider rounded-2xl p-6 space-y-6">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary">Condition Photos</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {rental.handoverPhotos && rental.handoverPhotos.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-text-secondary">Pickup / Handover Photos</h4>
+                <div className="flex flex-wrap gap-2">
+                  {rental.handoverPhotos.map((photo, idx) => (
+                    <a key={idx} href={photo.url} target="_blank" rel="noopener noreferrer" className="relative group overflow-hidden rounded-xl border border-divider">
+                      <img src={photo.url} alt={`Handover ${idx}`} className="size-20 object-cover hover:scale-105 transition-transform" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {rental.returnPhotos && rental.returnPhotos.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-text-secondary">Return Photos</h4>
+                <div className="flex flex-wrap gap-2">
+                  {rental.returnPhotos.map((photo, idx) => (
+                    <a key={idx} href={photo.url} target="_blank" rel="noopener noreferrer" className="relative group overflow-hidden rounded-xl border border-divider">
+                      <img src={photo.url} alt={`Return ${idx}`} className="size-20 object-cover hover:scale-105 transition-transform" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <RentalActions
         status={rental.status}

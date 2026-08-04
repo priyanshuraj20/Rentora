@@ -76,6 +76,36 @@ const BookingCard = ({ booking, onApprove, onReject, onComplete, onExtend, onSho
               </div>
             )}
           </div>
+
+          {/* Condition Photos Previews */}
+          {((booking.handoverPhotos && booking.handoverPhotos.length > 0) || (booking.returnPhotos && booking.returnPhotos.length > 0)) && (
+            <div className="flex gap-4 pt-2 border-t border-divider/50 mt-2">
+              {booking.handoverPhotos && booking.handoverPhotos.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-text-secondary font-medium">Pickup Photos:</span>
+                  <div className="flex gap-1">
+                    {booking.handoverPhotos.map((photo, idx) => (
+                      <a key={idx} href={photo.url} target="_blank" rel="noopener noreferrer" className="size-8 rounded-lg overflow-hidden border border-divider">
+                        <img src={photo.url} alt={`Handover ${idx}`} className="w-full h-full object-cover" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {booking.returnPhotos && booking.returnPhotos.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-text-secondary font-medium">Return Photos:</span>
+                  <div className="flex gap-1">
+                    {booking.returnPhotos.map((photo, idx) => (
+                      <a key={idx} href={photo.url} target="_blank" rel="noopener noreferrer" className="size-8 rounded-lg overflow-hidden border border-divider">
+                        <img src={photo.url} alt={`Return ${idx}`} className="w-full h-full object-cover" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

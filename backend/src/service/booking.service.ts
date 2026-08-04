@@ -20,7 +20,7 @@ export const getBookingService = async (userId: string, userRole: string) => {
 
   const bookings = await Booking.find(filter)
     .select(
-      "item_id renter_id owner_id start_date end_date pricing booking_status payment_status createdAt",
+      "item_id renter_id owner_id start_date end_date pricing booking_status payment_status createdAt handoverPhotos returnPhotos",
     )
     .populate("item_id", "title images")
     .populate("renter_id", "name profileImage trustScore")
