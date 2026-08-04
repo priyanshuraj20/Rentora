@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Html5QrcodeScanner, Html5QrcodeScanType } from "html5-qrcode";
+import { Html5QrcodeScanner, Html5QrcodeScanType, Html5Qrcode } from "html5-qrcode";
 import { toast } from "react-hot-toast";
 
 export default function QRScannerModal({ bookingId, onSuccess, onClose }) {
@@ -17,8 +17,7 @@ export default function QRScannerModal({ bookingId, onSuccess, onClose }) {
           return { width: size, height: size };
         },
         supportedScanTypes: [
-          Html5QrcodeScanType.SCAN_TYPE_CAMERA,
-          Html5QrcodeScanType.SCAN_TYPE_FILE
+          Html5QrcodeScanType.SCAN_TYPE_CAMERA
         ],
       },
       false,
@@ -93,6 +92,37 @@ export default function QRScannerModal({ bookingId, onSuccess, onClose }) {
     }
   };
 
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setStatus("locating");
+    try {
+      const html5QrCode = new Html5Qrcode("qr-file-region");
+      const decodedText = await html5QrCode.scanFile(file, false);
+
+      if (!navigator.geolocation) {
+        toast.error("Location access is required to confirm this scan.");
+        setStatus("scanning");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          confirmScan(decodedText, position.coords.latitude, position.coords.longitude);
+        },
+        () => {
+          toast.error("Please allow location access to confirm the scan.");
+          setStatus("scanning");
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    } catch (err) {
+      toast.error("Could not find a valid QR code in this image.");
+      setStatus("scanning");
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="w-full max-w-sm bg-surface border border-divider rounded-2xl p-6 shadow-2xl">
@@ -104,11 +134,28 @@ export default function QRScannerModal({ bookingId, onSuccess, onClose }) {
         </div>
 
         <div id="qr-reader-region" className="rounded-xl overflow-hidden" />
+        <div id="qr-file-region" style={{ display: "none" }} />
+
+        <div className="mt-4">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+            id="qr-file-upload-input"
+          />
+          <label
+            htmlFor="qr-file-upload-input"
+            className="w-full flex items-center justify-center gap-2 bg-primary/20 hover:bg-primary-hover text-primary border border-primary/30 py-3 rounded-xl font-semibold text-xs transition-all cursor-pointer text-center"
+          >
+            📁 Upload QR from Gallery
+          </label>
+        </div>
 
         <p className="text-xs text-text-muted mt-3 text-center">
           {status === "locating" && "Getting your location..."}
           {status === "confirming" && "Confirming..."}
-          {status === "scanning" && "Point your camera at the QR code."}
+          {status === "scanning" && "Point your camera at the QR code or upload from gallery."}
         </p>
       </div>
     </div>
