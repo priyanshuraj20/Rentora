@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import BookingTabs from '../../components/owner_ui/bookings/BookingTabs';
 import BookingCard from '../../components/owner_ui/bookings/BookingCard';
 import BookingPhotoUploadModal from '../../components/common/BookingPhotoUploadModal';
+import QRDisplayModal from '../../components/common/QRDisplayModal';
+import QRScannerModal from '../../components/common/QRScannerModal';
 import toast from 'react-hot-toast';
 
 const OwnerBookings = () => {
@@ -9,6 +11,8 @@ const OwnerBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [photoModalBookingId, setPhotoModalBookingId] = useState(null);
+  const [qrDisplayModal, setQrDisplayModal] = useState({ open: false, bookingId: null });
+  const [qrScannerModal, setQrScannerModal] = useState({ open: false, bookingId: null });
 
   const fetchBookings = async () => {
     setIsLoading(true);
@@ -190,6 +194,8 @@ const OwnerBookings = () => {
                   onReject={handleReject} 
                   onComplete={handleComplete}
                   onExtend={handleExtend}
+                  onShowHandoverQR={(id) => setQrDisplayModal({ open: true, bookingId: id })}
+                  onScanReturnQR={(id) => setQrScannerModal({ open: true, bookingId: id })}
                   activeTab={activeTab}
                 />
               ))
@@ -213,6 +219,22 @@ const OwnerBookings = () => {
             setPhotoModalBookingId(null);
             executeComplete(idToComplete);
           }}
+        />
+      )}
+
+      {qrDisplayModal.open && (
+        <QRDisplayModal
+          bookingId={qrDisplayModal.bookingId}
+          type="handover"
+          onClose={() => setQrDisplayModal({ open: false, bookingId: null })}
+        />
+      )}
+
+      {qrScannerModal.open && (
+        <QRScannerModal
+          bookingId={qrScannerModal.bookingId}
+          onClose={() => setQrScannerModal({ open: false, bookingId: null })}
+          onSuccess={fetchBookings}
         />
       )}
     </main>

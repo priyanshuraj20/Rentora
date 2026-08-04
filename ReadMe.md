@@ -49,6 +49,7 @@ These are the top engineering highlights that separate Rentora from a standard c
 | 📊 **Error Monitoring** | Sentry APM integration with automated 500 error capture and user context binding |
 | 🏛 **Clean Architecture** | Controller → Service → Model separation, centralized pricing engine |
 | 🔔 **Live Notifications** | Real-time Socket.io notification delivery with unread badge counts |
+| 🔐 **QR Handover & Return** | Location-verified (500m geofence) + short-lived JWT (2m expiry) + photo validation prerequisite + automated status transitions |
 
 ---
 
@@ -82,6 +83,17 @@ These are the top engineering highlights that separate Rentora from a standard c
 - **Mandatory Return Condition Upload**: Owner cannot mark booking completed until return condition photos are uploaded via `PATCH /booking/:id/photos`
 - **Optional Pickup Condition Upload**: Renters can upload handover condition photos at pickup
 - **Automated 3-Day Asset Purge Queue**: Uploading return condition photos schedules a BullMQ delay job (`photoPurgeQueue`). After 3 days, `photoPurgeWorker` automatically destroys the Cloudinary assets and clears DB photo arrays to optimize storage overhead
+
+### 🔐 QR Code Handover & Return Verification
+
+- **Prerequisite Validation**: QR codes cannot be generated unless the corresponding condition photos have been uploaded:
+  - **Handover QR**: Requires `booking.handoverPhotos.length > 0`. Throws `400` with the message `"Handover photos must be uploaded before generating the QR."` otherwise.
+  - **Return QR**: Requires `booking.returnPhotos.length > 0`. Throws `400` with the message `"Return photos must be uploaded before generating the QR."` otherwise.
+- **Short-Lived Tokens**: Generates 2-minute expiring JWTs signed with `QR_TOKEN_SECRET` to prevent token theft or reuse.
+- **GPS Location Geofencing**: Ensures the scanner is physically present at the pickup location (verified to be within **0.5 km** radius of the item's coordinates).
+- **Automated Booking Status Transitions**:
+  - Scanning **Handover QR** automatically sets `booking_status` to `"ongoing"`.
+  - Scanning **Return QR** automatically sets `booking_status` to `"completed"`.
 
 ### 📊 Error Tracking & APM (Sentry)
 
@@ -525,6 +537,39 @@ sequenceDiagram
     API->>Mapper: getReputationTier(user.trustScore)
     Mapper-->>API: "Top Community Member" / "Verified Member" / "Member"
     API-->>Client: Return reputationTier (trustScore stripped / unexposed)
+```
+
+### 10. Secure QR Code Handover & Return Lifecycle
+
+```mermaid
+sequenceDiagram
+    participant Requester as Generator (Owner/Renter)
+    participant Client as Scanner Client
+    participant API as Booking service (QR Engine)
+    participant Geocoder as GPS / Geofence check
+    participant DB as MongoDB
+
+    Requester->>API: GET /booking/:id/qr-code?type=handover|return
+    alt Photos missing for request type
+        API-->>Requester: HTTP 400 (Validation Error)
+    else Photos exist
+        API->>API: Generate 2-minute expiring JWT (QR_TOKEN_SECRET)
+        API-->>Requester: Return QR token
+    end
+    Requester->>Client: Displays QR Code SVG
+    Client->>Client: Scans QR code via camera
+    Client->>Client: Fetch current GPS coordinates
+    Client->>API: POST /booking/:id/confirm-scan { token, lat, lng }
+    API->>API: Verify JWT signature & expiration
+    API->>DB: Fetch booking & item details (retrieve item location)
+    API->>Geocoder: Calculate distance between scanner and item coordinates
+    alt Distance > 0.5 km
+        API-->>Client: HTTP 403 (Proximity Rejection)
+    else Distance <= 0.5 km
+        API->>DB: Update handoverConfirmedAt / returnConfirmedAt
+        API->>DB: Transition booking_status (to ongoing / completed)
+        API-->>Client: HTTP 200 (Success Confirmation)
+    end
 ```
 
 ---

@@ -1,7 +1,7 @@
-import { Calendar, User, CheckCircle, XCircle, Clock, RotateCcw } from 'lucide-react';
+import { Calendar, User, CheckCircle, XCircle, Clock, RotateCcw, QrCode, Scan } from 'lucide-react';
 import TrustScoreBadge from '../../common/TrustScoreBadge';
 
-const BookingCard = ({ booking, onApprove, onReject, onComplete, onExtend, activeTab }) => {
+const BookingCard = ({ booking, onApprove, onReject, onComplete, onExtend, onShowHandoverQR, onScanReturnQR, activeTab }) => {
   const { item, status, id, startDate, endDate, renterInfo } = booking;
   
   const formatDate = (dateStr) => {
@@ -101,13 +101,29 @@ const BookingCard = ({ booking, onApprove, onReject, onComplete, onExtend, activ
         )}
 
         {activeTab === 'active' && (
-          <button
-            onClick={() => onComplete(id)}
-            className="w-full flex items-center justify-center gap-1.5 bg-success/20 hover:bg-success/30 text-success border border-success/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
-          >
-            <CheckCircle className="w-3.5 h-3.5" />
-            Mark Returned
-          </button>
+          <>
+            <button
+              onClick={() => onShowHandoverQR && onShowHandoverQR(id)}
+              className="w-full flex items-center justify-center gap-1.5 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
+            >
+              <QrCode className="w-3.5 h-3.5" />
+              Show Handover QR
+            </button>
+            <button
+              onClick={() => onScanReturnQR && onScanReturnQR(id)}
+              className="w-full flex items-center justify-center gap-1.5 bg-secondary-accent/20 hover:bg-secondary-accent/30 text-secondary-accent border border-secondary-accent/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
+            >
+              <Scan className="w-3.5 h-3.5" />
+              Scan Return QR
+            </button>
+            <button
+              onClick={() => onComplete(id)}
+              className="w-full flex items-center justify-center gap-1.5 bg-success/20 hover:bg-success/30 text-success border border-success/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
+            >
+              <CheckCircle className="w-3.5 h-3.5" />
+              Mark Returned
+            </button>
+          </>
         )}
       </div>
     </div>

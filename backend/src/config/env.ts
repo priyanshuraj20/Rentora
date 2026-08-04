@@ -12,6 +12,7 @@ const envSchema = z.object({
 
   JWT_ACCESS_SECRET: z.string().min(10),
   JWT_REFRESH_SECRET: z.string().min(10),
+  QR_TOKEN_SECRET: z.string().min(10),
   JWT_ACCESS_EXPIRY: z.string().default("15m"),
   JWT_REFRESH_EXPIRY: z.string().default("7d"),
 

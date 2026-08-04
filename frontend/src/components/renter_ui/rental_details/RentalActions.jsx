@@ -1,8 +1,8 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { X, ShieldCheck, Clock } from "lucide-react";
+import { X, ShieldCheck, Clock, QrCode, Scan } from "lucide-react";
 
-export default function RentalActions({ status }) {
+export default function RentalActions({ status, onScanHandoverQR, onShowReturnQR }) {
   const [showReturnModal, setShowReturnModal] = useState(false);
 
   const handleRequestExtension = () => {
@@ -11,16 +11,34 @@ export default function RentalActions({ status }) {
 
   return (
     <>
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-4">
+        {(status === "confirmed" || status === "ongoing" || status === "approved") && (
+          <>
+            <button
+              onClick={onScanHandoverQR}
+              className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-text-primary py-3 px-4 rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              <Scan size={15} />
+              Scan Handover QR
+            </button>
+            <button
+              onClick={onShowReturnQR}
+              className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-secondary-accent hover:bg-secondary-accent/80 text-text-primary py-3 px-4 rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              <QrCode size={15} />
+              Show Return QR
+            </button>
+          </>
+        )}
         <button
           onClick={handleRequestExtension}
-          className="flex-1 bg-card border border-divider hover:bg-white/5 text-text-primary py-3 rounded-xl font-semibold text-xs transition-all cursor-pointer"
+          className="flex-1 min-w-[140px] bg-card border border-divider hover:bg-white/5 text-text-primary py-3 rounded-xl font-semibold text-xs transition-all cursor-pointer"
         >
           Request Extension
         </button>
         <button
           onClick={() => setShowReturnModal(true)}
-          className="flex-1 bg-surface border border-divider hover:border-primary/40 text-text-primary py-3 rounded-xl font-semibold text-xs transition-all cursor-pointer"
+          className="flex-1 min-w-[140px] bg-surface border border-divider hover:border-primary/40 text-text-primary py-3 rounded-xl font-semibold text-xs transition-all cursor-pointer"
         >
           View Return Instructions
         </button>

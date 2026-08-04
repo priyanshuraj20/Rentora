@@ -53,6 +53,8 @@ export interface IBooking extends Document {
   returnPhotos: { url: string; publicId: string }[];
   handoverPhotosUploadedAt?: Date;
   returnPhotosUploadedAt?: Date;
+  handoverConfirmedAt?: Date;
+  returnConfirmedAt?: Date;
   evidencePurgedAt?: Date;
 
   expiresAt?: Date;
@@ -170,6 +172,8 @@ const BookingSchema: Schema<IBooking> = new Schema(
     ],
     handoverPhotosUploadedAt: { type: Date },
     returnPhotosUploadedAt: { type: Date },
+    handoverConfirmedAt: { type: Date },
+    returnConfirmedAt: { type: Date },
     evidencePurgedAt: { type: Date },
 
     expiresAt: {

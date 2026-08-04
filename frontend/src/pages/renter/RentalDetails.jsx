@@ -10,6 +10,8 @@ import RentalPolicies from "../../components/renter_ui/rental_details/RentalPoli
 import RentalActions from "../../components/renter_ui/rental_details/RentalActions";
 import ActivityTimeline from "../../components/renter_ui/rental_details/ActivityTimeline";
 import BookingPhotoUploadModal from "../../components/common/BookingPhotoUploadModal";
+import QRDisplayModal from "../../components/common/QRDisplayModal";
+import QRScannerModal from "../../components/common/QRScannerModal";
 
 export default function RentalDetails() {
   const { rentalId } = useParams();
@@ -19,6 +21,8 @@ export default function RentalDetails() {
   const [error, setError] = useState(null);
   const [isPaymentSubmitting, setIsPaymentSubmitting] = useState(false);
   const [showHandoverModal, setShowHandoverModal] = useState(false);
+  const [showQRScannerModal, setShowQRScannerModal] = useState(false);
+  const [showQRDisplayModal, setShowQRDisplayModal] = useState(false);
 
   const fetchRentalDetails = async () => {
     try {
@@ -332,7 +336,11 @@ export default function RentalDetails() {
           </div>
         )}
 
-      <RentalActions status={rental.status} />
+      <RentalActions
+        status={rental.status}
+        onScanHandoverQR={() => setShowQRScannerModal(true)}
+        onShowReturnQR={() => setShowQRDisplayModal(true)}
+      />
       <ActivityTimeline timeline={rental.timeline} />
 
       {showHandoverModal && (
@@ -344,6 +352,22 @@ export default function RentalDetails() {
             setShowHandoverModal(false);
             fetchRentalDetails();
           }}
+        />
+      )}
+
+      {showQRScannerModal && (
+        <QRScannerModal
+          bookingId={rental.id}
+          onClose={() => setShowQRScannerModal(false)}
+          onSuccess={fetchRentalDetails}
+        />
+      )}
+
+      {showQRDisplayModal && (
+        <QRDisplayModal
+          bookingId={rental.id}
+          type="return"
+          onClose={() => setShowQRDisplayModal(false)}
         />
       )}
     </main>

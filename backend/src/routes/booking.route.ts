@@ -8,6 +8,8 @@ import {
   rejectBooking,
   completeBooking,
   uploadBookingPhotos,
+  getBookingQR,
+  confirmBookingScan,
 } from "../controllers/booking.controller";
 import { VerifyUser } from "../middlewares/verifyUser";
 import { restrictTo } from "../middlewares/restrictTo";
@@ -312,5 +314,7 @@ router.patch("/:id/reject", restrictTo("owner"), rejectBooking);
 router.patch("/:id/complete", restrictTo("owner"), completeBooking);
 
 router.patch("/:id/photos", uploadMultipleImages("photos", 5), uploadBookingPhotos);
+router.get("/:id/qr-code", getBookingQR);
+router.post("/:id/confirm-scan", confirmBookingScan);
 
 export default router;

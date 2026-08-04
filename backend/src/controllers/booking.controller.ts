@@ -9,6 +9,8 @@ import {
   rejectBookingService,
   completeBookingService,
   uploadBookingPhotosService,
+  generateQRTokenService,
+  confirmQRScanService,
 } from "../service/booking.service";
 import { createBookingSchema } from "../validators/booking.validator";
 import { AppError } from "../utils/AppError";
@@ -146,6 +148,43 @@ export const uploadBookingPhotos = catchAsync(async (req: Request, res: Response
   res.status(200).json({
     success: true,
     message: "Photos uploaded successfully",
+    data: result,
+  });
+});
+
+export const getBookingQR = catchAsync(async (req: Request, res: Response) => {
+  const { type } = req.query;
+
+  if (type !== "handover" && type !== "return") {
+    throw new AppError("Query param 'type' must be 'handover' or 'return'", 400);
+  }
+
+  const result = await generateQRTokenService(
+    req.params.id as string,
+    type,
+    req.userId!,
+  );
+
+  res.status(200).json({ success: true, data: result });
+});
+
+export const confirmBookingScan = catchAsync(async (req: Request, res: Response) => {
+  const { token, scannerLat, scannerLng } = req.body;
+
+  if (!token) {
+    throw new AppError("QR token is required", 400);
+  }
+
+  const result = await confirmQRScanService(
+    token,
+    req.userId!,
+    Number(scannerLat),
+    Number(scannerLng),
+  );
+
+  res.status(200).json({
+    success: true,
+    message: `${result.type === "handover" ? "Handover" : "Return"} confirmed successfully`,
     data: result,
   });
 });

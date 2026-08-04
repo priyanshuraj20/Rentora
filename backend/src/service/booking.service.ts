@@ -9,6 +9,8 @@ import { createNotificationService } from "./notification.service";
 import logger from "../config/logger";
 import { calculatePricing } from "../utils/pricing.calculator";
 import { getReputationTier } from "../utils/reputation";
+import { generateQRToken, verifyQRToken, QRType } from "../utils/qrToken";
+import { calculateDistanceKm } from "./explore.service";
 
 export const getBookingService = async (userId: string, userRole: string) => {
   logger.info("Fetching bookings", { userId, userRole });
@@ -515,4 +517,118 @@ export const uploadBookingPhotosService = async (
     type,
     photos,
   };
+};
+
+const MAX_SCAN_DISTANCE_KM = 0.5;
+
+export const generateQRTokenService = async (
+  bookingId: string,
+  type: QRType,
+  userId: string,
+) => {
+  const booking = await Booking.findOne({
+    _id: bookingId,
+    $or: [{ renter_id: userId }, { owner_id: userId }],
+  });
+
+  if (!booking) {
+    throw new AppError("Booking not found", 404);
+  }
+
+  if (type === "handover" && booking.owner_id.toString() !== userId) {
+    throw new AppError("Only the owner can generate the handover QR", 403);
+  }
+  if (type === "return" && booking.renter_id.toString() !== userId) {
+    throw new AppError("Only the renter can generate the return QR", 403);
+  }
+
+  if (type === "handover" && (!booking.handoverPhotos || booking.handoverPhotos.length === 0)) {
+    throw new AppError("Handover photos must be uploaded before generating the QR.", 400);
+  }
+  if (type === "return" && (!booking.returnPhotos || booking.returnPhotos.length === 0)) {
+    throw new AppError("Return photos must be uploaded before generating the QR.", 400);
+  }
+
+  const token = generateQRToken({ bookingId, type, issuedBy: userId });
+
+  logger.info("QR token generated", { bookingId, type, userId });
+
+  return { token, expiresIn: 120 };
+};
+
+export const confirmQRScanService = async (
+  token: string,
+  scannerUserId: string,
+  scannerLat: number,
+  scannerLng: number,
+) => {
+  let payload;
+  try {
+    payload = verifyQRToken(token);
+  } catch (err) {
+    logger.warn("QR scan failed — invalid or expired token", { scannerUserId });
+    throw new AppError("QR code is invalid or has expired. Ask for a new one.", 400);
+  }
+
+  const { bookingId, type } = payload;
+
+  const booking = await Booking.findById(bookingId).populate<{
+    item_id: { location?: { coordinates?: { coordinates: [number, number] } } };
+  }>("item_id", "location");
+
+  if (!booking) {
+    throw new AppError("Booking not found", 404);
+  }
+
+  if (type === "handover" && booking.renter_id.toString() !== scannerUserId) {
+    throw new AppError("Only the renter can scan the handover QR", 403);
+  }
+  if (type === "return" && booking.owner_id.toString() !== scannerUserId) {
+    throw new AppError("Only the owner can scan the return QR", 403);
+  }
+
+  const itemCoords = booking.item_id?.location?.coordinates?.coordinates;
+  if (itemCoords && typeof scannerLat === "number" && typeof scannerLng === "number") {
+    const [itemLng, itemLat] = itemCoords;
+    const distanceKm = calculateDistanceKm(scannerLat, scannerLng, itemLat, itemLng);
+    if (distanceKm > MAX_SCAN_DISTANCE_KM) {
+      logger.warn("QR scan rejected — scanner too far from pickup location", {
+        bookingId,
+        distanceKm,
+      });
+      throw new AppError(
+        "You must be at the pickup location to confirm this scan.",
+        403,
+      );
+    }
+  } else {
+    logger.warn("QR scan location check skipped — no item coordinates on file", {
+      bookingId,
+    });
+  }
+
+  if (type === "handover") {
+    booking.handoverConfirmedAt = new Date();
+    booking.booking_status = "ongoing";
+  } else {
+    booking.returnConfirmedAt = new Date();
+    booking.booking_status = "completed";
+  }
+  await booking.save();
+
+  const notifyUserId =
+    type === "handover" ? booking.owner_id.toString() : booking.renter_id.toString();
+  await createNotificationService({
+    userId: notifyUserId,
+    title: type === "handover" ? "Handover Confirmed" : "Return Confirmed",
+    message:
+      type === "handover"
+        ? "Item handover confirmed by renter"
+        : "Item return confirmed by owner",
+    type: "general",
+  });
+
+  logger.info("QR scan confirmed", { bookingId, type, scannerUserId });
+
+  return { type, confirmedAt: new Date() };
 };
