@@ -77,6 +77,8 @@ export default function RentalDetails() {
         paymentStatus: booking.payment_status || "pending",
         handoverPhotos: booking.handoverPhotos || [],
         returnPhotos: booking.returnPhotos || [],
+        handoverConfirmedAt: booking.handoverConfirmedAt,
+        returnConfirmedAt: booking.returnConfirmedAt,
         title: booking.item_id?.title || "Unknown Item",
         location: booking.address
           ? `${booking.address.district}, ${booking.address.state}`
@@ -373,6 +375,8 @@ export default function RentalDetails() {
 
       <RentalActions
         status={rental.status}
+        handoverConfirmedAt={rental.handoverConfirmedAt}
+        returnConfirmedAt={rental.returnConfirmedAt}
         onScanHandoverQR={() => setShowQRScannerModal(true)}
         onShowReturnQR={() => setShowQRDisplayModal(true)}
       />

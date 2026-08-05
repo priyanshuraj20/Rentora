@@ -2,7 +2,13 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { X, ShieldCheck, Clock, QrCode, Scan } from "lucide-react";
 
-export default function RentalActions({ status, onScanHandoverQR, onShowReturnQR }) {
+export default function RentalActions({
+  status,
+  handoverConfirmedAt,
+  returnConfirmedAt,
+  onScanHandoverQR,
+  onShowReturnQR,
+}) {
   const [showReturnModal, setShowReturnModal] = useState(false);
 
   const handleRequestExtension = () => {
@@ -12,22 +18,26 @@ export default function RentalActions({ status, onScanHandoverQR, onShowReturnQR
   return (
     <>
       <div className="flex flex-wrap gap-4">
-        {(status === "confirmed" || status === "ongoing" || status === "approved") && (
+        {(status === "confirmed" || status === "ongoing") && (
           <>
-            <button
-              onClick={onScanHandoverQR}
-              className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-text-primary py-3 px-4 rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-sm active:scale-95"
-            >
-              <Scan size={15} />
-              Scan Handover QR
-            </button>
-            <button
-              onClick={onShowReturnQR}
-              className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-secondary-accent hover:bg-secondary-accent/80 text-text-primary py-3 px-4 rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-sm active:scale-95"
-            >
-              <QrCode size={15} />
-              Show Return QR
-            </button>
+            {!handoverConfirmedAt && (
+              <button
+                onClick={onScanHandoverQR}
+                className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-text-primary py-3 px-4 rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-sm active:scale-95"
+              >
+                <Scan size={15} />
+                Scan Handover QR
+              </button>
+            )}
+            {handoverConfirmedAt && !returnConfirmedAt && (
+              <button
+                onClick={onShowReturnQR}
+                className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-secondary-accent hover:bg-secondary-accent/80 text-text-primary py-3 px-4 rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-sm active:scale-95"
+              >
+                <QrCode size={15} />
+                Show Return QR
+              </button>
+            )}
           </>
         )}
         <button

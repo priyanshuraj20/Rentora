@@ -535,6 +535,19 @@ export const generateQRTokenService = async (
     throw new AppError("Booking not found", 404);
   }
 
+  if (type === "handover" && booking.booking_status !== BookingStatus.CONFIRMED) {
+    throw new AppError("Payment must be completed before handover", 400);
+  }
+
+  if (
+    type === "return" &&
+    (!booking.handoverConfirmedAt ||
+      (booking.booking_status !== BookingStatus.CONFIRMED &&
+        booking.booking_status !== BookingStatus.ONGOING))
+  ) {
+    throw new AppError("Handover must be confirmed before return can be processed", 400);
+  }
+
   if (type === "handover" && booking.owner_id.toString() !== userId) {
     throw new AppError("Only the owner can generate the handover QR", 403);
   }
@@ -580,6 +593,19 @@ export const confirmQRScanService = async (
     throw new AppError("Booking not found", 404);
   }
 
+  if (type === "handover" && booking.booking_status !== BookingStatus.CONFIRMED) {
+    throw new AppError("Payment must be completed before handover", 400);
+  }
+
+  if (
+    type === "return" &&
+    (!booking.handoverConfirmedAt ||
+      (booking.booking_status !== BookingStatus.CONFIRMED &&
+        booking.booking_status !== BookingStatus.ONGOING))
+  ) {
+    throw new AppError("Handover must be confirmed before return can be processed", 400);
+  }
+
   if (type === "handover" && booking.renter_id.toString() !== scannerUserId) {
     throw new AppError("Only the renter can scan the handover QR", 403);
   }
@@ -609,26 +635,28 @@ export const confirmQRScanService = async (
 
   if (type === "handover") {
     booking.handoverConfirmedAt = new Date();
-    booking.booking_status = "ongoing";
+    booking.booking_status = BookingStatus.ONGOING;
+    await booking.save();
+
+    const notifyUserId = booking.owner_id.toString();
+    await createNotificationService({
+      userId: notifyUserId,
+      title: "Handover Confirmed",
+      message: "Item handover confirmed by renter",
+      type: "general",
+    });
+
+    logger.info("QR scan confirmed", { bookingId, type, scannerUserId });
+
+    return { type, confirmedAt: new Date() };
   } else {
     booking.returnConfirmedAt = new Date();
-    booking.booking_status = "completed";
+    await booking.save();
+
+    await completeBookingService(booking.owner_id.toString(), bookingId);
+
+    logger.info("QR scan confirmed", { bookingId, type, scannerUserId });
+
+    return { type, confirmedAt: new Date() };
   }
-  await booking.save();
-
-  const notifyUserId =
-    type === "handover" ? booking.owner_id.toString() : booking.renter_id.toString();
-  await createNotificationService({
-    userId: notifyUserId,
-    title: type === "handover" ? "Handover Confirmed" : "Return Confirmed",
-    message:
-      type === "handover"
-        ? "Item handover confirmed by renter"
-        : "Item return confirmed by owner",
-    type: "general",
-  });
-
-  logger.info("QR scan confirmed", { bookingId, type, scannerUserId });
-
-  return { type, confirmedAt: new Date() };
 };

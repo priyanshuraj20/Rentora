@@ -132,20 +132,24 @@ const BookingCard = ({ booking, onApprove, onReject, onComplete, onExtend, onSho
 
         {activeTab === 'active' && (
           <>
-            <button
-              onClick={() => onShowHandoverQR && onShowHandoverQR(id)}
-              className="w-full flex items-center justify-center gap-1.5 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
-            >
-              <QrCode className="w-3.5 h-3.5" />
-              Show Handover QR
-            </button>
-            <button
-              onClick={() => onScanReturnQR && onScanReturnQR(id)}
-              className="w-full flex items-center justify-center gap-1.5 bg-secondary-accent/20 hover:bg-secondary-accent/30 text-secondary-accent border border-secondary-accent/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
-            >
-              <Scan className="w-3.5 h-3.5" />
-              Scan Return QR
-            </button>
+            {!booking.handoverConfirmedAt && (
+              <button
+                onClick={() => onShowHandoverQR && onShowHandoverQR(id)}
+                className="w-full flex items-center justify-center gap-1.5 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                Show Handover QR
+              </button>
+            )}
+            {booking.handoverConfirmedAt && !booking.returnConfirmedAt && (
+              <button
+                onClick={() => onScanReturnQR && onScanReturnQR(id)}
+                className="w-full flex items-center justify-center gap-1.5 bg-secondary-accent/20 hover:bg-secondary-accent/30 text-secondary-accent border border-secondary-accent/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
+              >
+                <Scan className="w-3.5 h-3.5" />
+                Scan Return QR
+              </button>
+            )}
             <button
               onClick={() => onComplete(id)}
               className="w-full flex items-center justify-center gap-1.5 bg-success/20 hover:bg-success/30 text-success border border-success/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"

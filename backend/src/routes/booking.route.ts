@@ -14,6 +14,7 @@ import {
 import { VerifyUser } from "../middlewares/verifyUser";
 import { restrictTo } from "../middlewares/restrictTo";
 import { uploadMultipleImages } from "../middlewares/upload.middleware";
+import { qrGenerationLimiter } from "../middlewares/rateLimiter.middleware";
 const router = Router();
 
 router.use(VerifyUser);
@@ -314,7 +315,7 @@ router.patch("/:id/reject", restrictTo("owner"), rejectBooking);
 router.patch("/:id/complete", restrictTo("owner"), completeBooking);
 
 router.patch("/:id/photos", uploadMultipleImages("photos", 5), uploadBookingPhotos);
-router.get("/:id/qr-code", getBookingQR);
+router.get("/:id/qr-code", qrGenerationLimiter, getBookingQR);
 router.post("/:id/confirm-scan", confirmBookingScan);
 
 export default router;

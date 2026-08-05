@@ -10,3 +10,15 @@ export const phoneVerificationLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+export const qrGenerationLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 5,
+  keyGenerator: (req) => req.userId || req.ip || "",
+  message: {
+    success: false,
+    message: "Too many QR code requests. Please try again in 5 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
