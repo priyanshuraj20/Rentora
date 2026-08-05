@@ -650,13 +650,13 @@ export const confirmQRScanService = async (
 
     return { type, confirmedAt: new Date() };
   } else {
-    booking.returnConfirmedAt = new Date();
-    await booking.save();
-
     await completeBookingService(booking.owner_id.toString(), bookingId);
+
+    const now = new Date();
+    await Booking.findByIdAndUpdate(bookingId, { returnConfirmedAt: now });
 
     logger.info("QR scan confirmed", { bookingId, type, scannerUserId });
 
-    return { type, confirmedAt: new Date() };
+    return { type, confirmedAt: now };
   }
 };
