@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { SocketProvider } from "./context/SocketContext";
+import { AuthProvider } from "./context/AuthContext";
 import useAuth from "./hooks/authHook";
 
 import GuestLayout from "./layouts/GuestLayout";
@@ -39,9 +40,10 @@ function MessagesLayout() {
 
 export default function App() {
   return (
-    <SocketProvider>
-      <BrowserRouter>
-        <Toaster position="top-center" reverseOrder={false} />
+    <AuthProvider>
+      <SocketProvider>
+        <BrowserRouter>
+          <Toaster position="top-center" reverseOrder={false} />
         <Routes>
           {/* Guest pages */}
           <Route element={<GuestLayout />}>
@@ -86,5 +88,6 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </SocketProvider>
-  );
+  </AuthProvider>
+);
 }
