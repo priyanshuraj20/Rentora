@@ -5,8 +5,10 @@ import ExploreLocationBar from "../../components/renter_ui/explore/ExploreLocati
 import ExploreGrid from "../../components/renter_ui/explore/ExploreGrid";
 import ExploreEmptyState from "../../components/renter_ui/explore/ExploreEmptyState";
 import ExplorePagination from "../../components/renter_ui/explore/ExplorePagination";
+import useAuth from "../../hooks/authHook";
 
 const Explore = () => {
+  const { user } = useAuth();
   const [rentals, setRentals] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -96,7 +98,7 @@ const Explore = () => {
 
   return (
     <div className="mx-auto max-w-7xl px-6 lg:px-20 py-8 min-h-screen">
-      <LoginBanner />
+      {!user && <LoginBanner />}
       <ExploreSearchBar
         value={search}
         onChange={handleSearchChange}
