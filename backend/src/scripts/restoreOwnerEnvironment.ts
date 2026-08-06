@@ -91,6 +91,10 @@ async function restoreEnvironment() {
         },
         location: {
           type: "Point",
+          city: "Goa",
+          district: "South Goa",
+          state: "Goa",
+          pincode: "403001",
           coordinates: [73.8278, 15.4989], // [Longitude, Latitude] for Goa/Panaji
         },
       }

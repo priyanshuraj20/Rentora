@@ -64,7 +64,17 @@ export const getAllItemsService = async (
       },
     };
   } else if (city && city.trim()) {
-    query["location.city"] = new RegExp(`^${city.trim()}$`, "i");
+    const c = city.trim();
+    if (c.toLowerCase() !== "all") {
+      const cityRegex = new RegExp(c, "i");
+      query.$or = [
+        { "location.city": cityRegex },
+        { "location.district": cityRegex },
+        { "location.state": cityRegex },
+        { "address.district": cityRegex },
+        { "address.state": cityRegex },
+      ];
+    }
   }
 
   const skip = (page - 1) * limit;
