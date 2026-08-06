@@ -20,7 +20,9 @@ export const getBookingMessages = catchAsync(
     res.status(200).json({
       success: true,
       message: "Chat history fetched successfully",
-      ...data,
+      data: data.messages,
+      messages: data.messages,
+      pagination: data.pagination,
     });
   }
 );

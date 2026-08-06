@@ -106,7 +106,7 @@ export default function Messages() {
         });
         const data = await res.json();
         if (data.success) {
-          setMessages(data.data || []);
+          setMessages(data.messages || data.data || []);
           setTimeout(scrollToBottom, 100);
         }
       } catch (err) {

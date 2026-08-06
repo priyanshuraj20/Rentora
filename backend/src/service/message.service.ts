@@ -100,7 +100,14 @@ export const getBookingMessagesService = async (
   const limit = Math.min(100, Math.max(1, Number(query.limit) || 30));
   const skip = (page - 1) * limit;
 
-  const filter: Record<string, any> = { bookingId };
+  const filter: Record<string, any> = {
+    $or: [
+      { bookingId },
+      ...(mongoose.Types.ObjectId.isValid(bookingId)
+        ? [{ bookingId: new mongoose.Types.ObjectId(bookingId) }]
+        : []),
+    ],
+  };
   if (query.before) {
     filter._id = { $lt: new mongoose.Types.ObjectId(query.before) };
   }
