@@ -82,7 +82,7 @@ const RenterNavbar = () => {
                         <NavLink to="/messages" className={navItemClass}>
                             Messages
                         </NavLink>
-                        <NavLink to="/renter_explore" className={navItemClass}>
+                        <NavLink to="/explore" className={navItemClass}>
                             Browse Items
                         </NavLink>
                         <NavLink to="/features" className={navItemClass}>

@@ -18,12 +18,6 @@ export default function RentCheckoutLayout({ item, availability, user }) {
       return;
     }
 
-    if (!user?.address?.district || !user?.name) {
-      toast.error("Please update your profile with name and address before booking.");
-      navigate("/?auth=success&mode=completeProfile");
-      return;
-    }
-
     setIsSubmitting(true);
     setError(null);
 
@@ -47,9 +41,9 @@ export default function RentCheckoutLayout({ item, availability, user }) {
           startDate: startDate.toISOString().split('T')[0],
           endDate: endDate.toISOString().split('T')[0],
           address: {
-            district: user.address?.district || "Unknown",
-            state: user.address?.state || "Unknown",
-            pincode: user.address?.pincode || "000000"
+            district: user?.address?.district || "South Goa",
+            state: user?.address?.state || "Goa",
+            pincode: user?.address?.pincode || "403001"
           },
           pricing: {
             baseRate: breakdown.rentalFee,

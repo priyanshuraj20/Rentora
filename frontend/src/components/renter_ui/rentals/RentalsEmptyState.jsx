@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export default function RentalsEmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -12,9 +14,12 @@ export default function RentalsEmptyState() {
         It looks like you haven't booked anything premium recently.
       </p>
 
-      <button className="bg-primary text-white px-8 py-3 rounded-full font-bold bg-accent/80">
+      <Link
+        to="/explore"
+        className="bg-primary text-text-primary px-8 py-3 rounded-full font-bold bg-accent/80 hover:bg-primary-hover transition-all cursor-pointer inline-block"
+      >
         Start Browsing
-      </button>
+      </Link>
     </div>
   );
 }
