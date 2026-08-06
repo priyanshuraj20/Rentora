@@ -53,6 +53,11 @@ async function restoreEnvironment() {
       isVerified: true,
       trustScore: 100,
       walletBalance: 0,
+      address: {
+        district: "South Goa",
+        state: "Goa",
+        pincode: "403001",
+      },
       verifications: {
         email: { isVerified: true, verifiedAt: new Date() },
         phone: { isVerified: true, verifiedAt: new Date() },
@@ -70,11 +75,27 @@ async function restoreEnvironment() {
     console.log(`   - ID: ${ownerUser._id}`);
     console.log(`   - Email: ${ownerUser.email}`);
     console.log(`   - Password: Password@123`);
-    console.log(`   - Role: owner`);
+    console.log(`   - Location: South Goa, Goa (Pincode: 403001)`);
 
-    // Ensure all items are linked to this owner
-    const updateResult = await Item.updateMany({}, { ownerId: ownerUser._id, status: "active", isActive: true });
-    console.log(`🔗 Re-linked ${updateResult.modifiedCount} items to owner ID ${ownerUser._id}.`);
+    // Ensure all items are linked to this owner and have location attached
+    const updateResult = await Item.updateMany(
+      {},
+      {
+        ownerId: ownerUser._id,
+        status: "active",
+        isActive: true,
+        address: {
+          district: "South Goa",
+          state: "Goa",
+          pincode: "403001",
+        },
+        location: {
+          type: "Point",
+          coordinates: [73.8278, 15.4989], // [Longitude, Latitude] for Goa/Panaji
+        },
+      }
+    );
+    console.log(`🔗 Re-linked ${updateResult.modifiedCount} items to owner ID ${ownerUser._id} with Goa location.`);
 
     // Clear stale bookings, messages, notifications, and payments for clean testing
     const deletedBookings = await Booking.deleteMany({});
