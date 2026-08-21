@@ -1,138 +1,77 @@
-# Rentora — Production-Grade Peer-to-Peer Rental Marketplace
+# Rentora — Peer-to-Peer Rental Marketplace
 
-> **Not just a CRUD project.** Rentora is an end-to-end, location-aware P2P rental marketplace with enterprise security, real-time WebSockets, background job queues, zero-downtime search, Razorpay payments, and a clean production architecture.
+Rentora is a location-aware P2P rental marketplace built with Node.js/TypeScript, React, MongoDB, Redis, BullMQ, Socket.io, Elasticsearch, and Razorpay. It enables item owners to list unused assets (cameras, tools, vehicles, camping gear) and renters to discover and book them from nearby verified users.
 
-[![Tech Stack](https://img.shields.io/badge/Stack-Node.js%20%7C%20React%20%7C%20MongoDB%20%7C%20Redis%20%7C%20Socket.io-orange?style=flat-square)](https://github.com)
-[![Auth](https://img.shields.io/badge/Auth-JWT%20%2B%20CSRF%20%2B%20Redis%20Blacklist-blue?style=flat-square)](https://github.com)
-[![Search](https://img.shields.io/badge/Search-Elasticsearch%20%2B%20MongoDB%20Fallback-green?style=flat-square)](https://github.com)
+## Table of Contents
+- [Architecture Overview](#architecture-overview)
+- [Key Engineering Components](#key-engineering-components)
+- [Feature List](#feature-list)
+- [System Architecture Diagram](#system-architecture-diagram)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Core Business Lifecycles](#core-business-lifecycles)
+- [Security Implementation](#security-implementation)
+- [Environment Variables](#environment-variables)
+- [Installation & Setup](#installation--setup)
+- [Design Patterns](#design-patterns)
 
----
+## Architecture Overview
 
-## 📋 Table of Contents
-- [Overview](#-overview)
-- [What Makes Rentora Different](#-what-makes-rentora-different)
-- [Full Feature List](#-full-feature-list)
-- [System Architecture](#-system-architecture)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-directory-structure)
-- [Core Business Lifecycles](#-core-business-lifecycles)
-- [UI & Frontend Features](#-ui--frontend-features)
-- [Security Implementation](#-security-implementation)
-- [Environment Variables](#-environment-variables)
-- [Installation & Setup](#-installation--setup)
-- [License](#-license)
-
----
-
-## 🌟 Overview
-
-Rentora enables item owners to monetize unused assets while giving renters affordable, short-term access to cameras, tools, vehicles, bikes, camping gear, and more — from verified neighbors nearby.
-
-Built with **Node.js + TypeScript**, **React (Vite)**, **MongoDB**, **Redis**, **BullMQ**, **Socket.io**, **Elasticsearch**, and **Razorpay**, Rentora is architected for reliability, scale, and maintainability.
-
----
-
-## 🚀 What Makes Rentora Different
-
-These are the top engineering highlights that separate Rentora from a standard college project:
-
-| Feature | Implementation |
+| Component | Implementation |
 |---|---|
-| 📍 **Location-Aware Discovery** | Nominatim API geocoding + Redis caching + Haversine formula + MongoDB 2dsphere indexing |
-| 🛡️ **Trust & Reputation Engine** | Internal Trust Score tracking (+2 completion, -5 cancellation penalty) & public `reputationTier` mapping |
-| 📸 **Ephemeral Photo Evidence** | Handover/Return condition uploads with 3-day automated Cloudinary asset purge via BullMQ delay queues |
-| 🔍 **Zero-Downtime Search** | Elasticsearch fuzzy search with automatic MongoDB regex fallback |
-| 💬 **Real-Time Chat** | JWT-authenticated Socket.io room isolation per booking + message acknowledgment handling |
-| 💳 **Secure Payments** | Server-side amount calculation, HMAC SHA256 verification, idempotency |
-| ⚡ **Async Job Queues** | BullMQ + Redis for emails, ES sync, evidence purge, and automated booking transitions |
-| 🔒 **Enterprise Security** | JWT + Refresh Token Blacklist + Double CSRF + bcrypt + Account Suspension (`isBlocked`) |
-| 📊 **Error Monitoring** | Sentry APM integration with automated 500 error capture and user context binding |
-| 🏛 **Clean Architecture** | Controller → Service → Model separation, centralized pricing engine |
-| 🔔 **Live Notifications** | Real-time Socket.io notification delivery with unread badge counts |
-| 🔐 **QR Handover & Return** | Location-verified (500m geofence) + short-lived JWT (2m expiry) + photo validation prerequisite + automated status transitions |
+| Location-Aware Discovery | Nominatim API geocoding + Redis caching + Haversine formula + MongoDB 2dsphere indexing |
+| Photo Evidence Lifecycle | Handover/return condition uploads with 3-day automated Cloudinary purge via BullMQ delay queues |
+| Search | Elasticsearch fuzzy search with automatic MongoDB regex fallback |
+| Real-Time Chat | JWT-authenticated Socket.io room isolation per booking, with message acknowledgment handling |
+| Payments | Server-side amount calculation, HMAC SHA256 signature verification, idempotency guards |
+| Async Job Queues | BullMQ + Redis for emails, Elasticsearch sync, evidence purge, and booking status transitions |
+| Security | JWT + refresh token blacklist + double CSRF protection + bcrypt + account suspension (`isBlocked`) |
+| Architecture | Controller → Service → Model separation with a centralized pricing engine |
+| Notifications | Real-time Socket.io delivery with unread badge counts |
 
----
+## Feature List
 
-## ✨ Full Feature List
+### Authentication & User Management
+- Email registration with bcrypt password hashing and OTP email verification
+- Google OAuth (login + register, flow-aware)
+- JWT authentication: access token (15 min) + refresh token (7 days) in HTTP-only cookies
+- Refresh token rotation without forced re-login
+- Redis-backed token blacklist on logout — invalidated refresh tokens cannot be reused
+- Double CSRF protection: secret cookie + `X-CSRF-Token` header with timing-safe comparison
+- Role-based access control: Guest, Renter, Owner, Admin, enforced via middleware
+- Profile management: name, phone, profile image, address, city, district, state, pincode
 
-### 👤 Authentication & User Management
+### Admin Controls & Account Suspension
+- `isBlocked` flag checked during JWT verification; blocked users receive `403 Forbidden` and cannot log in or use the marketplace
+- Admin management API: `PATCH /user/:id/block` and `PATCH /user/:id/activate`, restricted to `admin` role
 
-- **Email Registration** with bcrypt password hashing and OTP email verification
-- **Google OAuth** (Login + Register, flow-aware)
-- **JWT Authentication**: Access Token (15 min) + Refresh Token (7 days) in HTTP-Only cookies
-- **Refresh Token Rotation**: New access token issued without forcing re-login
-- **Token Blacklist**: Redis-backed logout that invalidates refresh tokens — stolen tokens cannot be reused
-- **Double CSRF Protection**: Secret cookie + `X-CSRF-Token` header with timing-safe comparison
-- **Role-Based Access Control**: Guest, Renter, Owner, Admin roles with strict middleware guards
-- **Profile Management**: Name, phone, profile image, address, city, district, state, pincode
+### Photo Evidence & Auto-Purge Lifecycle
+- Return condition photos are mandatory before an owner can mark a booking complete (`PATCH /booking/:id/photos`)
+- Pickup condition photos are optional, uploaded by renters at handover
+- Uploading return photos schedules a BullMQ delay job (`photoPurgeQueue`); after 3 days, `photoPurgeWorker` destroys the Cloudinary assets and clears the DB photo arrays
 
-### 🛡️ Admin Controls & Account Suspension
+### Item Listing System (Owners)
+- Add/edit/delete items: title, category, description, multiple images (Cloudinary), pricing, deposit, availability, pickup location
+- Pause/resume listing visibility on Explore
+- New listings automatically inherit the owner's saved profile location
 
-- **Account Block Middleware**: `isBlocked` flag checked during JWT verification; blocked users receive a `403 Forbidden` response and are prevented from logging in or using the marketplace
-- **Admin Management API**: `PATCH /user/:id/block` and `PATCH /user/:id/activate` restricted to `admin` role
+### Location-Aware Discovery (Geospatial Engine)
+- Browser Geolocation API with permission handling, or manual city selection
+- Radius filter: 5/10/20/50/100 km
+- Haversine-calculated distance shown per listing
+- MongoDB `2dsphere` index with `$geoWithin $centerSphere` queries
+- Location persisted in LocalStorage across navigations
 
-### 🛡️ Trust Score & Reputation System
+### Smart Search
+- Elasticsearch fuzzy search across item title, category, and description
+- Automatic MongoDB regex fallback if Elasticsearch is unavailable
+- Combined search + location filters
+- BullMQ pipeline syncs listing changes to the Elasticsearch index asynchronously
 
-- **Automated Trust Scoring**: Internal user score (0–100 range) automatically updated based on rental lifecycle performance:
-  - `+2` score increment for both renter and owner upon successful booking completion (capped at 100)
-  - `-5` score penalty for canceling a committed (`APPROVED` / `CONFIRMED`) booking (floored at 0)
-- **Public Reputation Abstraction**: Unexposed raw score; server maps `trustScore` to public badges (`Top Community Member`, `Verified Member`, `Member`) returned in `reputationTier`
+### Wishlist
+- Add/remove items, persistent across sessions
 
-### 📸 Photo Evidence & Auto-Purge Lifecycle
-
-- **Mandatory Return Condition Upload**: Owner cannot mark booking completed until return condition photos are uploaded via `PATCH /booking/:id/photos`
-- **Optional Pickup Condition Upload**: Renters can upload handover condition photos at pickup
-- **Automated 3-Day Asset Purge Queue**: Uploading return condition photos schedules a BullMQ delay job (`photoPurgeQueue`). After 3 days, `photoPurgeWorker` automatically destroys the Cloudinary assets and clears DB photo arrays to optimize storage overhead
-
-### 🔐 QR Code Handover & Return Verification
-
-- **Prerequisite Validation**: QR codes cannot be generated unless the corresponding condition photos have been uploaded:
-  - **Handover QR**: Requires `booking.handoverPhotos.length > 0`. Throws `400` with the message `"Handover photos must be uploaded before generating the QR."` otherwise.
-  - **Return QR**: Requires `booking.returnPhotos.length > 0`. Throws `400` with the message `"Return photos must be uploaded before generating the QR."` otherwise.
-- **Short-Lived Tokens**: Generates 2-minute expiring JWTs signed with `QR_TOKEN_SECRET` to prevent token theft or reuse.
-- **GPS Location Geofencing**: Ensures the scanner is physically present at the pickup location (verified to be within **0.5 km** radius of the item's coordinates).
-- **Automated Booking Status Transitions**:
-  - Scanning **Handover QR** automatically sets `booking_status` to `"ongoing"`.
-  - Scanning **Return QR** automatically sets `booking_status` to `"completed"`.
-
-### 📊 Error Tracking & APM (Sentry)
-
-- **Automated Exception Capture**: `Sentry.setupExpressErrorHandler` captures uncaught 500 runtime exceptions & unhandled promise rejections
-- **User Context Tracing**: `Sentry.setUser({ id: userId })` attached during JWT verification for session-correlated crash reporting
-- **Environment Isolation**: Configured DSN with environment-aware sample rates (`tracesSampleRate`)
-
-### 📦 Item Listing System (Owners)
-
-- **Add Item**: Title, category, description, multiple images (Cloudinary CDN), pricing, deposit, availability, pickup location
-- **Edit Item**: All fields fully editable
-- **Delete Item**: Soft business validation before removal
-- **Pause Listing**: Temporarily hide from Explore (great for vacations, maintenance, personal use)
-- **Resume Listing**: Instantly re-publish to marketplace
-- **Auto Location Inheritance**: New listings automatically inherit owner's saved profile location — no manual re-entry
-
-### 📍 Location-Aware Discovery (Geospatial Engine)
-
-- **Automatic GPS Detection**: Browser Geolocation API with permission handling
-- **Manual City Selection**: User can override to any city (e.g., Ahmedabad → Ranchi → Delhi)
-- **Radius Filter**: Choose 5km / 10km / 20km / 50km / 100km dynamically
-- **Distance Display**: Exact Haversine-calculated distance shown per listing (e.g., `4.3 km away`)
-- **MongoDB GeoSpatial**: `2dsphere` index + `$geoWithin $centerSphere` queries
-- **LocalStorage Caching**: Location persists across page navigations
-
-### 🔍 Smart Search System
-
-- **Elasticsearch**: High-performance fuzzy search across item title, category, and description
-- **Zero-Downtime Fallback**: If Elasticsearch is unavailable, MongoDB regex search activates automatically
-- **Combined Filters**: Search + Location (e.g., *"Camera within 20km"*)
-- **BullMQ Sync Pipeline**: All listing changes are queued for async Elasticsearch index updates
-
-### ❤️ Wishlist
-
-- Add / Remove items from wishlist
-- Persistent across sessions
-- Compare and rent anytime
-
-### 📅 Booking Lifecycle (State Machine)
+### Booking Lifecycle (State Machine)
 
 | Status | Description |
 |---|---|
@@ -145,96 +84,63 @@ These are the top engineering highlights that separate Rentora from a standard c
 | `CANCELLED` | Cancelled by renter or owner |
 
 - Strict role-based state transitions
-- Prevents double-booking via date locking on approval
+- Double-booking prevented via date locking on approval
 
-### 💰 Centralized Pricing Engine
+### Centralized Pricing Engine
+- Computes rental amount, platform fee (10%), owner earning, and total
+- Single source of truth — client never sends amounts; server always calculates and validates
 
-- Automatically computes: rental amount, platform fee (10%), owner earning, and total
-- **Single source of truth** — client never sends amounts, server always calculates and validates
-
-### 💳 Razorpay Payment Integration
-
-- Server-side Razorpay order creation
-- **HMAC SHA256 signature verification** before confirming booking
+### Razorpay Payment Integration
+- Server-side order creation
+- HMAC SHA256 signature verification before confirming booking
 - Ownership validation on payment confirm
-- Idempotency guards — duplicate payments rejected
-- Atomically transitions booking to `CONFIRMED` on payment success
+- Idempotency guards reject duplicate payments
+- Atomic transition of booking to `CONFIRMED` on payment success
 
-### 💬 Real-Time Chat (Socket.io)
+### Real-Time Chat (Socket.io)
+- JWT-authenticated WebSocket connections
+- Room-based isolation — each booking has its own chat room
+- Live message delivery, unread message handling
+- Direct owner-renter messaging
 
-- **JWT-authenticated** WebSocket connections
-- **Room-based isolation** — each booking has its own chat room
-- Live message delivery with automatic scrolling
-- Unread message handling
-- Owner ↔ Renter direct messaging
+### Notification System
+- Real-time Socket.io notifications for booking requests, approvals/rejections, payments, new messages, and listing updates
+- Persistent notification bell with unread badge count, mark-all-as-read, direct navigation to the relevant resource
 
-### 🔔 Notification System
+### Ratings & Reviews
+- One review per completed booking, enforced server-side
+- Star rating (1–5) + optional text
+- Item's average rating recalculated in real time after each submission
 
-Real-time notifications via Socket.io for:
-- Booking request received
-- Booking approved / rejected
-- Payment completed
-- New message received
-- Listing updates
+### Image Upload (Cloudinary)
+- Multiple images per listing, optimized CDN delivery, URLs stored in MongoDB
 
-- Persistent notification bell with unread badge count
-- Mark all as read
-- Direct navigation to relevant resource on click
-
-### ⭐ Ratings & Reviews
-
-- Renters can rate and review items after a completed booking
-- One review per booking (enforced server-side)
-- Star rating (1–5) + optional text review
-- Real-time average rating recalculated on `Item` document after every submission
-- Ratings displayed across Explore, Search, and Item Detail pages
-
-### 📷 Image Upload (Cloudinary)
-
-- Multiple images per listing
-- Optimized delivery via Cloudinary CDN
-- Automatic URL storage in MongoDB
-
-### ⚡ Background Job Processing (BullMQ + Redis)
+### Background Job Processing (BullMQ + Redis)
 
 | Queue | Purpose |
 |---|---|
 | Email Queue | OTP, booking accepted/cancelled emails via Resend |
 | Elasticsearch Sync | Async index updates on listing create/update/delete |
-| Booking Status Worker | Auto-transition bookings to `ongoing` / `completed` by date |
-| Photo Purge Queue | 3-day delayed auto-deletion of evidence photos from Cloudinary & DB |
+| Booking Status Worker | Auto-transition bookings to `ongoing`/`completed` by date |
+| Photo Purge Queue | 3-day delayed deletion of evidence photos from Cloudinary & DB |
 
 - Automatic retry handling for failed jobs
 - Redis-backed concurrency management
 - Non-blocking — API responses are never delayed by background work
 
-### 📧 Email System (Resend)
+### Email System (Resend)
+- OTP verification, booking accepted, booking cancelled emails
+- Extendable to password reset, payment receipts, review reminders
 
-Currently sends:
-- OTP verification email
-- Booking accepted notification
-- Booking cancelled notification
-
-Easily extendable to: password reset, payment receipt, review reminders.
-
-### 📊 Owner Dashboard
-
+### Owner Dashboard
 - Overview of total listings, active bookings, pending requests
-- **Earnings Analytics**: Gross earnings, platform fees, net payouts
-- Inventory management with pause/resume controls
-- Booking approval workflow
+- Earnings analytics: gross earnings, platform fees, net payouts
+- Inventory management with pause/resume, booking approval workflow
 
-### 🎯 Renter Dashboard
+### Renter Dashboard
+- Active rental tracking, rental history, wishlist management, message inbox, review management
 
-- Active rental tracking
-- Rental history
-- Wishlist management
-- Message inbox
-- Review management
-
----
-
-## 🏗️ System Architecture
+## System Architecture Diagram
 
 ```mermaid
 graph TD
@@ -242,25 +148,20 @@ graph TD
         Client["Client App"]
         SocketClient["Socket.io Client"]
     end
-
     subgraph SecurityGateway["API Gateway & Security Controls"]
         API["Express HTTP Server (TypeScript)"]
         Auth["JWT + CSRF Guard + isBlocked Guard"]
     end
-
     subgraph ServiceLayer["Domain Services & Engines"]
         GeoEngine["Geocoder (Nominatim + Redis Cache)"]
-        TrustEngine["Trust Score Engine (+2 / -5)"]
         PricingEngine["Centralized Pricing Engine"]
     end
-
     subgraph AsyncQueues["Background Job Queues (BullMQ)"]
         Queue["BullMQ Queue Manager"]
         PurgeWorker["Photo Purge Worker (3-Day Retention)"]
         BookingWorker["Booking Status Worker"]
         ESWorker["Elasticsearch Sync Worker"]
     end
-
     subgraph InfraStorage["Persistence & External Services"]
         DB[("MongoDB (2dsphere Spatial)")]
         Cache[("Redis Cache / Blacklist / Queue Broker")]
@@ -268,9 +169,7 @@ graph TD
         Cloudinary["Cloudinary CDN"]
         Razorpay["Razorpay Gateway"]
         SocketServer["Socket.io Realtime Gateway"]
-        Sentry["Sentry Error APM"]
     end
-
     Client -->|HTTPS API Requests| API
     SocketClient <-->|WebSockets| SocketServer
     API --> Auth
@@ -278,8 +177,6 @@ graph TD
     API --> GeoEngine
     GeoEngine -- "Cache / Rate Limit" --> Cache
     GeoEngine --> DB
-    API --> TrustEngine
-    TrustEngine --> DB
     API --> PricingEngine
     API -->|Async Jobs| Queue
     Queue -->|Redis Connection| Cache
@@ -288,14 +185,11 @@ graph TD
     Queue -->|Auto Transition| BookingWorker --> DB
     API -->|Upload Evidence & Listing Media| Cloudinary
     API -->|Verify Signature| Razorpay
-    API -->|Error Tracing & Crash Reports| Sentry
     SocketServer -->|Persist Messages| DB
     SocketServer -->|Emit Notifications| SocketClient
 ```
 
----
-
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 | Technology | Purpose |
@@ -307,7 +201,6 @@ graph TD
 | BullMQ | Background job queue processing |
 | Elasticsearch v8 | Full-text fuzzy search engine |
 | Socket.io v4 | Real-time bidirectional WebSocket communication |
-| @sentry/node | Production APM, 500 error capture & user context tracing |
 | Razorpay Node SDK | Payment gateway integration |
 | Cloudinary Node SDK | Image upload and CDN delivery |
 | Resend | Transactional email delivery |
@@ -327,9 +220,7 @@ graph TD
 | React Hot Toast | User feedback notifications |
 | Browser Geolocation API | GPS location detection |
 
----
-
-## 📁 Project Directory Structure
+## Project Structure
 
 ```
 Rentora/
@@ -362,12 +253,9 @@ Rentora/
 │   │   └── main.jsx         # Vite entrypoint
 ```
 
----
-
-## 🔄 Core Business Lifecycles
+## Core Business Lifecycles
 
 ### 1. Location-Aware Discovery & Geo-Search
-
 ```mermaid
 flowchart TD
     A[Renter opens Explore] --> B{GPS Allowed?}
@@ -383,14 +271,12 @@ flowchart TD
 ```
 
 ### 2. Authentication & Security Flow
-
 ```mermaid
 sequenceDiagram
     participant User as Renter / Owner
     participant API as Express Auth API
     participant Redis as Redis Store
     participant DB as MongoDB
-
     User->>API: POST /auth/login (email, password)
     API->>DB: Verify credentials & bcrypt hash
     DB-->>API: User Document
@@ -400,12 +286,10 @@ sequenceDiagram
     User->>API: Authenticated Request + X-CSRF-Token
     API->>API: Timing-safe CSRF verification
     API-->>User: Success Response
-
     Note over API,Redis: On Logout — refreshToken added to Redis blacklist
 ```
 
 ### 3. Booking Lifecycle & State Machine
-
 ```mermaid
 stateDiagram-v2
     [*] --> PENDING: Renter Submits Booking Request
@@ -421,7 +305,6 @@ stateDiagram-v2
 ```
 
 ### 4. Payment Integration (Razorpay)
-
 ```mermaid
 sequenceDiagram
     participant Renter
@@ -429,7 +312,6 @@ sequenceDiagram
     participant Engine as Pricing Engine
     participant Razorpay as Razorpay API
     participant DB as MongoDB
-
     Renter->>API: POST /payments/create-order { bookingId }
     API->>Engine: Calculate totalAmount (server-side, no client input)
     Engine-->>API: rentalAmount + platformFee + deposit = total
@@ -446,14 +328,12 @@ sequenceDiagram
 ```
 
 ### 5. Real-Time Chat (Socket.io)
-
 ```mermaid
 sequenceDiagram
     participant Renter
     participant Owner
     participant SocketServer as Socket.io Server
     participant DB as MongoDB
-
     Renter->>SocketServer: Connect (JWT Cookie authentication)
     Owner->>SocketServer: Connect (JWT Cookie authentication)
     Renter->>SocketServer: join room (bookingId)
@@ -464,7 +344,6 @@ sequenceDiagram
 ```
 
 ### 6. Search with Zero-Downtime Fallback
-
 ```mermaid
 flowchart LR
     A[User types query] --> B[Elasticsearch Fuzzy Search]
@@ -476,7 +355,6 @@ flowchart LR
 ```
 
 ### 7. BullMQ Background Job Flow
-
 ```mermaid
 graph LR
     A[API Action] --> B[BullMQ Job Added to Queue]
@@ -489,8 +367,7 @@ graph LR
     E & F & G & H --> I[Job completed / retried on failure]
 ```
 
-### 8. Photo Evidence Upload & Automated 3-Day Purge Lifecycle
-
+### 8. Photo Evidence Upload & Automated Purge Lifecycle
 ```mermaid
 sequenceDiagram
     participant Owner as Owner / Renter
@@ -499,7 +376,6 @@ sequenceDiagram
     participant Queue as BullMQ Delay Queue
     participant Worker as Photo Purge Worker
     participant DB as MongoDB
-
     Owner->>API: PATCH /booking/:id/photos (multipart FormData)
     API->>CDN: Upload evidence photos
     CDN-->>API: Return publicId & URL
@@ -514,88 +390,12 @@ sequenceDiagram
     Worker->>DB: Empty photo arrays & set evidencePurgedAt
 ```
 
-### 9. Trust Score & Reputation Calculation Flow
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant API as Booking / User Service
-    participant Engine as Trust Score Engine
-    participant Mapper as Reputation Tier Mapper
-    participant DB as MongoDB
-
-    alt Booking Completed
-        API->>Engine: completeBookingService()
-        Engine->>DB: $inc trustScore +2 (capped at 100) for Renter & Owner
-    else Committed Booking Cancelled
-        API->>Engine: cancelBookingService()
-        Engine->>DB: $inc trustScore -5 (floored at 0) for Canceler
-    end
-
-    Client->>API: GET /booking or GET /user/me/profile
-    API->>DB: Fetch user document
-    API->>Mapper: getReputationTier(user.trustScore)
-    Mapper-->>API: "Top Community Member" / "Verified Member" / "Member"
-    API-->>Client: Return reputationTier (trustScore stripped / unexposed)
-```
-
-### 10. Secure QR Code Handover & Return Lifecycle
-
-```mermaid
-sequenceDiagram
-    participant Requester as Generator (Owner/Renter)
-    participant Client as Scanner Client
-    participant API as Booking service (QR Engine)
-    participant Geocoder as GPS / Geofence check
-    participant DB as MongoDB
-
-    Requester->>API: GET /booking/:id/qr-code?type=handover|return
-    alt Photos missing for request type
-        API-->>Requester: HTTP 400 (Validation Error)
-    else Photos exist
-        API->>API: Generate 2-minute expiring JWT (QR_TOKEN_SECRET)
-        API-->>Requester: Return QR token
-    end
-    Requester->>Client: Displays QR Code SVG
-    Client->>Client: Scans QR code via camera
-    Client->>Client: Fetch current GPS coordinates
-    Client->>API: POST /booking/:id/confirm-scan { token, lat, lng }
-    API->>API: Verify JWT signature & expiration
-    API->>DB: Fetch booking & item details (retrieve item location)
-    API->>Geocoder: Calculate distance between scanner and item coordinates
-    alt Distance > 0.5 km
-        API-->>Client: HTTP 403 (Proximity Rejection)
-    else Distance <= 0.5 km
-        API->>DB: Update handoverConfirmedAt / returnConfirmedAt
-        API->>DB: Transition booking_status (to ongoing / completed)
-        API-->>Client: HTTP 200 (Success Confirmation)
-    end
-```
-
----
-
-## 🎨 UI & Frontend Features
-
-- **Premium Dark Theme** with warm amber/orange brand palette
-- **Location-Aware Marketplace Hero** — real DB items fetched and shown on the homepage hero section
-- **Guest Explore Page** — browse without logging in, location-based discovery works for guests
-- **Features Showcase Page** (`/features`) — full production architecture overview for recruiters/portfolio
-- **Responsive Layout** — mobile, tablet, and desktop
-- **Skeleton Loading States** — smooth loading experience
-- **Empty States** — clean UI for no-data scenarios
-- **Custom 404 Page**
-- **Real-time Notification Bell** with unread count badge
-- **Auth Modal** — Login/Register in a modal with Google OAuth support
-- **Protected Routes** — role-based access via `ProtectedRoute` guard
-
----
-
-## 🔒 Security Implementation
+## Security Implementation
 
 | Layer | Implementation |
 |---|---|
 | Password Storage | bcrypt with salt rounds |
-| Session Tokens | JWT Access (15 min) + Refresh (7 days) in HTTP-Only, SameSite cookies |
+| Session Tokens | JWT access (15 min) + refresh (7 days) in HTTP-only, SameSite cookies |
 | Token Invalidation | Redis-backed refresh token blacklist on logout |
 | CSRF Protection | Double-submit cookie pattern with `timingSafeEqual` comparison |
 | Input Validation | Zod schema validation on all routes |
@@ -604,54 +404,39 @@ sequenceDiagram
 | Ownership Guards | Every mutation checks user ownership before proceeding |
 | Role Enforcement | `restrictTo(role)` middleware on every protected route |
 | Account Guards | `isBlocked` middleware check returning `403 Forbidden` for suspended users |
-| Error Monitoring | Sentry APM exception handling & `Sentry.setUser` session context binding |
 | XSS Safe Inputs | All user inputs sanitized before storage |
 
----
+## Environment Variables
 
-## 🔑 Environment Variables
-
-Create a `.env` file inside `backend/`:
-
+`backend/.env`:
 ```env
 NODE_ENV=development
 PORT=3000
 MONGO_URI=mongodb://localhost:27017/rentora
 CLIENT_URL=http://localhost:5173
-
 JWT_ACCESS_SECRET=your_jwt_access_secret
 JWT_REFRESH_SECRET=your_jwt_refresh_secret
 JWT_ACCESS_EXPIRY=15m
 JWT_REFRESH_EXPIRY=7d
-
 SESSION_SECRET=your_session_secret
-
 RAZORPAY_KEY_ID=rzp_test_your_key_id
 RAZORPAY_KEY_SECRET=your_razorpay_secret
-
 ELASTIC_SEARCH_URL=http://localhost:9200
 ELASTIC_API_KEY=your_elastic_api_key
-
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_cloudinary_key
 CLOUDINARY_API_SECRET=your_cloudinary_secret
-
 RESEND_API_KEY=your_resend_api_key
 REDIS_URL=redis://localhost:6379
-
-SENTRY_DSN=your_sentry_dsn_url
 ```
 
-Create a `.env` file inside `frontend/`:
-
+`frontend/.env`:
 ```env
 VITE_BACKEND_URL=http://localhost:3000/api/v1
 VITE_RAZORPAY_KEY_ID=rzp_test_your_key_id
 ```
 
----
-
-## ⚡ Installation & Setup
+## Installation & Setup
 
 ### Prerequisites
 - Node.js v18+ & npm
@@ -663,10 +448,8 @@ VITE_RAZORPAY_KEY_ID=rzp_test_your_key_id
 ```bash
 git clone https://github.com/priyanshuraj20/Rentora.git
 cd Rentora
-
 # Backend
 cd backend && npm install
-
 # Frontend
 cd ../frontend && npm install
 ```
@@ -674,7 +457,7 @@ cd ../frontend && npm install
 ### 2. Configure Environment Variables
 Copy and fill in the `.env` files as described above.
 
-### 3. Run Geocoding Data Migration (One-time, for existing data)
+### 3. Run Geocoding Data Migration (one-time, for existing data)
 ```bash
 cd backend
 npx ts-node -r tsconfig-paths/register src/scripts/migrateGeoCoordinates.ts
@@ -684,28 +467,23 @@ npx ts-node -r tsconfig-paths/register src/scripts/migrateGeoCoordinates.ts
 ```bash
 # Backend (in one terminal)
 cd backend && npm run dev
-
 # Frontend (in another terminal)
 cd frontend && npm run dev
 ```
 
-The app will be running at `http://localhost:5173`.
+App runs at `http://localhost:5173`.
 
----
-
-## 🧠 Design Patterns Used
+## Design Patterns
 
 | Pattern | Where Applied |
 |---|---|
-| **Service Layer** | Business logic decoupled from HTTP controllers |
-| **Strategy Pattern** | `IPaymentProvider` interface for payment gateways |
-| **State Machine** | Booking lifecycle state transitions |
-| **Repository Pattern** | MongoDB queries abstracted into service functions |
-| **Observer Pattern** | Socket.io event-driven notification system |
-| **Queue-Based Processing** | BullMQ async job execution |
+| Service Layer | Business logic decoupled from HTTP controllers |
+| Strategy Pattern | `IPaymentProvider` interface for payment gateways |
+| State Machine | Booking lifecycle state transitions |
+| Repository Pattern | MongoDB queries abstracted into service functions |
+| Observer Pattern | Socket.io event-driven notification system |
+| Queue-Based Processing | BullMQ async job execution |
 
----
+## License
 
-## 📜 License
-
-Distributed under the **MIT License**. See `LICENSE` for details.
+Distributed under the MIT License. See `LICENSE` for details.
