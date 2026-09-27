@@ -1,34 +1,17 @@
-# Rentora — Production-Grade Peer-to-Peer Rental Marketplace
+# Rentora — Peer-to-Peer Rental Marketplace
 
-> **Not just a CRUD project.** Rentora is an end-to-end, location-aware P2P rental marketplace with enterprise security, real-time WebSockets, background job queues, zero-downtime search, Razorpay payments, and a clean production architecture.
+> Rentora is an end-to-end, location-aware P2P rental marketplace with security, real-time WebSockets, background job queues, zero-downtime search, Razorpay payments, and a clean architecture.
 
 [![Tech Stack](https://img.shields.io/badge/Stack-Node.js%20%7C%20React%20%7C%20MongoDB%20%7C%20Redis%20%7C%20Socket.io-orange?style=flat-square)](https://github.com)
 [![Auth](https://img.shields.io/badge/Auth-JWT%20%2B%20CSRF%20%2B%20Redis%20Blacklist-blue?style=flat-square)](https://github.com)
 [![Search](https://img.shields.io/badge/Search-Elasticsearch%20%2B%20MongoDB%20Fallback-green?style=flat-square)](https://github.com)
 
 ---
-
-## 📋 Table of Contents
-- [Overview](#-overview)
-- [What Makes Rentora Different](#-what-makes-rentora-different)
-- [Full Feature List](#-full-feature-list)
-- [System Architecture](#-system-architecture)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-directory-structure)
-- [Core Business Lifecycles](#-core-business-lifecycles)
-- [UI & Frontend Features](#-ui--frontend-features)
-- [Security Implementation](#-security-implementation)
-- [Environment Variables](#-environment-variables)
-- [Installation & Setup](#-installation--setup)
-- [License](#-license)
-
----
-
 ## 🌟 Overview
 
-Rentora enables item owners to monetize unused assets while giving renters affordable, short-term access to cameras, tools, vehicles, bikes, camping gear, and more — from verified neighbors nearby.
+Rentora enables item owners to monetize unused assets while giving renters affordable, short-term access to cameras, tools, vehicles, bikes, camping gear, and more items — from verified neighbors nearby.
 
-Built with **Node.js + TypeScript**, **React (Vite)**, **MongoDB**, **Redis**, **BullMQ**, **Socket.io**, **Elasticsearch**, and **Razorpay**, Rentora is architected for reliability, scale, and maintainability.
+Built with **Node.js**, **React (Vite)**, **MongoDB**, **Redis**, **BullMQ**, **Socket.io**, **Elasticsearch**, and **Razorpay**, Rentora is architected for reliability, scale, and maintainability.
 
 ---
 
