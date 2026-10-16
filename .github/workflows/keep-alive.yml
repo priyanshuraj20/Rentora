@@ -1,0 +1,22 @@
+name: Keep Render Backend Alive
+
+on:
+  schedule:
+    # Runs every 14 minutes (Render free tier spins down after 15 minutes of inactivity)
+    - cron: '*/14 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions UI
+
+jobs:
+  ping-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Rentora Render Backend
+        run: |
+          echo "Pinging Rentora backend at $(date)..."
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://rentora-tgf9.onrender.com/health)
+          echo "Response HTTP Status: $STATUS_CODE"
+          if [ "$STATUS_CODE" -eq 200 ]; then
+            echo "Render backend is warm, alive, and healthy!"
+          else
+            echo "Unexpected status $STATUS_CODE, but ping successfully reached server to wake it up."
+          fi
