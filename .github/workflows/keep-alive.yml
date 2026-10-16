@@ -1,22 +1,23 @@
-name: Keep Render Backend Alive
+name: Keep Render Backend Alive (6-Hour On-Demand)
 
 on:
+  workflow_dispatch: # Trigger manually from GitHub Actions UI when starting interview/study session
   schedule:
-    # Runs every 14 minutes (Render free tier spins down after 15 minutes of inactivity)
-    - cron: '*/14 * * * *'
-  workflow_dispatch: # Allows manual trigger from GitHub Actions UI
+    # Runs during peak interview hours only: 12:00 PM to 6:00 PM IST (06:30 - 12:30 UTC)
+    - cron: '*/14 6-12 * * *'
 
 jobs:
-  ping-backend:
+  keep-alive-session:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Rentora Render Backend
+      - name: Keep Render Awake for 6 Hours
         run: |
-          echo "Pinging Rentora backend at $(date)..."
-          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://rentora-tgf9.onrender.com/health)
-          echo "Response HTTP Status: $STATUS_CODE"
-          if [ "$STATUS_CODE" -eq 200 ]; then
-            echo "Render backend is warm, alive, and healthy!"
-          else
-            echo "Unexpected status $STATUS_CODE, but ping successfully reached server to wake it up."
-          fi
+          echo "Starting 6-hour keep-alive session at $(date)..."
+          # 36 iterations x 10 minutes = 360 minutes (6 hours)
+          for i in {1..36}
+          do
+            echo "Ping $i/36 at $(date)"
+            curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" https://rentora-tgf9.onrender.com/health || true
+            sleep 600
+          done
+          echo "6-hour session complete. Server will now sleep to preserve monthly Render quota."
