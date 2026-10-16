@@ -4,42 +4,60 @@ import * as Sentry from "@sentry/node";
 import { catchAsync } from "@utils/catchAsync";
 import { AppError } from "@utils/AppError";
 import { env } from "@config/env";
-import { TokenPayload } from "@utils/generateTokens";
+import { TokenPayload, generateAccessToken } from "@utils/generateTokens";
+import { refreshTokenService } from "../service/auth.service";
 import { User } from "@models/user.model";
 
 export const VerifyUser = catchAsync(
-  async (req: Request, _res: Response, next: NextFunction) => {
-    //browser ayutomatically cookie bhejta
-    const token = req.cookies?.accessToken;
-    //if cookie nahi mtlb logged in nahi hain
-    if (!token) {
-      throw new AppError("Unauthorized. Please login", 401);
+  async (req: Request, res: Response, next: NextFunction) => {
+    let token = req.cookies?.accessToken;
+    let decoded: TokenPayload | null = null;
+
+    if (token) {
+      try {
+        decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as TokenPayload;
+      } catch (err) {
+        decoded = null;
+      }
     }
 
-    // If this throws (expired/invalid), it's caught by catchAsync and
-    // forwarded to globalErrorHandler, which converts JWT errors into
-    // clean 401 messages (see error.middleware.ts).
+    // If access token is missing or expired, attempt transparent silent refresh using the 7-day refresh token cookie
+    if (!decoded && req.cookies?.refreshToken) {
+      try {
+        const payload = await refreshTokenService(req.cookies.refreshToken);
+        const newAccessToken = generateAccessToken(payload);
+        const cookieOptions = {
+          httpOnly: true,
+          secure: env.NODE_ENV === "production",
+          sameSite: (env.NODE_ENV === "production" ? "none" : "lax") as
+            | "none"
+            | "lax",
+          maxAge: 15 * 60 * 1000,
+        };
+        res.cookie("accessToken", newAccessToken, cookieOptions);
+        decoded = payload;
+      } catch (refreshErr) {
+        decoded = null;
+      }
+    }
 
-    //check verify token || expired toh nahi || token fake toh nahi || signature match karti   and decoded ke pas data nikal ke aajata
-    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as TokenPayload;
+    if (!decoded) {
+      throw new AppError("Unauthorized. Please login", 401);
+    }
 
     req.userId = decoded.userId;
     req.userRole = decoded.userRole;
 
     const user = await User.findById(decoded.userId).select("isBlocked");
     if (user?.isBlocked) {
-      throw new AppError("Your account has been suspended. Please contact support.", 403);
+      throw new AppError(
+        "Your account has been suspended. Please contact support.",
+        403,
+      );
     }
 
-    //agar baad mein errror sentry will display in  its dashboard
     Sentry.setUser({ id: decoded.userId });
 
     next();
   },
 );
-
-
-
-
-
-

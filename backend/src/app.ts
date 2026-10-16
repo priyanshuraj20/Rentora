@@ -67,10 +67,12 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get("/health", healthController);
 
 // -------------------- CSRF & ROUTES --------------------
+app.use(csrfRouter);
 app.use("/api/v1", csrfRouter);
 app.use(verifyCsrf);
 
 app.use("/api/v1/auth", authRouter);
+app.use("/auth", authRouter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/items", itemRouter);
 app.use("/api/v1/booking", bookingRouter);

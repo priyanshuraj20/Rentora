@@ -83,6 +83,16 @@ export const verifyCsrf = (
     "/api/v1/auth/google",
     "/api/v1/auth/logout",
     "/api/v1/notifications/read",
+    "/auth/login",
+    "/auth/register",
+    "/auth/send-otp",
+    "/auth/verify-otp",
+    "/auth/refresh",
+    "/auth/forgot-password",
+    "/auth/reset-password",
+    "/auth/google",
+    "/auth/logout",
+    "/notifications/read",
   ];
   if (exemptPrefixes.some((prefix) => url.startsWith(prefix))) {
     return next();
