@@ -11,22 +11,14 @@ const RenterNavbar = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
 
-    // Fetching user names and profileImage from useAuth()
-    const { user } = useAuth();
+    // Fetching user details and logout method from useAuth()
+    const { user, logout } = useAuth();
     const name = user?.name;
     const avatarUrl = user?.profileImage;
 
     const handleSignOut = async () => {
         try {
-            // Call backend logout
-            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/logout`, {
-                method: "POST",
-                credentials: "include",
-            });
-            const data = await res.json();
-            if (!data.success) {
-                throw new Error("Unable to logout");
-            }
+            await logout();
             toast.success("Signed out successfully 👋");
             navigate("/");
         } catch (error) {
@@ -35,7 +27,6 @@ const RenterNavbar = () => {
             // Clear all tokens/storage
             localStorage.clear();
             sessionStorage.clear();
-            // Redirect to home
             setIsDropdownOpen(false);
         }
     };

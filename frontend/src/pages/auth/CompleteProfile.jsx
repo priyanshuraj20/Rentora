@@ -46,9 +46,13 @@ export default function CompleteProfile({ switchMode }) {
   const convertImage = async (profilePic) => {
     if (!profilePic) return null;
     const url = import.meta.env.VITE_CLOUDINARY_URL;
+    const preset = import.meta.env.VITE_CLOUDINARY_PRESET;
+    if (!url || !preset) {
+      throw new Error("Cloudinary credentials are not configured. Please check VITE_CLOUDINARY_URL and VITE_CLOUDINARY_PRESET.");
+    }
     const img = new FormData();
     img.append("file", profilePic);
-    img.append("upload_preset", import.meta.env.VITE_CLOUDINARY_PRESET);
+    img.append("upload_preset", preset);
     const res = await fetch(
       url,
       {
@@ -57,8 +61,11 @@ export default function CompleteProfile({ switchMode }) {
       }
     );
     const data = await res.json();
+    if (!res.ok || !data.secure_url) {
+      throw new Error(data?.error?.message || "Failed to upload profile photo to Cloudinary");
+    }
     return data.secure_url;
-  }
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];

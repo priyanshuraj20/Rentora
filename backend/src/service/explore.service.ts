@@ -201,8 +201,12 @@ export const getItemByIdService = async (id: string) => {
     description: (item as any).description,
     images: (item as any).images ?? [],
     category: (item as any).category,
+    subCategory: (item as any).subCategory ?? null,
     rating: (item as any).rating?.average ?? 0,
     pricing: (item as any).price,
+    discount: (item as any).discount ?? { daily: 0, weekly: 0, monthly: 0 },
+    securityDeposit: (item as any).securityDeposit ?? 0,
+    location: (item as any).location ?? null,
     unavailableDates: allUnavailableDates,
     owner: item.ownerId
       ? {

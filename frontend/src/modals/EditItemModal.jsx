@@ -78,6 +78,10 @@ export default function EditItemModal({ item, onClose, onSubmit }) {
         const uploadUrl = import.meta.env.VITE_CLOUDINARY_URL;
         const uploadPreset = import.meta.env.VITE_CLOUDINARY_PRESET;
 
+        if (!uploadUrl || !uploadPreset) {
+            throw new Error("Cloudinary credentials are not configured. Please check VITE_CLOUDINARY_URL and VITE_CLOUDINARY_PRESET.");
+        }
+
         const uploadPromises = images.map(async (img) => {
             if (typeof img === "string") return img;
 
@@ -85,21 +89,20 @@ export default function EditItemModal({ item, onClose, onSubmit }) {
             data.append("file", img);
             data.append("upload_preset", uploadPreset);
 
-            try {
-                const response = await fetch(uploadUrl, {
-                    method: "POST",
-                    body: data,
-                });
-                const resData = await response.json();
-                return resData.secure_url;
-            } catch (error) {
-                console.error("Cloudinary upload error:", error);
-                return null;
+            const response = await fetch(uploadUrl, {
+                method: "POST",
+                body: data,
+            });
+            const resData = await response.json();
+            if (!response.ok || !resData.secure_url) {
+                const errMsg = resData?.error?.message || response.statusText || "Failed to upload image to Cloudinary";
+                throw new Error(errMsg);
             }
+            return resData.secure_url;
         });
 
         const urls = await Promise.all(uploadPromises);
-        return urls.filter(url => url !== null);
+        return urls.filter((url) => typeof url === "string" && url.trim().length > 0);
     };
 
     const updateItem = async (data) => {
@@ -168,7 +171,7 @@ export default function EditItemModal({ item, onClose, onSubmit }) {
                     monthly: Number(formData.monthlyPrice) || 0
                 },
                 securityDeposit: Number(formData.securityDeposit) || 0,
-                images: imageUrls.filter(url => url !== null).length > 0 ? imageUrls.filter(url => url !== null) : undefined,
+                images: imageUrls.length > 0 ? imageUrls : undefined,
                 ...(locationType === "custom" && {
                     location: {
                         city: customLocation.city.trim(),

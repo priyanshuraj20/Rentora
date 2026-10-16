@@ -11,30 +11,25 @@ const OwnerNavbar = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
 
+    // Fetching user details and logout method from useAuth()
+    const { user, logout } = useAuth();
+    const name = user?.name;
+    const avatarUrl = user?.profileImage;
+
     const handleSignOut = async () => {
         try {
-            // Call backend logout
-            await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/logout`, {
-                method: "POST",
-                credentials: "include",
-            });
+            await logout();
+            toast.success("Signed out successfully 👋");
+            navigate("/");
         } catch (error) {
             console.error("Logout failed:", error);
         } finally {
             // Clear all tokens/storage
             localStorage.clear();
             sessionStorage.clear();
-            // Redirect to home
-            toast.success("Signed out successfully 👋");
-            navigate("/");
             setIsDropdownOpen(false);
         }
     };
-
-    // Fetching user names and profileImage from useAuth()
-    const { user } = useAuth();
-    const name = user?.name;
-    const avatarUrl = user?.profileImage;
 
     // Close dropdown when clicking outside
     useEffect(() => {

@@ -53,25 +53,31 @@ export default function AddItemModal({ onClose, onSubmit }) {
         const uploadUrl = import.meta.env.VITE_CLOUDINARY_URL;
         const uploadPreset = import.meta.env.VITE_CLOUDINARY_PRESET;
 
+        if (!uploadUrl || !uploadPreset) {
+            throw new Error("Cloudinary credentials are not configured. Please check VITE_CLOUDINARY_URL and VITE_CLOUDINARY_PRESET.");
+        }
+
         const uploadPromises = files.map(async (file) => {
+            if (typeof file === "string") return file;
+
             const data = new FormData();
             data.append("file", file);
             data.append("upload_preset", uploadPreset);
 
-            try {
-                const response = await fetch(uploadUrl, {
-                    method: "POST",
-                    body: data,
-                });
-                const resData = await response.json();
-                return resData.secure_url;
-            } catch (error) {
-                console.error("Cloudinary upload error:", error);
-                return null;
+            const response = await fetch(uploadUrl, {
+                method: "POST",
+                body: data,
+            });
+            const resData = await response.json();
+            if (!response.ok || !resData.secure_url) {
+                const errMsg = resData?.error?.message || response.statusText || "Failed to upload image to Cloudinary";
+                throw new Error(errMsg);
             }
+            return resData.secure_url;
         });
 
-        return Promise.all(uploadPromises);
+        const urls = await Promise.all(uploadPromises);
+        return urls.filter((url) => typeof url === "string" && url.trim().length > 0);
     };
 
     const addItemToBackend = async (data) => {
@@ -172,9 +178,18 @@ export default function AddItemModal({ onClose, onSubmit }) {
             }
         }
 
+        if (!formData.images || formData.images.length === 0) {
+            toast.error("Please select at least one image.");
+            return;
+        }
+
         setIsUploading(true);
         try {
             const imageUrls = await uploadImagesToCloudinary(formData.images);
+            if (!imageUrls || imageUrls.length === 0) {
+                throw new Error("No images were successfully uploaded. Please try again.");
+            }
+
             const finalData = {
                 title: formData.itemName,
                 description: formData.description,
@@ -185,7 +200,7 @@ export default function AddItemModal({ onClose, onSubmit }) {
                     monthly: Number(formData.monthlyPrice) || 0
                 },
                 securityDeposit: Number(formData.securityDeposit),
-                images: imageUrls.filter(url => url !== null),
+                images: imageUrls,
                 ...(locationType === "custom" && {
                     location: {
                         city: customLocation.city.trim(),

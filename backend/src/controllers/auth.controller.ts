@@ -28,6 +28,11 @@ export interface userInterface {
   role: string;
   phone?: string;
   profileImage: string;
+  address?: {
+    district?: string;
+    state?: string;
+    pincode?: string;
+  };
 }
 
 // Common function to set authentication cookies

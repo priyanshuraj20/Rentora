@@ -69,6 +69,10 @@ export const getBookingService = async (userId: string, userRole: string) => {
       totalAmount: booking.pricing?.totalAmount ?? 0,
       status: booking.booking_status,
       paymentStatus: booking.payment_status,
+      handoverPhotos: booking.handoverPhotos || [],
+      returnPhotos: booking.returnPhotos || [],
+      handoverConfirmedAt: booking.handoverConfirmedAt,
+      returnConfirmedAt: booking.returnConfirmedAt,
       createdAt: booking.createdAt,
     };
   });
@@ -133,12 +137,39 @@ export const createBookingService = async (userId: string, booking: any) => {
       (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
     ) + 1; // Including start date
 
+  // Calculate pricing server-side based on actual item rates
+  let calculatedBaseRate = 0;
+  let calculatedDiscount = 0;
+
+  if (totalDays >= 30) {
+    const months = Math.ceil(totalDays / 30);
+    const monthlyRate = item.price.monthly || item.price.daily * 30;
+    calculatedBaseRate = months * monthlyRate;
+    const monthlyDiscountPercent = item.discount?.monthly || 0;
+    calculatedDiscount = Math.round((calculatedBaseRate * monthlyDiscountPercent) / 100);
+  } else if (totalDays >= 7) {
+    const weeks = Math.ceil(totalDays / 7);
+    const weeklyRate = item.price.weekly || item.price.daily * 7;
+    calculatedBaseRate = weeks * weeklyRate;
+    const weeklyDiscountPercent = item.discount?.weekly || 0;
+    calculatedDiscount = Math.round((calculatedBaseRate * weeklyDiscountPercent) / 100);
+  } else {
+    calculatedBaseRate = totalDays * item.price.daily;
+    const dailyDiscountPercent = item.discount?.daily || 0;
+    calculatedDiscount = Math.round((calculatedBaseRate * dailyDiscountPercent) / 100);
+  }
+
+  const baseRate = calculatedBaseRate > 0 ? calculatedBaseRate : (booking.pricing?.baseRate || 0);
+  const discountApplied = calculatedDiscount > 0 ? calculatedDiscount : (booking.pricing?.discountApplied || 0);
+  const securityDeposit = item.securityDeposit ?? booking.pricing?.securityDeposit ?? 0;
+  const serviceFee = booking.pricing?.serviceFee ?? Math.max(50, Math.ceil((item.price.daily || 0) * 0.05));
+
   const pricing = calculatePricing({
-    baseRate: booking.pricing.baseRate,
-    discountApplied: booking.pricing.discountApplied,
-    securityDeposit: booking.pricing.securityDeposit,
-    serviceFee: booking.pricing.serviceFee,
-    tax: booking.pricing.tax,
+    baseRate,
+    discountApplied,
+    securityDeposit,
+    serviceFee,
+    tax: booking.pricing?.tax || 0,
     totalDays,
   });
 
@@ -483,13 +514,8 @@ export const uploadBookingPhotosService = async (
     throw new AppError("Booking not found", 404);
   }
 
-  if (type === "handover" && booking.renter_id.toString() !== userId) {
-    throw new AppError("You are not authorized to upload this type of evidence", 403);
-  }
+  // Both booking participants (owner and renter) are allowed to upload condition photos
 
-  if (type === "return" && booking.owner_id.toString() !== userId) {
-    throw new AppError("You are not authorized to upload this type of evidence", 403);
-  }
 
   const photos = files.map((f) => ({ url: f.path, publicId: f.filename }));
 

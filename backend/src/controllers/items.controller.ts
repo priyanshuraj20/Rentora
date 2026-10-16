@@ -48,7 +48,8 @@ export const updateItem = catchAsync(async (req: Request, res: Response) => {
   } else if (req.file) {
     images = [(req.file as any).path];
   } else if (req.body.images) {
-    images = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+    const rawImages = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+    images = rawImages.filter((img: any) => typeof img === "string" && img.trim().length > 0);
   }
 
   const rawBody: any = { ...req.body };
@@ -107,7 +108,8 @@ export const addItem = catchAsync(async (req: Request, res: Response) => {
   } else if (req.file) {
     images = [(req.file as any).path];
   } else if (req.body.images) {
-    images = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+    const rawImages = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+    images = rawImages.filter((img: any) => typeof img === "string" && img.trim().length > 0);
   }
 
   const rawBody: any = { ...req.body };
