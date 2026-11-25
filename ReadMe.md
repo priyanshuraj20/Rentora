@@ -125,35 +125,33 @@ sequenceDiagram
     autonumber
     participant Renter as Renter (Browser Mic)
     participant Modal as VoiceBookingAgentModal
-    participant Server as Voice Agent API (/voice/agent)
+    participant Server as Voice Agent API
     participant Saaras as Sarvam Saaras STT
-    participant NLP as Intent & Duration Parser
+    participant NLP as Intent and Duration Parser
     participant DB as MongoDB Inventory
     participant Bulbul as Sarvam Bulbul TTS
     participant Checkout as RentCheckout Page
 
-    Renter->>Modal: Tap Mic & Speak ("Bhai Sony camera chahiye weekend ke liye")
-    Modal->>Server: POST /voice/agent (multipart/form-data: audio/webm + lang)
-    Server->>Saaras: Transcribe Audio Buffer (saaras:v4)
-    Saaras-->>Server: Raw Transcript ("भाई सोनी कैमरा चाहिए वीकेंड के लिए")
-    Server->>NLP: Parse Keywords, Hindi Numerals & Duration
-    Note over NLP: "सोनी" -> Sony | "कैमरा" -> Camera | "वीकेंड" -> 2 Days
-    NLP->>DB: Query Item ($or: title, description, category; isActive: true)
-    DB-->>Server: Matched Item (Sony A7 IV, ₹1400/day, ₹5000 deposit)
-    Server->>Server: Compute Escrow: ₹1400 × 2d = ₹2800 Rent + ₹5000 Deposit = ₹7800 Total
-    Server->>Bulbul: Synthesize Hinglish Confirmation Audio (bulbul:v2)
+    Renter->>Modal: Tap Mic and Speak - Bhai Sony camera chahiye weekend ke liye
+    Modal->>Server: POST /voice/agent with audio/webm and lang
+    Server->>Saaras: Transcribe Audio Buffer (saaras v4)
+    Saaras-->>Server: Raw Transcript - भाई सोनी कैमरा चाहिए वीकेंड के लिए
+    Server->>NLP: Parse Keywords, Hindi Numerals and Duration
+    Note over NLP: सोनी = Sony, कैमरा = Camera, वीकेंड = 2 Days
+    NLP->>DB: Query Item by title, description or category where isActive is true
+    DB-->>Server: Matched Item - Sony A7 IV, ₹1400 per day, ₹5000 deposit
+    Server->>Server: Compute Escrow - ₹1400 x 2 days = ₹2800 rent, plus ₹5000 deposit = ₹7800 total
+    Server->>Bulbul: Synthesize Hinglish Confirmation Audio (bulbul v2)
     Bulbul-->>Server: Audio Buffer (WAV Base64)
-    Server-->>Modal: Return { success: true, bookingCard, audioBase64, spokenResponse }
-    Modal->>Renter: Autoplay Voice Reply + Render Booking Card with Date Picker
-    Renter->>Modal: Adjust Duration Chip (e.g., 3 Days) -> Price Recalculates Dynamically
-    Renter->>Modal: Click "Proceed to Instant Razorpay Checkout"
-    alt User is Demo / Guest
-        Modal->>Renter: Display Auth Warning (Register/Login or Continue as Demo)
+    Server-->>Modal: Return success, bookingCard, audioBase64 and spokenResponse
+    Modal->>Renter: Autoplay Voice Reply and Render Booking Card with Date Picker
+    Renter->>Modal: Adjust Duration Chip (e.g. 3 Days) and Price Recalculates Dynamically
+    Renter->>Modal: Click Proceed to Instant Razorpay Checkout
+    alt User is Demo or Guest
+        Modal->>Renter: Display Auth Warning (Register, Login or Continue as Demo)
     else User is Registered Renter
-        Modal->>Checkout: Navigate to /renter/rent/:id?start=2026-11-25&end=2026-11-28&days=3
+        Modal->>Checkout: Navigate to /renter/rent/:id with start, end and days params
     end
-```
-
 ---
 
 ### 2. Dual-Layer PIN + Acoustic Voice Consent Handover Flow
