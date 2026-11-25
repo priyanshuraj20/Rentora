@@ -1,13 +1,36 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import RentalCalendar from "./RentalCalendar";
 import RentalDuration from "./RentalDuration";
 import CostSummary from "./CostSummary";
+import { apiClient } from "../../../utils/apiClient";
+import useAuth from "../../../hooks/authHook";
+import AuthController from "../../auth/AuthController";
 
 export default function RentCheckoutLayout({ item, availability, user }) {
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
+  const { user: authUser } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [searchParams] = useSearchParams();
+  const paramStart = searchParams.get("start");
+  const paramEnd = searchParams.get("end");
+
+  const [startDate, setStartDate] = useState(() => {
+    if (paramStart) {
+      const d = new Date(paramStart);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return null;
+  });
+
+  const [endDate, setEndDate] = useState(() => {
+    if (paramEnd) {
+      const d = new Date(paramEnd);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return null;
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -18,43 +41,38 @@ export default function RentCheckoutLayout({ item, availability, user }) {
       return;
     }
 
+    if (!authUser) {
+      toast("Please register or log in as a Renter to complete your booking.", { icon: "🔐" });
+      setShowAuthModal(true);
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const csrf = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
-        method: "GET",
-        credentials: "include"
-      });
-      const csrfData = await csrf.json();
-
-      // 1. Create Booking
-      const bookingRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/booking`, {
+      // 1. Create Booking using centralized apiClient
+      const bookingRes = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/booking`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfData.csrfToken
-        },
         body: JSON.stringify({
           itemId: item.id || item._id,
           ownerId: item.owner?.id || item.ownerId || item.owner_id,
           startDate: startDate.toISOString().split('T')[0],
           endDate: endDate.toISOString().split('T')[0],
           address: {
-            district: user?.address?.district || "South Goa",
-            state: user?.address?.state || "Goa",
-            pincode: user?.address?.pincode || "403001"
+            district: user?.address?.district || user?.address?.city || "Bangalore",
+            state: user?.address?.state || "Karnataka",
+            pincode: user?.address?.pincode || "560001"
           },
           pricing: {
             baseRate: breakdown.rentalFee,
-            discountApplied: breakdown.appliedDiscount,
+            discountApplied: 0,
             securityDeposit: breakdown.securityDeposit,
             tax: 0,
-            platformFee: breakdown.serviceFee,
+            platformFee: 0,
             totalAmount: totalAmount
           }
         }),
-        credentials: "include"
       });
 
       const bookingData = await bookingRes.json();
@@ -87,6 +105,8 @@ export default function RentCheckoutLayout({ item, availability, user }) {
           )}
           <RentalCalendar
             disabledDates={availability.disabledDates}
+            initialStart={startDate}
+            initialEnd={endDate}
             onSelect={(start, end) => {
               setStartDate(start);
               setEndDate(end);
@@ -109,6 +129,12 @@ export default function RentCheckoutLayout({ item, availability, user }) {
           isSubmitting={isSubmitting}
         />
       </div>
+
+      <AuthController
+        open={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        defaultMode="register"
+      />
     </div>
   );
 }

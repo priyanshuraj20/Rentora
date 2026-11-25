@@ -1,23 +1,28 @@
 import { useState, useEffect } from "react";
-import { MapPin, Navigation, ChevronDown, Check } from "lucide-react";
+import { MapPin, Navigation, ChevronDown, Check, X } from "lucide-react";
 import toast from "react-hot-toast";
 
 const POPULAR_CITIES = [
-  "Patna",
-  "Ranchi",
+  "All Cities",
   "Ahmedabad",
-  "Delhi",
-  "Mumbai",
+  "Vadodara",
   "Bengaluru",
-  "Kolkata",
+  "Mumbai",
+  "Delhi",
+  "Pune",
   "Hyderabad",
   "Chennai",
-  "Pune"
+  "Kolkata",
+  "Jaipur",
+  "Patna",
+  "Ranchi",
+  "Lucknow",
+  "Chandigarh"
 ];
 
 const RADIUS_OPTIONS = [5, 10, 20, 50, 100];
 
-export default function ExploreLocationBar({ onLocationChange, selectedRadius = 50, onRadiusChange }) {
+export default function ExploreLocationBar({ userCity, onLocationChange, selectedRadius = 50, onRadiusChange }) {
   const [locationState, setLocationState] = useState(() => {
     try {
       const saved = localStorage.getItem("rentora_user_location");
@@ -25,12 +30,21 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
     } catch (e) {
       console.error(e);
     }
+    if (userCity && userCity.trim()) {
+      return {
+        type: "profile",
+        city: userCity.trim(),
+        lat: null,
+        lng: null,
+        label: `📍 ${userCity.trim()}`
+      };
+    }
     return {
       type: "none",
       city: "",
       lat: null,
       lng: null,
-      label: "Select Location"
+      label: "All Locations"
     };
   });
 
@@ -43,6 +57,23 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
       onLocationChange(locationState);
     }
   }, [locationState]);
+
+  // If user profile city arrives later and user hasn't selected a location yet
+  useEffect(() => {
+    if (userCity && userCity.trim() && locationState.type === "none" && !locationState.city) {
+      const saved = localStorage.getItem("rentora_user_location");
+      if (!saved) {
+        const profileLoc = {
+          type: "profile",
+          city: userCity.trim(),
+          lat: null,
+          lng: null,
+          label: `📍 ${userCity.trim()}`
+        };
+        setLocationState(profileLoc);
+      }
+    }
+  }, [userCity]);
 
   const handleUseGPS = () => {
     if (!navigator.geolocation) {
@@ -61,27 +92,38 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
         // Automatic Reverse Geocoding via OpenStreetMap Nominatim
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=jsonv2`
           );
           const data = await res.json();
           if (data && data.address) {
+            const area =
+              data.address.suburb ||
+              data.address.neighbourhood ||
+              data.address.residential ||
+              data.address.subdistrict ||
+              "";
             const city =
               data.address.city ||
               data.address.town ||
               data.address.village ||
-              data.address.suburb ||
               data.address.county ||
               "";
             const state = data.address.state || "";
-            if (city && state) {
-              resolvedLabel = `📍 ${city}, ${state}`;
+
+            if (area && city) {
+              resolvedLabel = `📍 ${area}, ${city}`;
+              resolvedCity = city;
             } else if (city) {
               resolvedLabel = `📍 ${city}`;
+              resolvedCity = city;
+            } else if (state) {
+              resolvedLabel = `📍 Near ${state}`;
+              resolvedCity = state;
             }
-            resolvedCity = city;
           }
         } catch (err) {
-          console.warn("Reverse geocoding failed, falling back to raw GPS label:", err);
+          console.warn("Reverse geocoding failed, using raw coordinates:", err);
+          resolvedLabel = `📍 GPS (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`;
         }
 
         const newLoc = {
@@ -102,17 +144,36 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
         toast.error("Could not access GPS. Please select your city manually.");
         console.warn("GPS Permission error:", err);
       },
-      { timeout: 10000, maximumAge: 600000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
     );
   };
 
+  const handleClearLocation = () => {
+    const newLoc = {
+      type: "none",
+      city: "",
+      lat: null,
+      lng: null,
+      label: "All Locations"
+    };
+    setLocationState(newLoc);
+    localStorage.removeItem("rentora_user_location");
+    setShowCityMenu(false);
+    toast.success("Location filter cleared - showing all items 🌍");
+  };
+
   const handleSelectCity = (city) => {
+    if (city === "All Cities") {
+      handleClearLocation();
+      return;
+    }
+
     const newLoc = {
       type: "manual",
       city,
       lat: null,
       lng: null,
-      label: city
+      label: `📍 ${city}`
     };
     setLocationState(newLoc);
     localStorage.setItem("rentora_user_location", JSON.stringify(newLoc));
@@ -134,9 +195,22 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
       <div className="relative flex items-center gap-2 flex-1 min-w-[240px]">
         <div className="flex items-center gap-1.5 bg-card px-3 py-2 rounded-xl border border-divider text-primary font-semibold">
           <MapPin className="size-4 shrink-0 text-primary" />
-          <span className="truncate max-w-[180px]">
-            {locationState.label || "Select Location"}
+          <span className="truncate max-w-[170px]">
+            {locationState.label || "All Locations"}
           </span>
+          {locationState.type !== "none" && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClearLocation();
+              }}
+              className="ml-1 p-0.5 rounded-full hover:bg-white/10 text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+              title="Clear location filter"
+            >
+              <X className="size-3" />
+            </button>
+          )}
         </div>
 
         <button
@@ -155,7 +229,7 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
               <span>Select City</span>
               <button
                 onClick={() => setShowCityMenu(false)}
-                className="text-text-muted hover:text-text-primary"
+                className="text-text-muted hover:text-text-primary cursor-pointer"
               >
                 ✕
               </button>
@@ -166,36 +240,49 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
                 type="text"
                 value={customCityInput}
                 onChange={(e) => setCustomCityInput(e.target.value)}
-                placeholder="Enter city (e.g. Patna)..."
+                placeholder="Enter city (e.g. Vadodara)..."
                 className="w-full bg-app border border-divider rounded-xl px-3 py-1.5 text-xs text-text-primary outline-none focus:border-primary"
               />
               <button
                 type="submit"
-                className="bg-primary text-text-primary font-semibold px-3 py-1.5 rounded-xl shrink-0 cursor-pointer"
+                className="bg-primary text-text-primary font-semibold px-3 py-1.5 rounded-xl shrink-0 cursor-pointer hover:brightness-110"
               >
                 Set
               </button>
             </form>
 
             <div className="space-y-1">
-              <p className="text-[10px] uppercase font-semibold text-text-muted tracking-wider mb-1">
-                Popular Cities
-              </p>
-              <div className="grid grid-cols-2 gap-1.5 max-h-44 overflow-y-auto pr-1">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-[10px] uppercase font-semibold text-text-muted tracking-wider">
+                  Select Location
+                </p>
+                {locationState.type !== "none" && (
+                  <button
+                    type="button"
+                    onClick={handleClearLocation}
+                    className="text-[10px] text-primary hover:underline cursor-pointer font-medium"
+                  >
+                    Clear Filter
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
                 {POPULAR_CITIES.map((c) => (
                   <button
                     key={c}
                     type="button"
                     onClick={() => handleSelectCity(c)}
                     className={`text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors flex items-center justify-between cursor-pointer ${
+                      (c === "All Cities" && locationState.type === "none") ||
                       locationState.city?.toLowerCase() === c.toLowerCase()
                         ? "bg-primary/15 text-primary font-bold"
                         : "hover:bg-app text-text-primary"
                     }`}
                   >
-                    <span>{c}</span>
-                    {locationState.city?.toLowerCase() === c.toLowerCase() && (
-                      <Check className="size-3" />
+                    <span className="truncate">{c}</span>
+                    {((c === "All Cities" && locationState.type === "none") ||
+                      locationState.city?.toLowerCase() === c.toLowerCase()) && (
+                      <Check className="size-3 shrink-0" />
                     )}
                   </button>
                 ))}
@@ -212,6 +299,7 @@ export default function ExploreLocationBar({ onLocationChange, selectedRadius = 
           onClick={handleUseGPS}
           disabled={isLocating}
           className="flex items-center gap-1.5 bg-primary/15 hover:bg-primary/25 text-primary border border-primary/30 px-3 py-2 rounded-xl transition-all cursor-pointer font-semibold disabled:opacity-50"
+          title="Find items near your device's exact location"
         >
           <Navigation className={`size-3.5 ${isLocating ? "animate-spin" : ""}`} />
           {isLocating ? "Locating..." : "Use My Location"}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Star, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { apiClient } from "../utils/apiClient";
 
 export default function AddReviewModal({ booking, onClose, onSuccess }) {
   const [rating, setRating] = useState(5);
@@ -12,24 +13,14 @@ export default function AddReviewModal({ booking, onClose, onSuccess }) {
     setIsSubmitting(true);
 
     try {
-      const csrf = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
-        credentials: "include",
-      });
-      const csrfData = await csrf.json();
-
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/reviews/items`, {
+      const response = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/reviews/items`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfData.csrfToken,
-        },
         body: JSON.stringify({
           bookingId: booking._id || booking.id,
           itemId: booking.item_id?._id || booking.item_id || booking.itemId,
           rating,
           review,
         }),
-        credentials: "include",
       });
 
       const data = await response.json();

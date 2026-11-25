@@ -41,3 +41,7 @@ export const bookingStatusWorker = new Worker(
     connection: redisConnection as any,
   },
 );
+
+bookingStatusWorker.on("error", (err) => {
+  logger.warn(`Booking status worker Redis notice: ${err.message}`);
+});

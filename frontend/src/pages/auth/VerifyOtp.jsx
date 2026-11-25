@@ -2,11 +2,13 @@ import { useState, useRef } from "react";
 import AuthLayout from "../../components/auth/AuthLayout";
 import { ShieldCheck } from "lucide-react";
 import toast from "react-hot-toast";
+import useAuth from "../../hooks/authHook";
 
-const VerifyOtp = ({ email, switchMode }) => {
+const VerifyOtp = ({ email, switchMode, onClose }) => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const inputRefs = useRef([]);
+  const { reFetch } = useAuth();
 
   const handleOtpChange = (index, value) => {
     if (isNaN(value)) return;
@@ -49,7 +51,9 @@ const VerifyOtp = ({ email, switchMode }) => {
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
 
-      switchMode("completeProfile");
+      if (reFetch) await reFetch();
+      toast.success("Verification successful! 🚀");
+      switchMode("success");
     } catch (error) {
       console.error("Error in verify otp", error.message);
       let errorMessage = error.message;

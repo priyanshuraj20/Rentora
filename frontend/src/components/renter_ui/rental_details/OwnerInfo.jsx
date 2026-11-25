@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
-import TrustScoreBadge from "../../common/TrustScoreBadge";
 
 export default function OwnerInfo({ owner, bookingId }) {
   const navigate = useNavigate();
@@ -18,9 +17,6 @@ export default function OwnerInfo({ owner, bookingId }) {
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-bold text-sm text-text-primary">{owner?.name}</p>
-            {owner?.reputationTier && (
-              <TrustScoreBadge tier={owner.reputationTier} />
-            )}
           </div>
           <p className="text-xs text-text-secondary">
             ⭐ {owner?.rating || "4.8"} ({owner?.reviews || "42"} reviews)

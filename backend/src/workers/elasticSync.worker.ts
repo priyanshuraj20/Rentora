@@ -49,3 +49,7 @@ elasticSyncWorker.on("failed", (job, err) => {
     `ElasticSearch sync job [${job?.name}] for item ${job?.data?.itemId} failed: ${err.message}`,
   );
 });
+
+elasticSyncWorker.on("error", (err) => {
+  logger.warn(`ElasticSearch sync worker Redis notice: ${err.message}`);
+});

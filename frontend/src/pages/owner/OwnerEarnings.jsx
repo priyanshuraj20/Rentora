@@ -62,9 +62,23 @@ export default function OwnerEarnings() {
     (b) => b.paymentStatus === "paid" || b.status === "completed" || b.status === "confirmed" || b.status === "ongoing"
   );
 
-  const grossEarnings = paidBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+  const getRentalRevenue = (b) => {
+    if (b.pricing?.subtotal !== undefined && b.pricing?.subtotal > 0) return b.pricing.subtotal;
+    if (b.pricing?.baseRate !== undefined && b.pricing?.baseRate > 0) return b.pricing.baseRate;
+    const deposit = b.pricing?.securityDeposit ?? (b.totalAmount > 10000 ? 10000 : 0);
+    const rentalAmount = (b.totalAmount || 0) - deposit;
+    return rentalAmount > 0 ? rentalAmount : (b.totalAmount || 0);
+  };
+
+  const getSecurityDeposit = (b) => {
+    if (b.pricing?.securityDeposit !== undefined) return b.pricing.securityDeposit;
+    return b.totalAmount > 10000 ? 10000 : 0;
+  };
+
+  const grossEarnings = paidBookings.reduce((sum, b) => sum + getRentalRevenue(b), 0);
   const platformFee = Math.round(grossEarnings * 0.1);
   const netPayout = grossEarnings - platformFee;
+  const totalEscrowHeld = paidBookings.reduce((sum, b) => sum + getSecurityDeposit(b), 0);
 
   return (
     <main className="min-h-screen bg-app px-6 md:px-12 py-8 max-w-[1400px] mx-auto space-y-8">
@@ -73,7 +87,7 @@ export default function OwnerEarnings() {
         <div>
           <h1 className="text-3xl font-bold text-text-primary tracking-tight">Earnings & Analytics</h1>
           <p className="text-text-secondary text-sm mt-1">
-            Real-time revenue metrics, platform fee deductions, and payout history.
+            Real-time rental revenue metrics, 10% platform fee breakdown, and net payout settlements.
           </p>
         </div>
         <div className="flex items-center gap-2 bg-surface border border-divider px-4 py-2 rounded-xl">
@@ -82,18 +96,33 @@ export default function OwnerEarnings() {
         </div>
       </div>
 
+      {/* Platform Escrow & Fee Transparency Card */}
+      <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0 mt-0.5">
+            <ShieldCheck size={18} />
+          </div>
+          <div className="text-xs">
+            <p className="font-bold text-text-primary text-sm">Escrow & Platform Fee Model</p>
+            <p className="text-text-secondary mt-0.5 leading-relaxed">
+              All renter payments enter <strong>Rentora Admin Razorpay Escrow</strong>. The <strong>10% Platform Fee</strong> is retained directly by Rentora Company/Admin. The <strong>90% Net Payout</strong> is disbursed to the Owner upon rental completion. <strong>Security Deposits</strong> remain locked in Admin Escrow and are refunded 100% back to the renter after return inspection.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-surface border border-divider rounded-3xl p-6 relative overflow-hidden shadow-sm">
           <div className="flex justify-between items-start mb-3">
-            <span className="text-text-muted text-xs font-semibold uppercase tracking-wider">Gross Revenue</span>
+            <span className="text-text-muted text-xs font-semibold uppercase tracking-wider">Gross Rental Revenue</span>
             <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
               <DollarSign size={18} />
             </div>
           </div>
           <p className="text-3xl font-extrabold text-text-primary">₹{grossEarnings.toLocaleString()}</p>
           <p className="text-xs text-primary mt-2 flex items-center gap-1 font-semibold">
-            <TrendingUp size={13} /> From {paidBookings.length} paid rentals
+            <TrendingUp size={13} /> From {paidBookings.length} paid rentals (Excl. Deposit)
           </p>
         </div>
 
@@ -105,7 +134,7 @@ export default function OwnerEarnings() {
             </div>
           </div>
           <p className="text-3xl font-extrabold text-success">₹{netPayout.toLocaleString()}</p>
-          <p className="text-xs text-success/80 mt-2 font-medium">Net earnings transferred</p>
+          <p className="text-xs text-success/80 mt-2 font-medium">Disbursed to Owner bank account</p>
         </div>
 
         <div className="bg-surface border border-divider rounded-3xl p-6 relative overflow-hidden shadow-sm">
@@ -116,18 +145,18 @@ export default function OwnerEarnings() {
             </div>
           </div>
           <p className="text-3xl font-extrabold text-warning">₹{platformFee.toLocaleString()}</p>
-          <p className="text-xs text-warning/80 mt-2 font-medium">Platform commission</p>
+          <p className="text-xs text-warning/80 mt-2 font-medium">Rentora company commission</p>
         </div>
 
         <div className="bg-surface border border-divider rounded-3xl p-6 relative overflow-hidden shadow-sm">
           <div className="flex justify-between items-start mb-3">
-            <span className="text-text-muted text-xs font-semibold uppercase tracking-wider">Active Inventory</span>
+            <span className="text-text-muted text-xs font-semibold uppercase tracking-wider">Admin Escrow Held</span>
             <div className="size-9 rounded-xl bg-secondary-accent/15 flex items-center justify-center text-secondary-accent">
               <CheckCircle2 size={18} />
             </div>
           </div>
-          <p className="text-3xl font-extrabold text-text-primary">{stats.totalListings || 0}</p>
-          <p className="text-xs text-text-muted mt-2 font-medium">Listings generating income</p>
+          <p className="text-3xl font-extrabold text-text-primary">₹{totalEscrowHeld.toLocaleString()}</p>
+          <p className="text-xs text-text-muted mt-2 font-medium">Refundable to renters upon return</p>
         </div>
       </div>
 
@@ -150,34 +179,49 @@ export default function OwnerEarnings() {
                   <th className="pb-3 font-semibold">Item Title</th>
                   <th className="pb-3 font-semibold">Renter Name</th>
                   <th className="pb-3 font-semibold">Rental Dates</th>
-                  <th className="pb-3 font-semibold">Gross Price</th>
-                  <th className="pb-3 font-semibold">Net Payout</th>
+                  <th className="pb-3 font-semibold">Rental Fee</th>
+                  <th className="pb-3 font-semibold">Platform Fee (10%)</th>
+                  <th className="pb-3 font-semibold">Net Payout (90%)</th>
+                  <th className="pb-3 font-semibold">Security Deposit</th>
                   <th className="pb-3 font-semibold">Payment Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-divider">
-                {paidBookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-white/5 transition-colors">
-                    <td className="py-3.5 font-bold text-text-primary flex items-center gap-3">
-                      {b.item?.image && (
-                        <img src={b.item.image} alt={b.item.title} className="size-9 rounded-xl object-cover border border-divider" />
-                      )}
-                      <span>{b.item?.title || "Rental Item"}</span>
-                    </td>
-                    <td className="py-3.5 text-text-primary font-medium">{b.renterInfo?.name || "Renter"}</td>
-                    <td className="py-3.5 text-text-secondary">
-                      {new Date(b.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} —{" "}
-                      {new Date(b.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </td>
-                    <td className="py-3.5 font-bold text-text-primary">₹{b.totalAmount}</td>
-                    <td className="py-3.5 font-bold text-success">₹{Math.round(b.totalAmount * 0.9)}</td>
-                    <td className="py-3.5">
-                      <span className="bg-success/15 text-success border border-success/30 text-[10px] uppercase font-bold px-2.5 py-1 rounded-full flex items-center gap-1 w-fit">
-                        <CheckCircle2 size={11} /> {b.paymentStatus?.toUpperCase() || "PAID"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {paidBookings.map((b) => {
+                  const rentalFee = getRentalRevenue(b);
+                  const fee10 = Math.round(rentalFee * 0.1);
+                  const payout90 = rentalFee - fee10;
+                  const deposit = getSecurityDeposit(b);
+
+                  return (
+                    <tr key={b.id} className="hover:bg-white/5 transition-colors">
+                      <td className="py-3.5 font-bold text-text-primary flex items-center gap-3">
+                        {b.item?.image && (
+                          <img src={b.item.image} alt={b.item.title} className="size-9 rounded-xl object-cover border border-divider" />
+                        )}
+                        <span>{b.item?.title || "Rental Item"}</span>
+                      </td>
+                      <td className="py-3.5 text-text-primary font-medium">{b.renterInfo?.name || "Renter"}</td>
+                      <td className="py-3.5 text-text-secondary">
+                        {new Date(b.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} —{" "}
+                        {new Date(b.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </td>
+                      <td className="py-3.5 font-bold text-text-primary">₹{rentalFee.toLocaleString()}</td>
+                      <td className="py-3.5 font-bold text-warning">₹{fee10.toLocaleString()}</td>
+                      <td className="py-3.5 font-bold text-success">₹{payout90.toLocaleString()}</td>
+                      <td className="py-3.5">
+                        <span className="text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md text-[11px]">
+                          🛡️ ₹{deposit.toLocaleString()} (Escrow)
+                        </span>
+                      </td>
+                      <td className="py-3.5">
+                        <span className="bg-success/15 text-success border border-success/30 text-[10px] uppercase font-bold px-2.5 py-1 rounded-full flex items-center gap-1 w-fit">
+                          <CheckCircle2 size={11} /> {b.paymentStatus?.toUpperCase() || "PAID"}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -53,7 +53,7 @@ export const NotFound = () => {
                     className="mb-6"
                     style={{ animation: "fade-up 0.6s ease-out" }}
                 >
-                    <h1 className="text-[140px] md:text-[180px] font-black font-serif leading-none tracking-tight text-primary select-none drop-shadow-md">
+                    <h1 className="text-[140px] md:text-[180px] font-black leading-none tracking-tight text-primary select-none drop-shadow-md">
                         404
                     </h1>
                 </div>
@@ -66,7 +66,7 @@ export const NotFound = () => {
 
                 {/* Message */}
                 <div style={{ animation: "fade-up 0.6s ease-out 0.3s both" }}>
-                    <h2 className="text-2xl md:text-3xl font-bold font-serif text-text-primary mb-3 tracking-tight">
+                    <h2 className="text-2xl md:text-3xl font-extrabold text-text-primary mb-3 tracking-tight">
                         Page not found
                     </h2>
                     <p className="text-text-secondary text-sm md:text-base leading-relaxed max-w-md mx-auto">

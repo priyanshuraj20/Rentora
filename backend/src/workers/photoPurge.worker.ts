@@ -42,3 +42,7 @@ export const photoPurgeWorker = new Worker(
     connection: redisConnection as any,
   },
 );
+
+photoPurgeWorker.on("error", (err) => {
+  logger.warn(`Photo purge worker Redis notice: ${err.message}`);
+});

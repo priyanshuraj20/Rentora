@@ -1,4 +1,4 @@
-import { Heart } from "lucide-react";
+import { Heart, MapPin } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import PricingSelector from "./PricingSelector";
 
@@ -14,9 +14,20 @@ const ItemSummaryCard = ({ item, isWishlisted, onToggleWishlist }) => {
     <div className="rounded-3xl border border-divider bg-surface p-6 min-h-[350px] shadow-sm">
       <h1 className="text-2xl font-bold text-text-primary tracking-tight">{item.title}</h1>
 
-      <p className="mt-1 text-text-secondary text-xs font-medium uppercase tracking-wider">
-        {item.category}
-      </p>
+      <div className="mt-1 flex flex-wrap items-center gap-3">
+        <p className="text-text-secondary text-xs font-medium uppercase tracking-wider">
+          {item.category}
+        </p>
+
+        {item.location && (item.location.area || item.location.city) && (
+          <div className="flex items-center gap-1 text-xs text-text-muted">
+            <MapPin className="size-3 text-primary shrink-0" />
+            <span className="font-medium text-text-secondary">
+              {item.location.area ? `${item.location.area}, ` : ""}{item.location.city || item.location.district}
+            </span>
+          </div>
+        )}
+      </div>
 
       <PricingSelector pricing={item.pricing} />
 

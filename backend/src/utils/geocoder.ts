@@ -29,8 +29,9 @@ export async function geocodeCityOrAddress(
   city?: string,
   state?: string,
   district?: string,
-): Promise<{ coordinates: [number, number]; city?: string; state?: string; district?: string }> {
-  const addressParts = [city?.trim(), district?.trim(), state?.trim(), "India"].filter(
+  area?: string,
+): Promise<{ coordinates: [number, number]; city?: string; state?: string; district?: string; area?: string }> {
+  const addressParts = [area?.trim(), city?.trim(), district?.trim(), state?.trim(), "India"].filter(
     (part): part is string => Boolean(part && part.length > 0)
   );
 
@@ -44,6 +45,7 @@ export async function geocodeCityOrAddress(
       const parsed = JSON.parse(cached);
       return {
         coordinates: parsed,
+        area: area?.trim(),
         city: city?.trim(),
         state: state?.trim(),
         district: district?.trim(),
@@ -87,6 +89,7 @@ export async function geocodeCityOrAddress(
 
             return {
               coordinates: coords,
+              area: area?.trim(),
               city: city?.trim(),
               state: state?.trim(),
               district: district?.trim(),

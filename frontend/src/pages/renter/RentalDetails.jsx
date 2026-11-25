@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { ShieldCheck } from "lucide-react";
+import { apiClient } from "../../utils/apiClient";
 import Breadcrumbs from "../../components/renter_ui/rental_details/Breadcrumbs";
 import RentalHero from "../../components/renter_ui/rental_details/RentalHero";
 import RentalProgress from "../../components/renter_ui/rental_details/RentalProgress";
@@ -10,8 +12,8 @@ import RentalPolicies from "../../components/renter_ui/rental_details/RentalPoli
 import RentalActions from "../../components/renter_ui/rental_details/RentalActions";
 import ActivityTimeline from "../../components/renter_ui/rental_details/ActivityTimeline";
 import BookingPhotoUploadModal from "../../components/common/BookingPhotoUploadModal";
-import QRDisplayModal from "../../components/common/QRDisplayModal";
-import QRScannerModal from "../../components/common/QRScannerModal";
+import PINDisplayModal from "../../components/common/PINDisplayModal";
+import PINInputModal from "../../components/common/PINInputModal";
 
 export default function RentalDetails() {
   const { rentalId } = useParams();
@@ -21,30 +23,16 @@ export default function RentalDetails() {
   const [error, setError] = useState(null);
   const [isPaymentSubmitting, setIsPaymentSubmitting] = useState(false);
   const [showHandoverModal, setShowHandoverModal] = useState(false);
-  const [showQRScannerModal, setShowQRScannerModal] = useState(false);
-  const [showQRDisplayModal, setShowQRDisplayModal] = useState(false);
+  const [showPINInputModal, setShowPINInputModal] = useState(false);
+  const [showPINDisplayModal, setShowPINDisplayModal] = useState(false);
 
   const fetchRentalDetails = async () => {
     try {
       setLoading(true);
-      const csrfResponse = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/csrf-token`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-      const csrfData = await csrfResponse.json();
-
-      const response = await fetch(
+      const response = await apiClient(
         `${import.meta.env.VITE_BACKEND_URL}/booking/${rentalId}`,
         {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": csrfData.csrfToken,
-          },
-          credentials: "include",
         }
       );
 
@@ -104,6 +92,8 @@ export default function RentalDetails() {
         }),
         progressPercent: Math.round(progressPercent),
         daysRemaining: daysRemaining,
+        damageReport: booking.damageReport || null,
+        depositSettlement: booking.depositSettlement || null,
         pricing: {
           dailyRate: booking.pricing?.baseRate || 0,
           durationDays: booking.total_days || 0,
@@ -115,7 +105,6 @@ export default function RentalDetails() {
           name: booking.owner_id?.name || "Private Owner",
           rating: 4.8,
           reviews: 42,
-          reputationTier: booking.owner_id?.reputationTier,
           avatar:
             booking.owner_id?.profileImage ||
             "https://ui-avatars.com/api/?name=" +
@@ -181,25 +170,11 @@ export default function RentalDetails() {
     try {
       setIsPaymentSubmitting(true);
 
-      const csrfRes = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/csrf-token`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-      const csrfData = await csrfRes.json();
-
-      const orderRes = await fetch(
+      const orderRes = await apiClient(
         `${import.meta.env.VITE_BACKEND_URL}/payments/create-order`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": csrfData.csrfToken,
-          },
           body: JSON.stringify({ bookingId: rental.id }),
-          credentials: "include",
         }
       );
 
@@ -215,25 +190,20 @@ export default function RentalDetails() {
         amount: amount,
         currency: currency,
         name: "Rentora Rental",
-        description: `Payment for ${rental.title}`,
+        description: `Escrow Security Deposit for ${rental.title}`,
         order_id: orderId,
         handler: async (response) => {
           try {
-            const verifyRes = await fetch(
+            const verifyRes = await apiClient(
               `${import.meta.env.VITE_BACKEND_URL}/payments/verify`,
               {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "X-CSRF-Token": csrfData.csrfToken,
-                },
                 body: JSON.stringify({
                   bookingId: rental.id,
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
                 }),
-                credentials: "include",
               }
             );
 
@@ -373,12 +343,107 @@ export default function RentalDetails() {
         </div>
       )}
 
+      {/* AI Damage Audit & Escrow Settlement Card */}
+      {(rental.depositSettlement || rental.damageReport) && (
+        <div className="bg-surface border border-divider rounded-3xl p-6 sm:p-7 space-y-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-divider pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20 text-primary">
+                <ShieldCheck size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-text-primary tracking-tight">
+                  Gemini AI Damage Audit & Escrow Settlement
+                </h3>
+                <p className="text-xs text-text-secondary">
+                  Automated condition inspection comparing pickup vs return condition
+                </p>
+              </div>
+            </div>
+
+            {/* Severity Badge */}
+            {rental.damageReport && (
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                  rental.damageReport.tier === "TIER_0"
+                    ? "bg-success/15 text-success border border-success/30"
+                    : rental.damageReport.tier === "TIER_1"
+                    ? "bg-warning/15 text-warning border border-warning/30"
+                    : "bg-error/15 text-error border border-error/30"
+                }`}
+              >
+                {rental.damageReport.tier === "TIER_0"
+                  ? "Tier 0 • Pristine Condition"
+                  : rental.damageReport.tier === "TIER_1"
+                  ? "Tier 1 • Minor Cosmetic Wear"
+                  : rental.damageReport.tier === "TIER_2"
+                  ? "Tier 2 • Moderate Damage"
+                  : "Tier 3 • Severe Damage (Locked)"}
+              </span>
+            )}
+          </div>
+
+          {/* AI Findings Summary */}
+          {rental.damageReport && (
+            <div className="bg-app border border-divider rounded-2xl p-4 space-y-2 text-xs">
+              <p className="font-semibold text-text-primary">
+                {rental.damageReport.summary}
+              </p>
+              {rental.damageReport.findings?.length > 0 && (
+                <ul className="space-y-1 text-text-secondary list-disc list-inside">
+                  {rental.damageReport.findings.map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {/* Settlement Breakdown */}
+          {rental.depositSettlement && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <div className="bg-app p-4 rounded-2xl border border-divider">
+                <span className="text-[11px] text-text-muted font-bold uppercase tracking-wider">
+                  Total Security Deposit
+                </span>
+                <p className="text-lg font-bold text-text-primary mt-1">
+                  ₹{rental.depositSettlement.totalDeposit}
+                </p>
+              </div>
+
+              <div className="bg-app p-4 rounded-2xl border border-divider">
+                <span className="text-[11px] text-text-muted font-bold uppercase tracking-wider">
+                  Repair Deduction
+                </span>
+                <p className="text-lg font-bold text-error mt-1">
+                  -₹{rental.depositSettlement.repairDeduction}
+                </p>
+              </div>
+
+              <div className="bg-app p-4 rounded-2xl border border-success/30 bg-success/5">
+                <span className="text-[11px] text-success font-bold uppercase tracking-wider">
+                  Refunded to Renter (Razorpay)
+                </span>
+                <p className="text-lg font-bold text-success mt-1">
+                  +₹{rental.depositSettlement.refundedToRenter}
+                </p>
+                {rental.depositSettlement.razorpayRefundId && (
+                  <p className="text-[10px] text-text-muted font-mono mt-0.5 truncate">
+                    Ref: {rental.depositSettlement.razorpayRefundId}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <RentalActions
         status={rental.status}
         handoverConfirmedAt={rental.handoverConfirmedAt}
         returnConfirmedAt={rental.returnConfirmedAt}
-        onScanHandoverQR={() => setShowQRScannerModal(true)}
-        onShowReturnQR={() => setShowQRDisplayModal(true)}
+        onEnterHandoverPin={() => setShowPINInputModal(true)}
+        onShowReturnPin={() => setShowPINDisplayModal(true)}
       />
       <ActivityTimeline timeline={rental.timeline} />
 
@@ -394,19 +459,22 @@ export default function RentalDetails() {
         />
       )}
 
-      {showQRScannerModal && (
-        <QRScannerModal
+      {showPINInputModal && (
+        <PINInputModal
           bookingId={rental.id}
-          onClose={() => setShowQRScannerModal(false)}
+          type="handover"
+          open={showPINInputModal}
+          onClose={() => setShowPINInputModal(false)}
           onSuccess={fetchRentalDetails}
         />
       )}
 
-      {showQRDisplayModal && (
-        <QRDisplayModal
+      {showPINDisplayModal && (
+        <PINDisplayModal
           bookingId={rental.id}
           type="return"
-          onClose={() => setShowQRDisplayModal(false)}
+          open={showPINDisplayModal}
+          onClose={() => setShowPINDisplayModal(false)}
         />
       )}
     </main>

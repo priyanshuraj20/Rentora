@@ -30,17 +30,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const csrfRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
-        method: "GET",
-        credentials: "include",
-      });
-      const csrfData = await csrfRes.json();
-
       const response = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/auth/login`, {
         method: "POST",
-        headers: {
-          "X-CSRF-Token": csrfData.csrfToken,
-        },
         body: JSON.stringify({ email, password }),
       });
 
@@ -58,22 +49,32 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      const csrfRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
-        method: "GET",
-        credentials: "include",
-      });
-      const csrfData = await csrfRes.json();
-
       await apiClient(`${import.meta.env.VITE_BACKEND_URL}/auth/logout`, {
         method: "POST",
-        headers: {
-          "X-CSRF-Token": csrfData.csrfToken,
-        },
       });
     } catch (err) {
       console.error("Logout error", err);
     } finally {
       setUser(null);
+    }
+  };
+
+  const demoLogin = async (persona) => {
+    try {
+      const response = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/auth/demo-login`, {
+        method: "POST",
+        body: JSON.stringify({ persona }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        await fetchUser();
+        return { success: true, data };
+      } else {
+        return { success: false, message: data.message || "Demo login failed" };
+      }
+    } catch (err) {
+      return { success: false, message: err.message || "Network error" };
     }
   };
 
@@ -83,7 +84,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, error, login, logout, reFetch: fetchUser, setUser }}
+      value={{ user, loading, error, login, logout, demoLogin, reFetch: fetchUser, setUser }}
     >
       {children}
     </AuthContext.Provider>

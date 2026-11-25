@@ -15,6 +15,7 @@ export const itemValidationSchema = z.object({
   images: z.array(z.string()).min(1, "Images are required").optional(),
   location: z
     .object({
+      area: z.string().optional(),
       city: z.string().optional(),
       district: z.string().optional(),
       state: z.string().optional(),
@@ -44,6 +45,7 @@ export const updateItemSchema = z.object({
   images: z.array(z.string()).optional(),
   location: z
     .object({
+      area: z.string().optional(),
       city: z.string().optional(),
       district: z.string().optional(),
       state: z.string().optional(),

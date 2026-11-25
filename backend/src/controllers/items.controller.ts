@@ -14,6 +14,7 @@ import {
   itemValidationSchema,
 } from "../validators/item.schema";
 import { ROLE } from "../validators/auth.schema";
+import { generateListingAIService, generateItemDescriptionAIService } from "../service/ai.service";
 
 type ItemStatus = "active" | "paused" | "rented";
 
@@ -62,12 +63,40 @@ export const updateItem = catchAsync(async (req: Request, res: Response) => {
     };
   }
 
-  if (rawBody["location[city]"] !== undefined || rawBody["location[district]"] !== undefined || rawBody["location[state]"] !== undefined || rawBody["location[pincode]"] !== undefined) {
+  if (
+    rawBody["location[area]"] !== undefined ||
+    rawBody["location[city]"] !== undefined ||
+    rawBody["location[district]"] !== undefined ||
+    rawBody["location[state]"] !== undefined ||
+    rawBody["location[pincode]"] !== undefined ||
+    rawBody["location[coordinates]"] !== undefined ||
+    rawBody.location !== undefined
+  ) {
+    let coords: [number, number] | undefined = undefined;
+    if (rawBody["location[coordinates]"]) {
+      try {
+        coords = typeof rawBody["location[coordinates]"] === "string"
+          ? JSON.parse(rawBody["location[coordinates]"])
+          : rawBody["location[coordinates]"];
+      } catch (e) {}
+    } else if (rawBody.location?.coordinates?.coordinates) {
+      coords = rawBody.location.coordinates.coordinates;
+    } else if (Array.isArray(rawBody.location?.coordinates)) {
+      coords = rawBody.location.coordinates;
+    }
+
     rawBody.location = {
-      city: rawBody["location[city]"] || "",
-      district: rawBody["location[district]"] || "",
-      state: rawBody["location[state]"] || "",
-      pincode: rawBody["location[pincode]"] || "",
+      area: rawBody["location[area]"] || rawBody.location?.area || "",
+      city: rawBody["location[city]"] || rawBody.location?.city || "",
+      district: rawBody["location[district]"] || rawBody.location?.district || "",
+      state: rawBody["location[state]"] || rawBody.location?.state || "",
+      pincode: rawBody["location[pincode]"] || rawBody.location?.pincode || "",
+      ...(coords && coords.length === 2 ? {
+        coordinates: {
+          type: "Point",
+          coordinates: [Number(coords[0]), Number(coords[1])],
+        }
+      } : {}),
     };
   }
 
@@ -122,12 +151,40 @@ export const addItem = catchAsync(async (req: Request, res: Response) => {
     };
   }
 
-  if (rawBody["location[city]"] !== undefined || rawBody["location[district]"] !== undefined || rawBody["location[state]"] !== undefined || rawBody["location[pincode]"] !== undefined) {
+  if (
+    rawBody["location[area]"] !== undefined ||
+    rawBody["location[city]"] !== undefined ||
+    rawBody["location[district]"] !== undefined ||
+    rawBody["location[state]"] !== undefined ||
+    rawBody["location[pincode]"] !== undefined ||
+    rawBody["location[coordinates]"] !== undefined ||
+    rawBody.location !== undefined
+  ) {
+    let coords: [number, number] | undefined = undefined;
+    if (rawBody["location[coordinates]"]) {
+      try {
+        coords = typeof rawBody["location[coordinates]"] === "string"
+          ? JSON.parse(rawBody["location[coordinates]"])
+          : rawBody["location[coordinates]"];
+      } catch (e) {}
+    } else if (rawBody.location?.coordinates?.coordinates) {
+      coords = rawBody.location.coordinates.coordinates;
+    } else if (Array.isArray(rawBody.location?.coordinates)) {
+      coords = rawBody.location.coordinates;
+    }
+
     rawBody.location = {
-      city: rawBody["location[city]"] || "",
-      district: rawBody["location[district]"] || "",
-      state: rawBody["location[state]"] || "",
-      pincode: rawBody["location[pincode]"] || "",
+      area: rawBody["location[area]"] || rawBody.location?.area || "",
+      city: rawBody["location[city]"] || rawBody.location?.city || "",
+      district: rawBody["location[district]"] || rawBody.location?.district || "",
+      state: rawBody["location[state]"] || rawBody.location?.state || "",
+      pincode: rawBody["location[pincode]"] || rawBody.location?.pincode || "",
+      ...(coords && coords.length === 2 ? {
+        coordinates: {
+          type: "Point",
+          coordinates: [Number(coords[0]), Number(coords[1])],
+        }
+      } : {}),
     };
   }
 
@@ -183,6 +240,45 @@ export const deleteItem = catchAsync(async (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: "Item deleted successfully",
+  });
+});
+
+export const aiSuggestListing = catchAsync(async (req: Request, res: Response) => {
+  const { imageUrl, titleHint, categoryHint } = req.body;
+
+  const suggestion = await generateListingAIService({
+    imageUrl,
+    titleHint,
+    categoryHint,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "AI listing suggestions generated successfully",
+    data: suggestion,
+  });
+});
+
+export const generateItemDescription = catchAsync(async (req: Request, res: Response) => {
+  const { itemName, category } = req.body;
+
+  if (!itemName || typeof itemName !== "string" || !itemName.trim()) {
+    throw new AppError("Item name is required to generate description", 400);
+  }
+
+  if (!category || typeof category !== "string" || !category.trim()) {
+    throw new AppError("Category is required to generate description", 400);
+  }
+
+  const description = await generateItemDescriptionAIService(
+    itemName.trim(),
+    category.trim()
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Description generated successfully",
+    data: { description },
   });
 });
 

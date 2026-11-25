@@ -8,7 +8,6 @@ import * as Sentry from "@sentry/node";
 
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger";
-import passport from "@config/passport";
 
 import { env } from "@config/env";
 import { healthController } from "@controllers/health.controller";
@@ -25,6 +24,8 @@ import paymentRouter from "./routes/payment.route";
 import notificationRouter from "./routes/notification.route";
 import reviewRouter from "./routes/review.route";
 import messageRouter from "./routes/message.route";
+import adminRouter from "./routes/admin.route";
+import voiceRouter from "./routes/voice.route";
 import csrfRouter, { verifyCsrf } from "./routes/csrf.route";
 
 const app = express();
@@ -40,12 +41,15 @@ app.use(
 );
 
 // -------------------- SECURITY & PARSING --------------------
-app.use(helmet()); // sets safe HTTP headers (XSS, sniffing, etc.)
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+); // sets safe HTTP headers (XSS, sniffing, etc.)
 app.use(morgan(env.NODE_ENV === "development" ? "dev" : "combined"));
 app.use(express.json({ limit: "10kb" })); // caps body size — basic DoS guard
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(passport.initialize());
 
 // -------------------- RATE LIMITING --------------------
 // Generic limiter for all routes. Stricter limiters (e.g. AUTH_LIMITER)
@@ -65,14 +69,15 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // -------------------- HEALTH CHECK --------------------
 app.get("/health", healthController);
+app.get("/api/v1/health", healthController);
 
 // -------------------- CSRF & ROUTES --------------------
 app.use(csrfRouter);
 app.use("/api/v1", csrfRouter);
 app.use(verifyCsrf);
 
+// Primary versioned API routes
 app.use("/api/v1/auth", authRouter);
-app.use("/auth", authRouter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/items", itemRouter);
 app.use("/api/v1/booking", bookingRouter);
@@ -81,6 +86,21 @@ app.use("/api/v1/payments", paymentRouter);
 app.use("/api/v1/notifications", notificationRouter);
 app.use("/api/v1/reviews", reviewRouter);
 app.use("/api/v1/messages", messageRouter);
+app.use("/api/v1/admin", adminRouter);
+app.use("/api/v1/voice", voiceRouter);
+
+// Root fallback aliases for seamless frontend client compatibility
+app.use("/auth", authRouter);
+app.use("/user", userRouter);
+app.use("/items", itemRouter);
+app.use("/booking", bookingRouter);
+app.use("/explore", exploreRouter);
+app.use("/payments", paymentRouter);
+app.use("/notifications", notificationRouter);
+app.use("/reviews", reviewRouter);
+app.use("/messages", messageRouter);
+app.use("/admin", adminRouter);
+app.use("/voice", voiceRouter);
 
 // -------------------- SENTRY ERROR HANDLER --------------------
 // Must come after all routes, before our own error handlers.

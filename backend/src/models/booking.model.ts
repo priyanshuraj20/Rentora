@@ -57,6 +57,45 @@ export interface IBooking extends Document {
   returnConfirmedAt?: Date;
   evidencePurgedAt?: Date;
 
+  verificationPin?: {
+    handoverPin?: string;
+    handoverExpiresAt?: Date;
+    handoverAttempts?: number;
+    returnPin?: string;
+    returnExpiresAt?: Date;
+    returnAttempts?: number;
+  };
+
+  damageReport?: {
+    tier: "TIER_0" | "TIER_1" | "TIER_2" | "TIER_3";
+    severity: "none" | "minor" | "moderate" | "severe";
+    summary: string;
+    findings: string[];
+    estimatedRepairCost: number;
+    inspectedAt: Date;
+    aiInspected: boolean;
+  };
+
+  depositSettlement?: {
+    totalDeposit: number;
+    repairDeduction: number;
+    refundedToRenter: number;
+    compensatedToOwner: number;
+    razorpayRefundId?: string;
+    settledAt: Date;
+    status: "settled" | "pending";
+  };
+
+  voiceConsent?: {
+    audioUrl?: string;
+    publicId?: string;
+    fingerprint?: string;
+    transcript?: string;
+    languageCode?: string;
+    recordedAt?: Date;
+    verified?: boolean;
+  };
+
   expiresAt?: Date;
 
   createdAt: Date;
@@ -175,6 +214,45 @@ const BookingSchema: Schema<IBooking> = new Schema(
     handoverConfirmedAt: { type: Date },
     returnConfirmedAt: { type: Date },
     evidencePurgedAt: { type: Date },
+
+    verificationPin: {
+      handoverPin: { type: String },
+      handoverExpiresAt: { type: Date },
+      handoverAttempts: { type: Number, default: 0 },
+      returnPin: { type: String },
+      returnExpiresAt: { type: Date },
+      returnAttempts: { type: Number, default: 0 },
+    },
+
+    damageReport: {
+      tier: { type: String, enum: ["TIER_0", "TIER_1", "TIER_2", "TIER_3"] },
+      severity: { type: String, enum: ["none", "minor", "moderate", "severe"] },
+      summary: { type: String },
+      findings: [{ type: String }],
+      estimatedRepairCost: { type: Number, default: 0 },
+      inspectedAt: { type: Date },
+      aiInspected: { type: Boolean, default: false },
+    },
+
+    depositSettlement: {
+      totalDeposit: { type: Number, default: 0 },
+      repairDeduction: { type: Number, default: 0 },
+      refundedToRenter: { type: Number, default: 0 },
+      compensatedToOwner: { type: Number, default: 0 },
+      razorpayRefundId: { type: String },
+      settledAt: { type: Date },
+      status: { type: String, enum: ["settled", "pending"], default: "pending" },
+    },
+
+    voiceConsent: {
+      audioUrl: { type: String },
+      publicId: { type: String },
+      fingerprint: { type: String },
+      transcript: { type: String },
+      languageCode: { type: String, default: "hi-IN" },
+      recordedAt: { type: Date },
+      verified: { type: Boolean, default: false },
+    },
 
     expiresAt: {
       type: Date,

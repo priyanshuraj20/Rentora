@@ -102,8 +102,9 @@ export const addItemService = async (
   ensureOwner(user.roles as ROLE);
 
   const locData = (data as any).location || {};
-  const city = locData.city || user.address?.district || user.address?.state;
-  const district = locData.district || user.address?.district || "";
+  const area = locData.area?.trim() || "";
+  const city = locData.city || user.address?.city || user.address?.district || user.address?.state;
+  const district = locData.district || user.address?.district || user.address?.city || "";
   const state = locData.state || user.address?.state || "";
   const pincode = locData.pincode || user.address?.pincode || "";
 
@@ -114,19 +115,37 @@ export const addItemService = async (
     );
   }
 
-  const geocoded = await geocodeCityOrAddress(city, state, district);
+  // Check if frontend passed exact GPS coordinates [lng, lat]
+  let coords: [number, number] | null = null;
+  if (Array.isArray(locData.coordinates?.coordinates) && locData.coordinates.coordinates.length === 2) {
+    const [lng, lat] = locData.coordinates.coordinates;
+    if (typeof lng === "number" && typeof lat === "number" && !isNaN(lng) && !isNaN(lat)) {
+      coords = [lng, lat];
+    }
+  } else if (Array.isArray(locData.coordinates) && locData.coordinates.length === 2) {
+    const [lng, lat] = locData.coordinates;
+    if (typeof lng === "number" && typeof lat === "number" && !isNaN(lng) && !isNaN(lat)) {
+      coords = [lng, lat];
+    }
+  }
+
+  if (!coords) {
+    const geocoded = await geocodeCityOrAddress(city, state, district, area);
+    coords = geocoded.coordinates;
+  }
 
   const itemData: any = {
     ownerId: userId,
     ...data,
     location: {
+      area,
       city,
       district,
       state,
       pincode,
       coordinates: {
         type: "Point" as const,
-        coordinates: locData.coordinates?.coordinates || geocoded.coordinates,
+        coordinates: coords,
       },
     },
   };
@@ -162,21 +181,42 @@ export const updateItemService = async (
 
   if ((data as any).location) {
     const loc = (data as any).location;
+    const area = loc.area !== undefined ? loc.area.trim() : (existingItem.location?.area || "");
     const city = loc.city || existingItem.location?.city;
     const state = loc.state || existingItem.location?.state;
     const district = loc.district || existingItem.location?.district;
     const pincode = loc.pincode || existingItem.location?.pincode;
 
+    let coords: [number, number] | null = null;
+    if (Array.isArray(loc.coordinates?.coordinates) && loc.coordinates.coordinates.length === 2) {
+      const [lng, lat] = loc.coordinates.coordinates;
+      if (typeof lng === "number" && typeof lat === "number" && !isNaN(lng) && !isNaN(lat)) {
+        coords = [lng, lat];
+      }
+    } else if (Array.isArray(loc.coordinates) && loc.coordinates.length === 2) {
+      const [lng, lat] = loc.coordinates;
+      if (typeof lng === "number" && typeof lat === "number" && !isNaN(lng) && !isNaN(lat)) {
+        coords = [lng, lat];
+      }
+    }
+
+    if (!coords && city) {
+      const geocoded = await geocodeCityOrAddress(city, state, district, area);
+      coords = geocoded.coordinates;
+    } else if (!coords && existingItem.location?.coordinates?.coordinates) {
+      coords = existingItem.location.coordinates.coordinates as [number, number];
+    }
+
     if (city) {
-      const geocoded = await geocodeCityOrAddress(city, state, district);
       updatePayload.location = {
+        area,
         city,
         district: district || "",
         state: state || "",
         pincode: pincode || "",
         coordinates: {
           type: "Point" as const,
-          coordinates: loc.coordinates?.coordinates || geocoded.coordinates,
+          coordinates: coords || [72.5714, 23.0225],
         },
       };
     }

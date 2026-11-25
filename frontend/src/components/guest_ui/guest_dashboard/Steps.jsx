@@ -1,26 +1,26 @@
-import { Search, ShieldCheck, Star } from "lucide-react";
+import { Search, PlusCircle, Handshake } from "lucide-react";
 
 const steps = [
   {
     id: "01",
     icon: <Search className="size-5" />,
-    title: "Browse & Discover",
+    title: "Discover What You Need",
     description:
-      "Search thousands of high-quality items in your neighborhood — from professional cameras to power tools and luxury furniture.",
+      "Explore useful products, equipment, vehicles, and everyday essentials available from people in your neighborhood.",
   },
   {
     id: "02",
-    icon: <ShieldCheck className="size-5" />,
-    title: "Book & Pay Securely",
+    icon: <PlusCircle className="size-5" />,
+    title: "Share & Earn",
     description:
-      "Instantly check availability and reserve with our end-to-end encrypted checkout. Your payment is protected until pickup.",
+      "List your unused belongings, set your pricing and availability, and start receiving booking requests from interested users.",
   },
   {
     id: "03",
-    icon: <Star className="size-5" />,
-    title: "Return & Review",
+    icon: <Handshake className="size-5" />,
+    title: "Connect & Grow",
     description:
-      "Complete a seamless handback with your neighbor. Build community trust by sharing a detailed, honest review.",
+      "Complete secure transactions, verify handovers and returns, and build trust through genuine community experiences.",
   },
 ];
 
@@ -31,11 +31,11 @@ export default function Steps() {
 
         {/* Section Header */}
         <div className="text-center mb-16 max-w-2xl mx-auto">
-          <h2 className="font-serif text-3xl md:text-5xl font-normal text-text-primary leading-[1.1] mb-4 tracking-tight">
-            Three Steps to Start
+          <h2 className="text-3xl md:text-5xl font-extrabold text-text-primary leading-[1.15] mb-4 tracking-tight">
+            Turn What You Own Into Opportunity.
           </h2>
           <p className="text-base md:text-lg text-text-secondary leading-relaxed font-normal">
-            From browsing to earning — the whole experience is designed to be effortless.
+            Whether you want to earn from unused possessions or access something you need, getting started is simple.
           </p>
         </div>
 

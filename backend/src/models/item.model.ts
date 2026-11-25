@@ -33,6 +33,7 @@ export interface Item extends Document {
   };
 
   location?: {
+    area?: string;
     city?: string;
     district?: string;
     state?: string;
@@ -124,6 +125,7 @@ const ItemSchema: Schema<Item> = new Schema(
     },
 
     location: {
+      area: { type: String, trim: true },
       city: { type: String, trim: true },
       district: { type: String, trim: true },
       state: { type: String, trim: true },

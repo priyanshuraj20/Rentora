@@ -1,14 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CalendarMonth from "./CalendarMonth";
-import { ChevronLeft, ChevronRight, X,Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Calendar } from "lucide-react";
 
-
-export default function RentalCalendar({ disabledDates = [], onSelect }) {
-    const [range, setRange] = useState({ start: null, end: null });
+export default function RentalCalendar({ disabledDates = [], onSelect, initialStart = null, initialEnd = null }) {
+    const [range, setRange] = useState({ start: initialStart, end: initialEnd });
     const [baseDate, setBaseDate] = useState(() => {
-        const now = new Date();
+        const now = initialStart || new Date();
         return new Date(now.getFullYear(), now.getMonth(), 1);
     });
+
+    useEffect(() => {
+        if (initialStart || initialEnd) {
+            setRange({ start: initialStart, end: initialEnd });
+            if (initialStart) {
+                setBaseDate(new Date(initialStart.getFullYear(), initialStart.getMonth(), 1));
+            }
+        }
+    }, [initialStart, initialEnd]);
 
     function addMonths(date, amount) {
         return new Date(date.getFullYear(), date.getMonth() + amount, 1);

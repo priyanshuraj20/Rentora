@@ -3,6 +3,7 @@ import DashboardHeader from "../../components/renter_ui/renter_dashboard/Dashboa
 import StatsCard from "../../components/renter_ui/renter_dashboard/StatsCard";
 import BookingCard from "../../components/renter_ui/renter_dashboard/BookingCard";
 import QuickActions from "../../components/renter_ui/renter_dashboard/QuickActions";
+import RenterVoiceGuide from "../../components/renter_ui/RenterVoiceGuide";
 import { Link, useNavigate } from "react-router-dom";
 import homeRedirect from "../../hooks/homeRedirect";
 import useAuth from "../../hooks/authHook";
@@ -84,6 +85,9 @@ export default function RenterDashboard() {
       <div className="max-w-[1400px] mx-auto px-6 py-8">
 
         <DashboardHeader userName={name} />
+
+        {/* AI Audio Voice Guide for Renters */}
+        <RenterVoiceGuide />
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-6">

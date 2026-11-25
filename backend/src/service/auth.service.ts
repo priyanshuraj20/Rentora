@@ -13,6 +13,20 @@ import { env } from "@config/env";
 export const registerService = async (userData: {
   email: string;
   password: string;
+  name?: string;
+  fullName?: string;
+  phone?: string;
+  role?: "renter" | "owner" | "admin";
+  roles?: "renter" | "owner" | "admin";
+  profileImage?: string;
+  city?: string;
+  pincode?: string;
+  address?: {
+    city?: string;
+    district?: string;
+    state?: string;
+    pincode?: string;
+  };
 }) => {
   logger.info("User registration started", { email: userData.email });
 
@@ -24,13 +38,30 @@ export const registerService = async (userData: {
   }
 
   const hashedPassword = await bcrypt.hash(userData.password, 10);
+  const resolvedRole = userData.role || userData.roles || "renter";
+  const resolvedName = (userData.name || userData.fullName || "").trim() || "Rentora User";
+  const resolvedCity = (userData.address?.city || userData.city || "").trim() || "Bangalore";
+  const resolvedPincode = (userData.address?.pincode || userData.pincode || "").trim() || "560001";
+  const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(resolvedName)}&background=f97316&color=fff&bold=true`;
 
   await User.create({
     email: userData.email,
     password: hashedPassword,
+    name: resolvedName,
+    phone: (userData.phone || "").trim(),
+    roles: resolvedRole,
+    profileImage: userData.profileImage || defaultAvatar,
+    address: {
+      city: resolvedCity,
+      district: userData.address?.district || resolvedCity,
+      state: userData.address?.state || "Karnataka",
+      pincode: resolvedPincode,
+    },
+    isVerified: false,
+    isActive: true,
   });
 
-  logger.info("User registered successfully", { email: userData.email });
+  logger.info("User registered successfully", { email: userData.email, role: resolvedRole });
 };
 
 export const sendOTPService = async (email: string) => {

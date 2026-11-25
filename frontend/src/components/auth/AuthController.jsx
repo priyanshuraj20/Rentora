@@ -28,7 +28,7 @@ export default function AuthController({ open, onClose, defaultMode = "login" })
     <AuthModal
       open={open}
       onClose={onClose}
-      maxWidth={mode === "completeProfile" ? "max-w-4xl" : "max-w-[440px]"}
+      maxWidth={mode === "register" ? "max-w-xl" : mode === "completeProfile" ? "max-w-4xl" : "max-w-[440px]"}
     >
       {screens[mode]}
     </AuthModal>

@@ -240,10 +240,17 @@ async function seed() {
     process.exit(0);
   }
 
+  const sampleLocations = [
+    { city: "Bangalore", district: "Bangalore Urban", state: "Karnataka", pincode: "560001", coordinates: { type: "Point", coordinates: [77.5946, 12.9716] } },
+    { city: "Mumbai", district: "Mumbai City", state: "Maharashtra", pincode: "400001", coordinates: { type: "Point", coordinates: [72.8777, 19.0760] } },
+    { city: "Delhi", district: "New Delhi", state: "Delhi", pincode: "110001", coordinates: { type: "Point", coordinates: [77.2090, 28.6139] } },
+  ];
+
   // Insert all items
-  const itemDocs = seedItems.map((item) => ({
+  const itemDocs = seedItems.map((item, index) => ({
     ownerId: owner._id,
     ...item,
+    location: sampleLocations[index % sampleLocations.length],
     availability: { isAvailable: true, unavailableDates: [] },
     isActive: true,
     status: "active" as const,

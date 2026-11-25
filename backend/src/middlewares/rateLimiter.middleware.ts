@@ -15,6 +15,7 @@ export const qrGenerationLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 5,
   keyGenerator: (req) => req.userId || req.ip || "",
+  validate: { keyGeneratorIpFallback: false },
   message: {
     success: false,
     message: "Too many QR code requests. Please try again in 5 minutes.",

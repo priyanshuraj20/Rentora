@@ -45,3 +45,20 @@ export const verifyPayment = catchAsync(async (req: Request, res: Response) => {
     message: result.message,
   });
 });
+
+export const settleDeposit = catchAsync(async (req: Request, res: Response) => {
+  const { bookingId } = req.body;
+  if (!bookingId) {
+    throw new AppError("Booking ID is required", 400);
+  }
+
+  const result = await defaultPaymentService.settleDeposit(
+    bookingId,
+    req.userId!,
+  );
+
+  res.status(200).json({
+    success: true,
+    data: result,
+  });
+});

@@ -1,38 +1,127 @@
 import AuthLayout from "../../components/auth/AuthLayout";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
+import {
+  Mail,
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  User,
+  Phone,
+  MapPin,
+  Camera,
+  ShoppingBag,
+  TrendingUp,
+} from "lucide-react";
 
-import { Mail, Eye, EyeOff, LockKeyhole } from "lucide-react";
-
-const Register = ({ switchMode, email, setEmail }) => {
-  const [user, setUser] = useState({
+const Register = ({ switchMode, setEmail }) => {
+  const [role, setRole] = useState("renter"); // 'renter' | 'owner'
+  const [formData, setFormData] = useState({
+    fullName: "",
     email: "",
     password: "",
+    phone: "",
+    city: "",
+    pincode: "",
   });
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const fileInputRef = useRef(null);
+
   const [showPassword, setShowPassword] = useState(false);
   const [checked, setChecked] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [coldStartNotice, setColdStartNotice] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    if (loading) {
+      timer = setTimeout(() => {
+        setColdStartNotice(true);
+      }, 3000);
+    } else {
+      setColdStartNotice(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfileImageFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  // Safe Cloudinary upload with graceful fallback so preset errors never block registration
+  const uploadImageIfSelected = async (file) => {
+    if (!file) return null;
+    const url = import.meta.env.VITE_CLOUDINARY_URL;
+    const preset = import.meta.env.VITE_CLOUDINARY_PRESET;
+    if (!url || !preset) return null;
+
+    try {
+      const img = new FormData();
+      img.append("file", file);
+      img.append("upload_preset", preset);
+      const res = await fetch(url, { method: "POST", body: img });
+      const data = await res.json();
+      if (res.ok && data?.secure_url) {
+        return data.secure_url;
+      }
+    } catch (err) {
+      console.warn("Cloudinary upload notice (using fallback avatar):", err);
+    }
+    return null;
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    if (!user.email.trim()) {
+    if (!formData.fullName.trim()) {
+      toast.error("Please enter your full name");
+      return;
+    }
+
+    if (!formData.email.trim()) {
       toast.error("Email is required");
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
       toast.error("Please enter a valid email address");
       return;
     }
 
-    if (!user.password.trim()) {
+    if (!formData.password.trim()) {
       toast.error("Password is required");
       return;
     }
 
-    if (user.password.length < 6) {
+    if (formData.password.length < 6) {
       toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      toast.error("Please enter your phone number");
+      return;
+    }
+
+    if (!formData.city.trim()) {
+      toast.error("Please enter your city");
+      return;
+    }
+
+    if (!formData.pincode.trim()) {
+      toast.error("Please enter your pincode");
       return;
     }
 
@@ -43,43 +132,67 @@ const Register = ({ switchMode, email, setEmail }) => {
 
     try {
       setLoading(true);
+
+      // 1. Upload photo if selected (optional; falls back safely)
+      let photoUrl = null;
+      if (profileImageFile) {
+        photoUrl = await uploadImageIfSelected(profileImageFile);
+      }
+      if (!photoUrl) {
+        photoUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+          formData.fullName.trim()
+        )}&background=f97316&color=fff&bold=true`;
+      }
+
+      // 2. Submit complete profile details directly at registration
+      const payload = {
+        name: formData.fullName.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        phone: formData.phone.trim(),
+        role,
+        roles: role,
+        profileImage: photoUrl,
+        address: {
+          city: formData.city.trim(),
+          pincode: formData.pincode.trim(),
+        },
+      };
+
       const res = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/auth/register`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(user),
-        },
+          body: JSON.stringify(payload),
+        }
       );
       const data = await res.json();
       if (!data.success) {
         throw new Error(data.message || "Registration failed");
       }
 
+      // 3. Send verification OTP
       const sendOtp = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/auth/send-otp`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ email: user.email }),
-        },
+          body: JSON.stringify({ email: formData.email.trim() }),
+        }
       );
       const otpData = await sendOtp.json();
       if (!otpData.success) {
         throw new Error(otpData.message || "Failed to send OTP");
       }
 
-      toast.success("Verification code sent! 📩");
-      setEmail(user.email);
+      toast.success("Verification code sent to your email! 📩");
+      if (setEmail) setEmail(formData.email.trim());
       switchMode("otp");
     } catch (error) {
-      console.error("Error in register", error.message);
+      console.error("Error in register:", error.message);
       let errorMessage = error.message;
       if (
         errorMessage.toLowerCase().includes("limit") ||
@@ -95,138 +208,300 @@ const Register = ({ switchMode, email, setEmail }) => {
     }
   };
 
-  const handleGoogleAuth = () => {
-    window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/google?flow=register`;
-  };
-
   return (
     <AuthLayout>
       {/* Header */}
-      <div className="p-8 pb-6 text-center border-b border-divider">
+      <div className="p-6 pb-4 text-center border-b border-divider">
         <h1 className="text-xl font-bold tracking-tight text-text-primary">
-          Create Your Account
+          Join Rentora Community
         </h1>
         <p className="text-text-secondary text-xs mt-1">
-          Join your local rental community
+          Create your account with your rental preferences
         </p>
       </div>
 
       {/* Form */}
-      <div className="p-8">
+      <div className="p-6 max-h-[80vh] overflow-y-auto">
         <form className="space-y-4" onSubmit={handleRegister}>
-          {/* Email */}
+          {/* 1. Role Selection: Rent vs List */}
           <div>
-            <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">
-              Email address
+            <label className="block text-[11px] font-bold text-text-muted uppercase tracking-wider mb-2">
+              I Want To
+            </label>
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => setRole("renter")}
+                className={`flex items-center gap-2.5 p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                  role === "renter"
+                    ? "bg-primary/10 border-primary text-primary shadow-sm"
+                    : "bg-surface border-divider text-text-secondary hover:border-text-muted"
+                }`}
+              >
+                <div
+                  className={`p-2 rounded-lg ${
+                    role === "renter"
+                      ? "bg-primary text-text-primary"
+                      : "bg-card text-text-muted"
+                  }`}
+                >
+                  <ShoppingBag size={18} />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-text-primary">
+                    Rent Items
+                  </div>
+                  <div className="text-[10px] text-text-muted">
+                    Browse & borrow gear
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRole("owner")}
+                className={`flex items-center gap-2.5 p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                  role === "owner"
+                    ? "bg-primary/10 border-primary text-primary shadow-sm"
+                    : "bg-surface border-divider text-text-secondary hover:border-text-muted"
+                }`}
+              >
+                <div
+                  className={`p-2 rounded-lg ${
+                    role === "owner"
+                      ? "bg-primary text-text-primary"
+                      : "bg-card text-text-muted"
+                  }`}
+                >
+                  <TrendingUp size={18} />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-text-primary">
+                    List Items
+                  </div>
+                  <div className="text-[10px] text-text-muted">
+                    Earn from your gear
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* 2. Optional Profile Photo Picker */}
+          <div className="flex items-center gap-3.5 p-2.5 rounded-xl bg-surface/50 border border-divider">
+            <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+              <div className="w-14 h-14 rounded-full overflow-hidden bg-card border border-divider flex items-center justify-center">
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-6 h-6 text-text-muted" />
+                )}
+              </div>
+              <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="w-4 h-4 text-white" />
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs font-semibold text-text-primary">
+                Profile Photo{" "}
+                <span className="text-[10px] text-text-muted font-normal">
+                  (Optional)
+                </span>
+              </div>
+              <div className="text-[10px] text-text-muted mt-0.5">
+                {profileImageFile
+                  ? `Selected: ${profileImageFile.name.slice(0, 20)}...`
+                  : "Click photo to upload, or a smart avatar will be created automatically."}
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Full Name */}
+          <div>
+            <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+              Full Name
             </label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted size-4" />
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted size-4" />
               <input
-                type="email"
-                placeholder="name@example.com"
-                value={user.email}
-                onChange={(e) => {
-                  setUser({ ...user, email: e.target.value });
-                }}
-                className="w-full pl-10 pr-4 py-2.5 bg-card border border-divider rounded-lg text-text-primary text-sm placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
+                type="text"
+                name="fullName"
+                required
+                placeholder="e.g. Priyanshu Raj"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                className="w-full pl-10 pr-4 py-2 bg-card border border-divider rounded-lg text-text-primary text-xs placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
               />
             </div>
           </div>
 
-          {/* Password */}
+          {/* 4. Email & Phone (2 columns) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted size-3.5" />
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  placeholder="name@example.com"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full pl-9 pr-3 py-2 bg-card border border-divider rounded-lg text-text-primary text-xs placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+                Phone Number
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted size-3.5" />
+                <input
+                  type="tel"
+                  name="phone"
+                  required
+                  placeholder="e.g. 9876543210"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className="w-full pl-9 pr-3 py-2 bg-card border border-divider rounded-lg text-text-primary text-xs placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 5. Password */}
           <div>
-            <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
               Password
             </label>
             <div className="relative">
               <LockKeyhole className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted size-4" />
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                value={user.password}
-                onChange={(e) => {
-                  setUser({ ...user, password: e.target.value });
-                }}
-                className="w-full pl-10 pr-10 py-2.5 bg-card border border-divider rounded-lg text-text-primary text-sm placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
+                name="password"
+                required
+                placeholder="At least 6 characters"
+                value={formData.password}
+                onChange={handleInputChange}
+                className="w-full pl-10 pr-10 py-2 bg-card border border-divider rounded-lg text-text-primary text-xs placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary text-sm cursor-pointer"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary cursor-pointer"
               >
                 {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>
             </div>
           </div>
 
-          {/* Terms */}
+          {/* 6. City & Pincode (2 columns) */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+                City
+              </label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted size-3.5" />
+                <input
+                  type="text"
+                  name="city"
+                  required
+                  placeholder="e.g. Bangalore"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  className="w-full pl-9 pr-3 py-2 bg-card border border-divider rounded-lg text-text-primary text-xs placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+                Pincode
+              </label>
+              <input
+                type="text"
+                name="pincode"
+                required
+                placeholder="e.g. 560001"
+                value={formData.pincode}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 bg-card border border-divider rounded-lg text-text-primary text-xs placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* 7. Terms Agreement */}
           <div className="flex items-start gap-2.5 py-1">
             <input
               type="checkbox"
+              id="termsCheckbox"
               checked={checked}
               onChange={() => setChecked(!checked)}
-              className="mt-0.5 rounded border-divider bg-card text-primary focus:ring-primary accent-[#e8734a]"
+              className="mt-0.5 rounded border-divider bg-card text-primary focus:ring-primary accent-[#e8734a] cursor-pointer"
             />
-            <p className="text-xs text-text-secondary leading-relaxed">
-              By creating an account, I agree to Rentora&apos;s{" "}
-              <span className="text-primary hover:underline cursor-pointer font-medium">
-                Terms of Service
+            <label htmlFor="termsCheckbox" className="text-xs text-text-secondary leading-relaxed cursor-pointer select-none">
+              I agree to Rentora&apos;s{" "}
+              <span className="text-primary hover:underline font-medium">
+                Rental Terms
               </span>{" "}
-              and{" "}
-              <span className="text-primary hover:underline cursor-pointer font-medium">
-                Privacy Policy
-              </span>
-              .
-            </p>
+              and Escrow Policy.
+            </label>
           </div>
 
-          {/* CTA */}
+          {/* 8. CTA */}
           <button
             type="submit"
+            disabled={loading}
             className="w-full cursor-pointer bg-primary hover:bg-primary-hover text-text-primary font-semibold 
-                       py-2.5 px-6 rounded-lg text-sm shadow-sm transition-all 
-                       active:scale-[0.98] mt-2"
+                       py-2.5 px-6 rounded-lg text-xs shadow-sm transition-all 
+                       active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
           >
-            {loading ? "Creating Account..." : "Create Account"}
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Creating Account...</span>
+              </div>
+            ) : (
+              `Create ${role === "owner" ? "Owner" : "Renter"} Account`
+            )}
           </button>
+
+          {/* Cloud cold-start helper hint */}
+          {coldStartNotice && (
+            <div className="mt-2.5 p-2 bg-primary/10 border border-primary/20 rounded-lg text-center animate-fade-in">
+              <p className="text-[11px] text-primary font-medium leading-tight">
+                ⚡ Free-tier server is waking up from idle state... Thanks for your patience!
+              </p>
+            </div>
+          )}
         </form>
-
-        {/* Divider */}
-        <div className="relative my-5">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-divider" />
-          </div>
-          <div className="relative flex justify-center text-[10px] uppercase">
-            <span className="bg-surface px-3 text-text-muted font-bold tracking-widest">
-              or continue with
-            </span>
-          </div>
-        </div>
-
-        {/* Google */}
-        <button
-          type="button"
-          onClick={handleGoogleAuth}
-          className="flex items-center justify-center gap-3 w-full 
-                     bg-card hover:bg-white/5 text-text-primary font-medium 
-                     py-2.5 px-4 rounded-lg transition-all cursor-pointer
-                     border border-divider text-xs"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-          </svg>
-          <span>Continue with Google</span>
-        </button>
       </div>
 
       {/* Footer */}
-      <div className="bg-card/60 px-8 py-3.5 border-t border-divider text-center">
+      <div className="bg-card/60 px-6 py-3 border-t border-divider text-center">
         <p className="text-text-secondary text-xs">
           Already have an account?
-          <button className="text-primary font-semibold hover:underline ml-1 cursor-pointer" onClick={() => switchMode("login")}>
+          <button
+            className="text-primary font-semibold hover:underline ml-1 cursor-pointer"
+            onClick={() => switchMode("login")}
+          >
             Login
           </button>
         </p>

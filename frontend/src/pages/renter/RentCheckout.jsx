@@ -23,13 +23,19 @@ export default function RentCheckout() {
                     throw new Error(itemData.message || "Failed to fetch item details");
                 }
 
-                // Fetch User Profile for Address
-                const userRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/user/me/profile`, {
-                    credentials: "include"
-                });
-                const userData = await userRes.json();
-                if (userData.success) {
-                    setUser(userData.user);
+                // Fetch User Profile for Address (if logged in)
+                try {
+                    const userRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/user/me/profile`, {
+                        credentials: "include"
+                    });
+                    if (userRes.ok) {
+                        const userData = await userRes.json();
+                        if (userData.success) {
+                            setUser(userData.user);
+                        }
+                    }
+                } catch (_) {
+                    // Guest user without active session
                 }
             } catch (err) {
                 console.error("Error fetching data:", err);
@@ -52,13 +58,30 @@ export default function RentCheckout() {
 
     if (error || !item) {
         return (
-            <div className="flex h-[80vh] flex-col items-center justify-center gap-4">
+            <div className="flex h-[80vh] flex-col items-center justify-center gap-4 text-center px-4">
+                <div className="size-16 rounded-full bg-primary/10 border border-primary/25 flex items-center justify-center text-primary text-2xl mb-1">
+                    ⚠️
+                </div>
                 <h2 className="text-2xl font-bold text-text-primary">
                     {error || "Item not found"}
                 </h2>
-                <p className="text-text-secondary">
-                    We couldn't load the item for checkout. Please try again.
+                <p className="text-text-secondary max-w-md">
+                    We couldn't load the item for checkout. It may have been unlisted or unavailable.
                 </p>
+                <div className="flex items-center gap-3 mt-3">
+                    <button
+                        onClick={() => window.history.back()}
+                        className="px-5 py-2.5 rounded-xl bg-app border border-divider text-text-secondary hover:text-text-primary text-xs font-semibold cursor-pointer"
+                    >
+                        ← Go Back
+                    </button>
+                    <a
+                        href="/explore"
+                        className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-text-primary text-xs font-bold cursor-pointer"
+                    >
+                        Browse All Gear →
+                    </a>
+                </div>
             </div>
         );
     }
@@ -66,16 +89,18 @@ export default function RentCheckout() {
     // Format item to match expected structure in CostSummary.jsx
     const formattedItem = {
         ...item,
+        pricing: item.pricing || item.price || { daily: 0, weekly: 0, monthly: 0 },
+        securityDeposit: Number(item.securityDeposit || 0),
         booking: {
-            securityDeposit: item.securityDeposit || 0,
-            serviceFee: Math.ceil((item.pricing?.daily || 0) * 0.05) || 50, // Example 5% or 50 min
+            securityDeposit: Number(item.securityDeposit || 0),
+            serviceFee: 0,
             discounts: {
-                monthlyPercent: item.discount?.monthly || 10,
-                weeklyPercent: item.discount?.weekly || 5,
+                monthlyPercent: 0,
+                weeklyPercent: 0,
             },
             protection: {
                 included: true,
-                coverageAmount: (item.pricing?.daily || 0) * 100 || 50000,
+                coverageAmount: (item.pricing?.daily || item.price?.daily || 0) * 100 || 50000,
             }
         }
     };

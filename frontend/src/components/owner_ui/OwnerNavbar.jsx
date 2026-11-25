@@ -5,10 +5,13 @@ import logo from "../../assets/logo.svg";
 import toast from "react-hot-toast";
 
 import NotificationBell from "../common/NotificationBell";
+import ProfileModal from "../../modals/ProfileModal";
+import VoiceWelcomeWidget from "../common/VoiceWelcomeWidget";
 
 const OwnerNavbar = () => {
     const navigate = useNavigate();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const dropdownRef = useRef(null);
 
     // Fetching user details and logout method from useAuth()
@@ -83,15 +86,12 @@ const OwnerNavbar = () => {
                         <NavLink to="/messages" className={navItemClass}>
                             Messages
                         </NavLink>
-
-                        <NavLink to="/features" className={navItemClass}>
-                            Features
-                        </NavLink>
                     </nav>
                 </div>
 
                 {/* Right: User Section */}
-                <div className="flex items-center gap-4 relative" ref={dropdownRef}>
+                <div className="flex items-center gap-3 relative" ref={dropdownRef}>
+                    <VoiceWelcomeWidget defaultPersona="owner" hidePersonaSwitch={true} />
                     <NotificationBell />
 
                     {/* Profile Button */}
@@ -120,10 +120,36 @@ const OwnerNavbar = () => {
 
                     {/* Dropdown Menu */}
                     {isDropdownOpen && (
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-divider rounded-2xl shadow-2xl py-1.5 z-50 overflow-hidden animate-[modalIn_150ms_ease-out]">
+                        <div className="absolute right-0 top-full mt-2 w-56 bg-surface border border-divider rounded-2xl shadow-2xl py-1.5 z-50 overflow-hidden animate-[modalIn_150ms_ease-out]">
+                            <button
+                                onClick={() => {
+                                    setIsProfileModalOpen(true);
+                                    setIsDropdownOpen(false);
+                                }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-text-primary hover:bg-white/5 transition-colors cursor-pointer text-left font-medium"
+                            >
+                                <span>👤 My Profile & Account</span>
+                            </button>
+                            <Link
+                                to="/renter"
+                                onClick={() => setIsDropdownOpen(false)}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+                            >
+                                <span>Switch to Renter Mode</span>
+                            </Link>
+                            {(user?.roles === "admin" || user?.role === "admin") && (
+                                <Link
+                                    to="/admin"
+                                    onClick={() => setIsDropdownOpen(false)}
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-primary hover:bg-white/5 transition-colors font-semibold"
+                                >
+                                    <span>🛡️ Admin Portal</span>
+                                </Link>
+                            )}
+                            <div className="border-t border-divider my-1" />
                             <button
                                 onClick={handleSignOut}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-error/10 transition-colors cursor-pointer"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-error hover:bg-error/10 transition-colors cursor-pointer"
                             >
                                 <span className="material-symbols-outlined text-lg">logout</span>
                                 <span className="font-medium">Sign Out</span>
@@ -134,6 +160,11 @@ const OwnerNavbar = () => {
                 </div>
 
             </div>
+
+            <ProfileModal
+                open={isProfileModalOpen}
+                onClose={() => setIsProfileModalOpen(false)}
+            />
         </header>
     );
 };

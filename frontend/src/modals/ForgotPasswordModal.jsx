@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Mail, KeyRound, Lock } from "lucide-react";
 import toast from "react-hot-toast";
+import { apiClient } from "../utils/apiClient";
 
 export default function ForgotPasswordModal({ onClose }) {
   const [step, setStep] = useState(1); // 1 = Request OTP, 2 = Verify & Reset
@@ -18,17 +19,9 @@ export default function ForgotPasswordModal({ onClose }) {
 
     setLoading(true);
     try {
-      const csrf = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, { credentials: "include" });
-      const csrfData = await csrf.json();
-
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/forgot-password`, {
+      const res = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/auth/forgot-password`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfData.csrfToken,
-        },
         body: JSON.stringify({ email }),
-        credentials: "include",
       });
 
       const data = await res.json();
@@ -54,17 +47,9 @@ export default function ForgotPasswordModal({ onClose }) {
 
     setLoading(true);
     try {
-      const csrf = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, { credentials: "include" });
-      const csrfData = await csrf.json();
-
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/reset-password`, {
+      const res = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/auth/reset-password`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfData.csrfToken,
-        },
         body: JSON.stringify({ email, otp, newPassword }),
-        credentials: "include",
       });
 
       const data = await res.json();

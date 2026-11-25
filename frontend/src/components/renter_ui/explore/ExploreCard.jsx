@@ -1,4 +1,4 @@
-import { Heart, Star } from "lucide-react";
+import { Heart, Star, MapPin, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const ExploreCard = ({ item, isWishlisted, onToggleWishlist, linkPrefix = "/renter/rent_items" }) => {
@@ -58,20 +58,44 @@ const ExploreCard = ({ item, isWishlisted, onToggleWishlist, linkPrefix = "/rent
             </p>
           )}
 
-          {/* Price + Distance */}
-          <div className="mt-4 flex items-center justify-between">
-            <p className="text-lg font-bold text-primary">
-              ₹{item.dailyPrice ?? item.pricing?.daily}
-              <span className="ml-1 text-xs font-normal text-text-muted">
-                /day
+          {/* Location & Distance Badge */}
+          <div className="mt-2.5 flex items-center justify-between text-xs text-text-muted">
+            <div className="flex items-center gap-1 min-w-0 pr-2">
+              <MapPin size={12} className="text-primary shrink-0" />
+              <span className="truncate font-medium text-text-secondary">
+                {item.location?.area ? `${item.location.area}, ` : ""}{item.location?.city || item.location?.district || "Available locally"}
               </span>
-            </p>
+            </div>
 
-            {item.distanceKm && (
-              <span className="rounded-lg bg-card border border-divider px-2.5 py-1 text-[10px] font-medium text-text-secondary">
-                {item.distanceKm} km away
+            {item.distanceKm !== null && item.distanceKm !== undefined && (
+              <span className="shrink-0 rounded-md bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                {item.distanceKm < 1 ? "< 1 km away" : `${item.distanceKm} km away`}
               </span>
             )}
+          </div>
+
+          {/* Price & Deposit */}
+          <div className="mt-3 flex items-end justify-between pt-2 border-t border-divider/40">
+            <div>
+              <p className="text-lg font-bold text-primary leading-tight">
+                ₹{item.dailyPrice ?? item.pricing?.daily}
+                <span className="ml-1 text-xs font-normal text-text-muted">
+                  /day
+                </span>
+              </p>
+              <p className="mt-1 flex items-center gap-1 text-[11px] text-text-muted">
+                <ShieldCheck size={11} className="text-emerald-400 shrink-0" />
+                <span>
+                  {item.securityDeposit && Number(item.securityDeposit) > 0
+                    ? `₹${Number(item.securityDeposit).toLocaleString("en-IN")} deposit`
+                    : "Zero deposit"}
+                </span>
+              </p>
+            </div>
+
+            <span className="text-[11px] font-medium text-text-muted group-hover:text-primary transition-colors pb-0.5">
+              View Details →
+            </span>
           </div>
         </div>
       </Link>

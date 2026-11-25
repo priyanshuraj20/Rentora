@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 
 import useAuth from "../../hooks/authHook";
 import { useEffect } from "react";
+import { apiClient } from "../../utils/apiClient";
 
 
 export default function CompleteProfile({ switchMode }) {
@@ -26,6 +27,7 @@ export default function CompleteProfile({ switchMode }) {
     fullName: "",
     phone: "",
   });
+  const [city, setCity] = useState("");
   const [pincode, setPincode] = useState("");
 
   const [loading, setLoading] = useState(false);
@@ -35,7 +37,14 @@ export default function CompleteProfile({ switchMode }) {
       setFormData(prev => ({
         ...prev,
         fullName: prev.fullName || user.name || "",
+        phone: prev.phone || user.phone || "",
       }));
+      if (user.address?.city && !city) {
+        setCity(user.address.city);
+      }
+      if (user.address?.pincode && !pincode) {
+        setPincode(user.address.pincode);
+      }
       if (user.profileImage && !previewUrl) {
         setPreviewUrl(user.profileImage);
       }
@@ -90,13 +99,13 @@ export default function CompleteProfile({ switchMode }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!profileImage && !previewUrl) {
-      toast.error("Please upload a profile photo");
+    if (!formData.fullName.trim()) {
+      toast.error("Please enter your full name");
       return;
     }
 
-    if (!formData.fullName.trim()) {
-      toast.error("Please enter your full name");
+    if (!city.trim()) {
+      toast.error("Please enter your city");
       return;
     }
 
@@ -107,45 +116,42 @@ export default function CompleteProfile({ switchMode }) {
 
     setLoading(true);
     try {
-
-      // Step 1 : profileImage upload to Cloudinary (If new image selected)
+      // Step 1 : profileImage upload to Cloudinary (optional with smart avatar fallback)
       let uploadedImageUrl = previewUrl;
       if (profileImage) {
-        uploadedImageUrl = await convertImage(profileImage);
-        if (!uploadedImageUrl) {
-          toast.error("Failed to upload image");
-          return;
+        try {
+          uploadedImageUrl = await convertImage(profileImage);
+        } catch (imgErr) {
+          console.warn("Cloudinary upload failed, using smart avatar fallback:", imgErr);
+          uploadedImageUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullName.trim())}&background=f97316&color=fff&bold=true`;
         }
       }
 
-      // Step 2 : Complete profile backend call
-      const csrfRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
-        method: "GET",
-        credentials: "include",
-      });
-      const csrfData = await csrfRes.json();
+      if (!uploadedImageUrl) {
+        uploadedImageUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullName.trim() || "User")}&background=f97316&color=fff&bold=true`;
+      }
 
+      // Step 2 : Complete profile backend call via centralized apiClient
       const roleSelected = intent === "owner" ? "owner" : "renter";
       const payload = {
-        name: formData.fullName,
-        phone: formData.phone,
-        address: { pincode: pincode },
+        name: formData.fullName.trim(),
+        phone: formData.phone.trim(),
+        address: {
+          city: city.trim(),
+          pincode: pincode.trim(),
+        },
         role: roleSelected,
+        roles: roleSelected,
         profileImage: uploadedImageUrl,
       };
 
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/user/me/profile`, {
+      const res = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/user/me/profile`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfData.csrfToken,
-        },
-        credentials: "include",
         body: JSON.stringify(payload),
       });
 
       const data = await res.json();
-      if (!data.success) {
+      if (!res.ok || !data.success) {
         throw new Error(data.message || "Failed to update profile");
       }
 
@@ -233,14 +239,25 @@ export default function CompleteProfile({ switchMode }) {
               icon={<User className="w-4 h-4" />}
             />
 
-            <Input
-              label="LOCATION"
-              name="pincode"
-              value={pincode}
-              onChange={(e) => setPincode(e.target.value)}
-              placeholder="Pincode"
-              icon={<MapPin className="w-4 h-4" />}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                label="CITY"
+                name="city"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="e.g. Bangalore"
+                icon={<MapPin className="w-4 h-4" />}
+              />
+
+              <Input
+                label="PINCODE"
+                name="pincode"
+                value={pincode}
+                onChange={(e) => setPincode(e.target.value)}
+                placeholder="e.g. 560001"
+                icon={<MapPin className="w-4 h-4" />}
+              />
+            </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold tracking-wider text-text-secondary uppercase">

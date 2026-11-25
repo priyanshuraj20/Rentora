@@ -4,6 +4,7 @@ import ExploreLocationBar from "../../components/renter_ui/explore/ExploreLocati
 import ExploreGrid from "../../components/renter_ui/explore/ExploreGrid";
 import ExploreEmptyState from "../../components/renter_ui/explore/ExploreEmptyState";
 import ExplorePagination from "../../components/renter_ui/explore/ExplorePagination";
+import RenterVoiceGuide from "../../components/renter_ui/RenterVoiceGuide";
 import useAuth from "../../hooks/authHook";
 import toast from "react-hot-toast";
 
@@ -155,22 +156,27 @@ const RenterExplore = () => {
 
   return (
     <div className="mx-auto max-w-7xl px-6 lg:px-20 py-8 min-h-screen">
-      <ExploreSearchBar
-        value={search}
-        onChange={handleSearchChange}
-        onSubmit={handleSearchSubmit}
-      />
+      <div id="renter-tour-search" className="transition-all duration-300 scroll-mt-24 rounded-2xl">
+        <ExploreSearchBar
+          value={search}
+          onChange={handleSearchChange}
+          onSubmit={handleSearchSubmit}
+        />
+      </div>
 
-      <ExploreLocationBar
-        onLocationChange={handleLocationChange}
-        selectedRadius={radius}
-        onRadiusChange={handleRadiusChange}
-      />
+      <div id="renter-tour-location" className="transition-all duration-300 scroll-mt-24 rounded-2xl">
+        <ExploreLocationBar
+          userCity={user?.address?.city || user?.address?.district}
+          onLocationChange={handleLocationChange}
+          selectedRadius={radius}
+          onRadiusChange={handleRadiusChange}
+        />
+      </div>
 
       {rentals.length === 0 && !loading ? (
         <ExploreEmptyState />
       ) : (
-        <div className="flex flex-col gap-10">
+        <div id="renter-tour-gear" className="flex flex-col gap-10 transition-all duration-300 scroll-mt-24 rounded-3xl">
           <ExploreGrid
             rentals={rentals}
             wishlistIds={wishlistIds}

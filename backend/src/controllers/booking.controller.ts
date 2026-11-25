@@ -11,6 +11,10 @@ import {
   uploadBookingPhotosService,
   generateQRTokenService,
   confirmQRScanService,
+  generateVerificationPinService,
+  verifyPinService,
+  getActivePinForDemoService,
+  submitVoiceConsentService,
 } from "../service/booking.service";
 import { createBookingSchema } from "../validators/booking.validator";
 import { AppError } from "../utils/AppError";
@@ -188,3 +192,75 @@ export const confirmBookingScan = catchAsync(async (req: Request, res: Response)
     data: result,
   });
 });
+
+export const generateVerificationPin = catchAsync(
+  async (req: Request, res: Response) => {
+    const { type } = req.body;
+    if (type !== "handover" && type !== "return") {
+      throw new AppError("Body param 'type' must be 'handover' or 'return'", 400);
+    }
+
+    const result = await generateVerificationPinService(
+      req.userId!,
+      req.params.id as string,
+      type,
+    );
+
+    res.status(200).json({ success: true, data: result });
+  },
+);
+
+export const verifyVerificationPin = catchAsync(
+  async (req: Request, res: Response) => {
+    const { type, pin } = req.body;
+    if (type !== "handover" && type !== "return") {
+      throw new AppError("Body param 'type' must be 'handover' or 'return'", 400);
+    }
+    if (!pin) {
+      throw new AppError("6-digit 'pin' is required", 400);
+    }
+
+    const result = await verifyPinService(
+      req.userId!,
+      req.params.id as string,
+      type,
+      pin,
+    );
+
+    res.status(200).json({ success: true, data: result });
+  },
+);
+
+export const getActivePinForDemo = catchAsync(
+  async (req: Request, res: Response) => {
+    const { type } = req.query;
+    if (type !== "handover" && type !== "return") {
+      throw new AppError("Query param 'type' must be 'handover' or 'return'", 400);
+    }
+
+    const result = await getActivePinForDemoService(
+      req.userId!,
+      req.params.id as string,
+      type,
+    );
+
+    res.status(200).json({ success: true, data: result });
+  },
+);
+
+export const submitVoiceConsent = catchAsync(
+  async (req: Request, res: Response) => {
+    if (!req.file || !req.file.buffer) {
+      throw new AppError("Audio file is required for voice consent", 400);
+    }
+
+    const result = await submitVoiceConsentService(
+      req.userId!,
+      req.params.id as string,
+      req.file.buffer,
+      req.file.mimetype || "audio/webm",
+    );
+
+    res.status(200).json(result);
+  },
+);

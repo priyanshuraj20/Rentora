@@ -6,12 +6,12 @@ export interface IUser extends Document {
   name?: string;
   phone?: string;
   profileImage?: string;
-  googleId?: string;
   isVerified: boolean;
 
   roles: "renter" | "owner" | "admin";
 
   address?: {
+    city?: string;
     district?: string;
     state?: string;
     pincode?: string;
@@ -55,9 +55,7 @@ export interface IUser extends Document {
     };
   };
 
-  trustScore: number;
-
-  walletBalance: number;
+  walletBalance?: number;
   isActive: boolean;
   isBlocked: boolean;
 
@@ -83,12 +81,6 @@ const UserSchema: Schema<IUser> = new Schema(
       type: String,
       required: false,
       minlength: 6,
-    },
-
-    googleId: {
-      type: String,
-      unique: true,
-      sparse: true,
     },
 
     name: {
@@ -120,6 +112,7 @@ const UserSchema: Schema<IUser> = new Schema(
     },
 
     address: {
+      city: String,
       district: String,
       state: String,
       pincode: String,
@@ -166,13 +159,6 @@ const UserSchema: Schema<IUser> = new Schema(
     isBlocked: {
       type: Boolean,
       default: false,
-    },
-
-    trustScore: {
-      type: Number,
-      default: 50,
-      min: 0,
-      max: 100,
     },
 
     verifications: {

@@ -33,9 +33,11 @@ export const globalErrorHandler = (
   err.statusCode = err.statusCode || 500;
   err.message = err.message || "Internal Server Error";
 
-  //  DEVELOPMENT: full details, easier debugging 
+  //  DEVELOPMENT: full stack trace for 500s / unexpected errors, clean output for expected 4xx
   if (env.NODE_ENV === "development") {
-    console.error("💥 ERROR:", err);
+    if (err.statusCode >= 500 || !err.isOperational) {
+      console.error("💥 SERVER ERROR:", err);
+    }
     return res.status(err.statusCode).json({
       success: false,
       message: err.message,

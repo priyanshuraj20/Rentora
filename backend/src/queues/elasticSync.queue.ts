@@ -15,6 +15,10 @@ export const elasticSyncQueue = new Queue("elasticSyncQueue", {
   },
 });
 
+elasticSyncQueue.on("error", (err) => {
+  logger.warn(`elasticSyncQueue Redis notice: ${err.message}`);
+});
+
 export const addElasticSyncJob = async (
   action: "INDEX_ITEM" | "DELETE_ITEM",
   itemId: string,

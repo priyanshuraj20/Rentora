@@ -4,25 +4,25 @@ import { ArrowRight, Laptop, Sofa, Wrench, Car } from "lucide-react";
 const categories = [
   {
     title: "Electronics",
-    count: "2,400+ items",
+    count: "Cameras, Drones & Audio",
     image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=80",
     icon: <Laptop className="size-5" />,
   },
   {
     title: "Furniture",
-    count: "1,800+ items",
+    count: "Desks, Chairs & Living",
     image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80",
     icon: <Sofa className="size-5" />,
   },
   {
     title: "Tools",
-    count: "4,200+ items",
+    count: "Power Drills & Equipment",
     image: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80",
     icon: <Wrench className="size-5" />,
   },
   {
     title: "Vehicles",
-    count: "850+ items",
+    count: "Bikes & City Commuters",
     image: "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800&q=80",
     icon: <Car className="size-5" />,
   },
@@ -38,11 +38,11 @@ export default function Categories() {
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
           <div className="max-w-xl">
-            <h2 className="font-serif text-3xl md:text-5xl font-normal text-text-primary leading-tight mb-3 tracking-tight">
-              Explore What's Near You
+            <h2 className="text-3xl md:text-5xl font-extrabold text-text-primary leading-tight mb-3 tracking-tight">
+              Explore More. Own Less.
             </h2>
             <p className="text-text-secondary text-base font-normal">
-              Discover high-quality items available immediately in your neighborhood.
+              From everyday essentials to specialized equipment, discover useful items available from people around you.
             </p>
           </div>
           <Link

@@ -1,6 +1,6 @@
-/* Fonts */
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap");
+/* Icons & Plus Jakarta Sans Font */
 @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap");
 
 /* Tailwind v4 entry */
 @import "tailwindcss";
@@ -34,9 +34,9 @@
   --color-warning: #ffb545;
   --color-error: #ef5350;
 
-  /* Typography */
-  --font-sans: Outfit, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-serif: Fraunces, Georgia, serif;
+  /* Typography: Plus Jakarta Sans */
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 /* Base styles */

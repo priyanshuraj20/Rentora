@@ -2,34 +2,24 @@ import React, { useState, useEffect, useMemo } from 'react';
 import BookingTabs from '../../components/owner_ui/bookings/BookingTabs';
 import BookingCard from '../../components/owner_ui/bookings/BookingCard';
 import BookingPhotoUploadModal from '../../components/common/BookingPhotoUploadModal';
-import QRDisplayModal from '../../components/common/QRDisplayModal';
-import QRScannerModal from '../../components/common/QRScannerModal';
+import PINDisplayModal from '../../components/common/PINDisplayModal';
+import PINInputModal from '../../components/common/PINInputModal';
 import toast from 'react-hot-toast';
+import { apiClient } from '../../utils/apiClient';
 
 const OwnerBookings = () => {
   const [activeTab, setActiveTab] = useState('pending');
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [photoModalBookingId, setPhotoModalBookingId] = useState(null);
-  const [qrDisplayModal, setQrDisplayModal] = useState({ open: false, bookingId: null });
-  const [qrScannerModal, setQrScannerModal] = useState({ open: false, bookingId: null });
+  const [pinDisplayModal, setPinDisplayModal] = useState({ open: false, bookingId: null, type: 'handover' });
+  const [pinInputModal, setPinInputModal] = useState({ open: false, bookingId: null, type: 'return' });
 
   const fetchBookings = async () => {
     setIsLoading(true);
     try {
-      const csrf = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
+      const response = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/booking`, {
         method: "GET",
-        credentials: "include"
-      });
-      const csrfData = await csrf.json();
-
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/booking`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfData.csrfToken
-        },
-        credentials: "include"
       });
       
       const data = await response.json();
@@ -49,27 +39,20 @@ const OwnerBookings = () => {
 
   const handleApprove = async (id) => {
     try {
-      const csrf = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
-        method: "GET",
-        credentials: "include"
-      });
-      const csrfData = await csrf.json();
-
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/booking/${id}/approve`, {
+      const response = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/booking/${id}/approve`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfData.csrfToken
-        },
-        credentials: "include"
       });
       
       const data = await response.json();
       if (data.success) {
+        toast.success("Booking approved! Renter notified to complete payment. ✅");
         fetchBookings();
+      } else {
+        toast.error(data.message || "Failed to approve booking.");
       }
     } catch (error) {
       console.error("Failed to approve booking:", error);
+      toast.error(error.message || "Failed to approve booking.");
     }
   };
 
@@ -81,46 +64,28 @@ const OwnerBookings = () => {
     }
 
     try {
-      const csrf = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
-        method: "GET",
-        credentials: "include"
-      });
-      const csrfData = await csrf.json();
-
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/booking/${id}/reject`, {
+      const response = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/booking/${id}/reject`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfData.csrfToken
-        },
         body: JSON.stringify({ rejectMessage: message }),
-        credentials: "include"
       });
       
       const data = await response.json();
       if (data.success) {
+        toast.success("Booking request declined.");
         fetchBookings();
+      } else {
+        toast.error(data.message || "Failed to reject booking.");
       }
     } catch (error) {
       console.error("Failed to reject booking:", error);
+      toast.error(error.message || "Failed to reject booking.");
     }
   };
 
   const executeComplete = async (id) => {
     try {
-      const csrf = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
-        method: "GET",
-        credentials: "include"
-      });
-      const csrfData = await csrf.json();
-
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/booking/${id}/complete`, {
+      const response = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/booking/${id}/complete`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfData.csrfToken
-        },
-        credentials: "include"
       });
       
       const data = await response.json();
@@ -144,10 +109,6 @@ const OwnerBookings = () => {
         executeComplete(id);
       }
     }
-  };
-
-  const handleExtend = (id) => {
-    toast("Extend Rental functionality coming soon!", { icon: "⏳" });
   };
 
   const filteredBookings = useMemo(() => {
@@ -188,14 +149,13 @@ const OwnerBookings = () => {
             ) : filteredBookings.length > 0 ? (
               filteredBookings.map((booking) => (
                 <BookingCard 
-                  key={booking.id} 
+                  key={booking.id || booking._id} 
                   booking={booking} 
                   onApprove={handleApprove} 
                   onReject={handleReject} 
                   onComplete={handleComplete}
-                  onExtend={handleExtend}
-                  onShowHandoverQR={(id) => setQrDisplayModal({ open: true, bookingId: id })}
-                  onScanReturnQR={(id) => setQrScannerModal({ open: true, bookingId: id })}
+                  onShowHandoverPin={(id) => setPinDisplayModal({ open: true, bookingId: id, type: 'handover' })}
+                  onEnterReturnPin={(id) => setPinInputModal({ open: true, bookingId: id, type: 'return' })}
                   activeTab={activeTab}
                 />
               ))
@@ -222,18 +182,21 @@ const OwnerBookings = () => {
         />
       )}
 
-      {qrDisplayModal.open && (
-        <QRDisplayModal
-          bookingId={qrDisplayModal.bookingId}
-          type="handover"
-          onClose={() => setQrDisplayModal({ open: false, bookingId: null })}
+      {pinDisplayModal.open && (
+        <PINDisplayModal
+          bookingId={pinDisplayModal.bookingId}
+          type={pinDisplayModal.type}
+          open={pinDisplayModal.open}
+          onClose={() => setPinDisplayModal({ open: false, bookingId: null, type: 'handover' })}
         />
       )}
 
-      {qrScannerModal.open && (
-        <QRScannerModal
-          bookingId={qrScannerModal.bookingId}
-          onClose={() => setQrScannerModal({ open: false, bookingId: null })}
+      {pinInputModal.open && (
+        <PINInputModal
+          bookingId={pinInputModal.bookingId}
+          type={pinInputModal.type}
+          open={pinInputModal.open}
+          onClose={() => setPinInputModal({ open: false, bookingId: null, type: 'return' })}
           onSuccess={fetchBookings}
         />
       )}

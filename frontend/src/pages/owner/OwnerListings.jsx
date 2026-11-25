@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
+import { apiClient } from "../../utils/apiClient";
 import SearchBar from "../../components/owner_ui/ownerListings/SearchBar";
 import InventoryCard from "../../components/owner_ui/ownerListings/InventoryCard";
 import InventoryTabs from "../../components/owner_ui/ownerListings/InventoryTabs";
@@ -17,19 +18,8 @@ export default function OwnerListings() {
 
     const fetchItems = async () => {
         try {
-            const csrf = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
+            const response = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/items`, {
                 method: "GET",
-                credentials: "include"
-            });
-            const csrfData = await csrf.json();
-
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/items`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-Token": csrfData.csrfToken
-                },
-                credentials: "include"
             });
             
             const data = await response.json();
@@ -62,19 +52,8 @@ export default function OwnerListings() {
 
     const handlePauseItem = async (id) => {
         try {
-            const csrf = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
-                method: "GET",
-                credentials: "include"
-            });
-            const csrfData = await csrf.json();
-
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/items/${id}/pause`, {
+            const response = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/items/${id}/pause`, {
                 method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-Token": csrfData.csrfToken
-                },
-                credentials: "include"
             });
             const data = await response.json();
             if (data.success) {
@@ -89,19 +68,8 @@ export default function OwnerListings() {
 
     const handleActivateItem = async (id) => {
         try {
-            const csrf = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
-                method: "GET",
-                credentials: "include"
-            });
-            const csrfData = await csrf.json();
-
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/items/${id}/activate`, {
+            const response = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/items/${id}/activate`, {
                 method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-Token": csrfData.csrfToken
-                },
-                credentials: "include"
             });
             const data = await response.json();
             if (data.success) {
@@ -117,19 +85,8 @@ export default function OwnerListings() {
     const handleDeleteItem = async (id) => {
         if (!window.confirm("Are you sure you want to delete this item?")) return;
         try {
-            const csrf = await fetch(`${import.meta.env.VITE_BACKEND_URL}/csrf-token`, {
-                method: "GET",
-                credentials: "include"
-            });
-            const csrfData = await csrf.json();
-
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/items/${id}/delete`, {
+            const response = await apiClient(`${import.meta.env.VITE_BACKEND_URL}/items/${id}/delete`, {
                 method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-Token": csrfData.csrfToken
-                },
-                credentials: "include"
             });
             const data = await response.json();
             if (data.success) {

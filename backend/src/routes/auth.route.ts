@@ -6,12 +6,11 @@ import {
   register,
   sendOTP,
   verifyOTP,
-  googleCallback,
   refreshToken,
   forgotPassword,
   resetPassword,
+  demoLogin,
 } from "../controllers/auth.controller";
-import passport from "passport";
 import { VerifyUser } from "../middlewares/verifyUser";
 import { OTP_LIMITER, AUTH_LIMITER } from "../middlewares/rateLimiter";
 
@@ -145,41 +144,8 @@ router.post("/logout", VerifyUser, logout);
  */
 router.post("/refresh", refreshToken);
 
-/**
- * @swagger
- * /auth/google:
- *   get:
- *     summary: Initiate Google OAuth
- *     tags: [Auth]
- *     parameters:
- *       - in: query
- *         name: flow
- *         schema:
- *           type: string
- *         description: "State to distinguish between 'login' and 'register'"
- */
-router.get("/google", (req, res, next) => {
-  const { flow } = req.query;
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
-    state: flow as string,
-  })(req, res, next);
-});
-
-/**
- * @swagger
- * /auth/google/callback:
- *   get:
- *     summary: Google OAuth Callback
- *     tags: [Auth]
- */
-router.get(
-  "/google/callback",
-  passport.authenticate("google", { session: false }),
-  googleCallback,
-);
-
 router.post("/forgot-password", OTP_LIMITER, forgotPassword);
 router.post("/reset-password", resetPassword);
+router.post("/demo-login", demoLogin);
 
 export default router;

@@ -37,3 +37,7 @@ emailWorker.on("completed", (job) => {
 emailWorker.on("failed", (job, err) => {
   logger.error(`Email job [${job?.name}] failed: ${err.message}`);
 });
+
+emailWorker.on("error", (err) => {
+  logger.warn(`Email worker Redis notice: ${err.message}`);
+});

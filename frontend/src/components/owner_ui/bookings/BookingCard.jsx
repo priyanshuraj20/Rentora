@@ -1,22 +1,33 @@
-import { Calendar, User, CheckCircle, XCircle, Clock, RotateCcw, QrCode, Scan } from 'lucide-react';
-import TrustScoreBadge from '../../common/TrustScoreBadge';
+import { Calendar, User, CheckCircle, XCircle, Clock, RotateCcw, KeyRound, ShieldCheck } from 'lucide-react';
 
-const BookingCard = ({ booking, onApprove, onReject, onComplete, onExtend, onShowHandoverQR, onScanReturnQR, activeTab }) => {
+const BookingCard = ({ booking, onApprove, onReject, onComplete, onExtend, onShowHandoverPin, onEnterReturnPin, onShowHandoverQR, onScanReturnQR, activeTab }) => {
   const { item, status, id, startDate, endDate, renterInfo } = booking;
   
   const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    });
+    if (!dateStr) return 'N/A';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return 'N/A';
+      return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (e) {
+      return 'N/A';
+    }
   };
 
   const getDaysRemaining = (endStr) => {
-    const today = new Date();
-    const end = new Date(endStr);
-    const diffTime = end - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    if (!endStr) return 0;
+    try {
+      const today = new Date();
+      const end = new Date(endStr);
+      if (isNaN(end.getTime())) return 0;
+      const diffTime = end - today;
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    } catch (e) {
+      return 0;
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -58,9 +69,6 @@ const BookingCard = ({ booking, onApprove, onReject, onComplete, onExtend, onSho
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 text-text-secondary text-xs flex-wrap">
             <span className="font-medium">Renter: <span className="text-text-primary">{renterInfo?.name || 'Unknown Renter'}</span></span>
-            {renterInfo?.reputationTier && (
-              <TrustScoreBadge tier={renterInfo.reputationTier} />
-            )}
           </div>
 
           <div className="flex items-center gap-4 text-xs text-text-muted pt-1">
@@ -134,20 +142,20 @@ const BookingCard = ({ booking, onApprove, onReject, onComplete, onExtend, onSho
           <>
             {!booking.handoverConfirmedAt && (
               <button
-                onClick={() => onShowHandoverQR && onShowHandoverQR(id)}
+                onClick={() => (onShowHandoverPin || onShowHandoverQR) && (onShowHandoverPin || onShowHandoverQR)(id)}
                 className="w-full flex items-center justify-center gap-1.5 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
               >
-                <QrCode className="w-3.5 h-3.5" />
-                Show Handover QR
+                <KeyRound className="w-3.5 h-3.5" />
+                Show Handover PIN
               </button>
             )}
             {booking.handoverConfirmedAt && !booking.returnConfirmedAt && (
               <button
-                onClick={() => onScanReturnQR && onScanReturnQR(id)}
+                onClick={() => (onEnterReturnPin || onScanReturnQR) && (onEnterReturnPin || onScanReturnQR)(id)}
                 className="w-full flex items-center justify-center gap-1.5 bg-secondary-accent/20 hover:bg-secondary-accent/30 text-secondary-accent border border-secondary-accent/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
               >
-                <Scan className="w-3.5 h-3.5" />
-                Scan Return QR
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Enter Return PIN
               </button>
             )}
             <button

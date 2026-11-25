@@ -51,7 +51,6 @@ async function restoreEnvironment() {
       phone: "+919876543210",
       roles: "owner",
       isVerified: true,
-      trustScore: 100,
       walletBalance: 0,
       address: {
         district: "South Goa",

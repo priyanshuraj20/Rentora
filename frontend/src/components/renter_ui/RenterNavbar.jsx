@@ -1,14 +1,20 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
+import { Mic } from "lucide-react";
 import useAuth from "../../hooks/authHook";
 import logo from "../../assets/logo.svg";
 import toast from "react-hot-toast";
 
 import NotificationBell from "../common/NotificationBell";
+import VoiceBookingAgentModal from "../common/VoiceBookingAgentModal";
+import VoiceWelcomeWidget from "../common/VoiceWelcomeWidget";
+import ProfileModal from "../../modals/ProfileModal";
 
 const RenterNavbar = () => {
     const navigate = useNavigate();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [voiceAgentOpen, setVoiceAgentOpen] = useState(false);
     const dropdownRef = useRef(null);
 
     // Fetching user details and logout method from useAuth()
@@ -64,8 +70,11 @@ const RenterNavbar = () => {
                     </Link>
 
                     <nav className="hidden md:flex items-center gap-2">
+                        <NavLink to="/renter" className={navItemClass}>
+                            Browse Gear
+                        </NavLink>
                         <NavLink to="/rentals" className={navItemClass}>
-                            Rentals
+                            My Rentals
                         </NavLink>
                         <NavLink to="/wishlist" className={navItemClass}>
                             Wishlist
@@ -73,17 +82,23 @@ const RenterNavbar = () => {
                         <NavLink to="/messages" className={navItemClass}>
                             Messages
                         </NavLink>
-                        <NavLink to="/explore" className={navItemClass}>
-                            Browse Items
-                        </NavLink>
-                        <NavLink to="/features" className={navItemClass}>
-                            Features
-                        </NavLink>
                     </nav>
                 </div>
 
                 {/* Right: User Section */}
-                <div className="flex items-center gap-4 relative" ref={dropdownRef}>
+                <div className="flex items-center gap-3 relative" ref={dropdownRef}>
+                    <button
+                        onClick={() => setVoiceAgentOpen(true)}
+                        title="Autonomous Voice Booking (Sarvam Indic AI)"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/25 text-primary text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                    >
+                        <Mic size={13} className="animate-pulse" />
+                        <span className="hidden sm:inline">Voice Agent</span>
+                    </button>
+
+                    {/* Dedicated Renter AI Voice Tour */}
+                    <VoiceWelcomeWidget defaultPersona="renter" hidePersonaSwitch={true} />
+
                     <NotificationBell />
 
                     {/* Profile Button */}
@@ -93,7 +108,7 @@ const RenterNavbar = () => {
                     >
                         <div className="flex flex-col">
                             <span className="text-sm text-text-primary font-semibold">
-                                {name}
+                                {name || "Renter"}
                             </span>
                         </div>
 
@@ -112,10 +127,36 @@ const RenterNavbar = () => {
 
                     {/* Dropdown Menu */}
                     {isDropdownOpen && (
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-divider rounded-2xl shadow-2xl py-1.5 z-50 overflow-hidden animate-[modalIn_150ms_ease-out]">
+                        <div className="absolute right-0 top-full mt-2 w-56 bg-surface border border-divider rounded-2xl shadow-2xl py-1.5 z-50 overflow-hidden animate-[modalIn_150ms_ease-out]">
+                            <button
+                                onClick={() => {
+                                    setIsProfileModalOpen(true);
+                                    setIsDropdownOpen(false);
+                                }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-text-primary hover:bg-white/5 transition-colors cursor-pointer text-left font-medium"
+                            >
+                                <span>👤 My Profile & Account</span>
+                            </button>
+                            <Link
+                                to="/owner"
+                                onClick={() => setIsDropdownOpen(false)}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+                            >
+                                <span>Switch to Owner Mode</span>
+                            </Link>
+                            {(user?.roles === "admin" || user?.role === "admin") && (
+                                <Link
+                                    to="/admin"
+                                    onClick={() => setIsDropdownOpen(false)}
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-primary hover:bg-white/5 transition-colors font-semibold"
+                                >
+                                    <span>🛡️ Admin Portal</span>
+                                </Link>
+                            )}
+                            <div className="border-t border-divider my-1" />
                             <button
                                 onClick={handleSignOut}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-error/10 transition-colors cursor-pointer"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-error hover:bg-error/10 transition-colors cursor-pointer"
                             >
                                 <span className="material-symbols-outlined text-lg">logout</span>
                                 <span className="font-medium">Sign Out</span>
@@ -126,6 +167,15 @@ const RenterNavbar = () => {
                 </div>
 
             </div>
+
+            <ProfileModal
+                open={isProfileModalOpen}
+                onClose={() => setIsProfileModalOpen(false)}
+            />
+            <VoiceBookingAgentModal
+                open={voiceAgentOpen}
+                onClose={() => setVoiceAgentOpen(false)}
+            />
         </header>
     );
 };

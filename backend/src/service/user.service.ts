@@ -9,7 +9,6 @@ import {
 } from "../validators/user.schema";
 import { AppError } from "../utils/AppError";
 import logger from "../config/logger";
-import { getReputationTier } from "../utils/reputation";
 
 export const userProfileService = async (
   userId: string,
@@ -52,12 +51,12 @@ export const getUserProfileService = async (userId: string) => {
     name: user.name!,
     phone: user.phone!,
     address: {
-      pincode: user.address?.pincode!,
-      district: user.address?.district!,
-      state: user.address?.state!,
+      city: user.address?.city || "",
+      pincode: user.address?.pincode || "",
+      district: user.address?.district || "",
+      state: user.address?.state || "",
     },
     profileImage: user.profileImage!,
-    reputationTier: getReputationTier(user.trustScore),
     isVerified: user.isVerified ?? false,
     verifications: {
       email: {
@@ -97,15 +96,22 @@ export const updateProfileService = async (
 ) => {
   logger.info("Updating user profile", { userId });
 
-  const allowedFields = ["name", "phone", "address"];
+  const allowedFields = ["name", "phone", "address", "profileImage", "role", "roles"];
 
-  const filteredData = Object.fromEntries(
-    Object.entries(userData).filter(([key]) => allowedFields.includes(key)),
-  );
+  const updateData: Record<string, any> = {};
+  for (const [key, val] of Object.entries(userData)) {
+    if (allowedFields.includes(key) && val !== undefined) {
+      if (key === "role") {
+        updateData.roles = val;
+      } else {
+        updateData[key] = val;
+      }
+    }
+  }
 
   const user = await User.findByIdAndUpdate(
     userId,
-    { $set: filteredData },
+    { $set: updateData },
     { new: true, runValidators: true },
   );
 
@@ -228,10 +234,24 @@ export const dashboardDataService = async (userId: string) => {
 
     logger.info("Owner dashboard stats fetched", { userId });
 
+    const paidOwnerBookings = await Booking.find({
+      owner_id: userId,
+      payment_status: "paid",
+    }).select("pricing").lean();
+
+    const calculatedEarnings = paidOwnerBookings.reduce((sum: number, b: any) => {
+      const net = b.pricing?.ownerEarning ?? Math.round((b.pricing?.baseRate || 0) * 0.9);
+      return sum + net;
+    }, 0);
+
+    const totalEarnings = (user.owner?.totalEarnings && user.owner.totalEarnings > 0)
+      ? user.owner.totalEarnings
+      : calculatedEarnings;
+
     return {
       totalListings,
       activeRentals: activeOwnerRentals,
-      totalEarnings: user.owner?.totalEarnings ?? 0,
+      totalEarnings,
       rentals: formattedRentals,
     };
   }

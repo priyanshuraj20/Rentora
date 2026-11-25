@@ -10,10 +10,14 @@ import {
   uploadBookingPhotos,
   getBookingQR,
   confirmBookingScan,
+  generateVerificationPin,
+  verifyVerificationPin,
+  getActivePinForDemo,
+  submitVoiceConsent,
 } from "../controllers/booking.controller";
 import { VerifyUser } from "../middlewares/verifyUser";
 import { restrictTo } from "../middlewares/restrictTo";
-import { uploadMultipleImages } from "../middlewares/upload.middleware";
+import { uploadMultipleImages, uploadAudioMemory } from "../middlewares/upload.middleware";
 import { qrGenerationLimiter } from "../middlewares/rateLimiter.middleware";
 const router = Router();
 
@@ -317,5 +321,10 @@ router.patch("/:id/complete", restrictTo("owner"), completeBooking);
 router.patch("/:id/photos", uploadMultipleImages("photos", 5), uploadBookingPhotos);
 router.get("/:id/qr-code", qrGenerationLimiter, getBookingQR);
 router.post("/:id/confirm-scan", confirmBookingScan);
+
+router.post("/:id/generate-pin", generateVerificationPin);
+router.post("/:id/verify-pin", verifyVerificationPin);
+router.get("/:id/active-pin", getActivePinForDemo);
+router.post("/:id/voice-consent", uploadAudioMemory, submitVoiceConsent);
 
 export default router;

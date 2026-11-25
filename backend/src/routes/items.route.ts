@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import {
   getItemsByUser,
   pauseItem,
@@ -6,10 +6,37 @@ import {
   updateItem,
   addItem,
   activateItem,
+  aiSuggestListing,
+  generateItemDescription,
 } from "../controllers/items.controller";
 import { VerifyUser } from "../middlewares/verifyUser";
 import { uploadMultipleImages } from "../middlewares/upload.middleware";
+import { catchAsync } from "../utils/catchAsync";
+import { AppError } from "../utils/AppError";
+
 const router = Router();
+
+router.post("/ai-suggest-listing", VerifyUser, aiSuggestListing);
+router.post("/generate-description", VerifyUser, generateItemDescription);
+
+// Dedicated authenticated Cloudinary image upload (uses backend API key & secret, no preset required)
+router.post(
+  "/upload-images",
+  VerifyUser,
+  uploadMultipleImages("images", 5),
+  catchAsync(async (req: Request, res: Response) => {
+    const files = req.files as any[];
+    if (!files || files.length === 0) {
+      throw new AppError("No images uploaded", 400);
+    }
+    const urls = files.map((f: any) => f.path);
+    res.status(200).json({
+      success: true,
+      message: "Images uploaded successfully",
+      data: { urls, url: urls[0] },
+    });
+  })
+);
 
 /**
  * @swagger

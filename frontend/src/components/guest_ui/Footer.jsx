@@ -17,9 +17,8 @@ export default function Footer() {
               </h2>
             </div>
 
-            <p className="text-text-secondary text-sm leading-relaxed mb-6">
-              The premium local rental marketplace designed for trust,
-              convenience, and community sustainability.
+            <p className="text-text-secondary text-xs sm:text-sm leading-relaxed mb-6">
+              A peer-to-peer asset-sharing platform that helps people earn from their unused belongings while giving others affordable access to the things they need. Built around secure transactions, smart technology and community trust.
             </p>
 
             <div className="flex gap-3">
@@ -45,10 +44,10 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold mb-5 text-text-primary text-sm uppercase tracking-wider">Marketplace</h4>
             <ul className="space-y-3 text-sm text-text-secondary">
-              <li><a className="hover:text-primary transition-colors" href="/explore">Browse Items</a></li>
-              <li><a className="hover:text-primary transition-colors" href="/#how-it-works">How it Works</a></li>
+              <li><a className="hover:text-primary transition-colors" href="/explore">Discover Items</a></li>
+              <li><a className="hover:text-primary transition-colors" href="/#how-it-works">How It Works</a></li>
               <li><a className="hover:text-primary transition-colors" href="/features">Features Overview</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Rentora Pro</a></li>
+              <li><a className="hover:text-primary transition-colors" href="/role-redirect">Start Earning</a></li>
             </ul>
           </div>
 
@@ -79,7 +78,7 @@ export default function Footer() {
         {/* BOTTOM BAR */}
         <div className="pt-6 border-t border-divider flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-text-muted text-xs">
-            © 2026 Rentora Marketplace. All rights reserved.
+            © 2026 Rentora — Make More of What You Own. All rights reserved.
           </p>
 
           <div className="flex gap-6 text-xs text-text-muted">

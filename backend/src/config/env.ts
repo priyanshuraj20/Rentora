@@ -22,9 +22,6 @@ const envSchema = z.object({
   ELASTIC_SEARCH_URL: z.string().url(),
   ELASTIC_API_KEY: z.string().min(1),
 
-  GOOGLE_CLIENT_ID: z.string().min(1),
-  GOOGLE_CLIENT_SECRET: z.string().min(1),
-  GOOGLE_CALLBACK_URL: z.string().url(),
   SESSION_SECRET: z.string().min(20),
 
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
@@ -40,6 +37,8 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   MAIL_USER: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
+  GEMINI_API_KEY: z.string().optional(),
+  SARVAM_API_KEY: z.string().optional(),
 });
 
 // Parse once at startup. If anything is missing/wrong, app crashes HERE

@@ -2,6 +2,7 @@ import WelcomeSection from "../../components/owner_ui/dashboard/WelcomeSection";
 import StatsCard from "../../components/owner_ui/dashboard/StatsCard";
 import RentalsSection from "../../components/owner_ui/dashboard/RentalSection";
 import QuickActions from "../../components/owner_ui/dashboard/QuickActions";
+import OwnerVoiceGuide from "../../components/owner_ui/OwnerVoiceGuide";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
@@ -84,16 +85,24 @@ const OwnerDashboard = () => {
     <div className="flex-1 overflow-y-auto bg-app min-h-screen">
       <div className="max-w-[1400px] mx-auto px-6 py-8">
 
-        <WelcomeSection user={user} />
+        <div id="owner-tour-welcome" className="scroll-mt-24">
+          <WelcomeSection user={user} />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {stats.map((stat) => (
-            <StatsCard key={stat.id} {...stat} />
-          ))}
+          <div id="owner-tour-listings-stat" className="transition-all duration-300 scroll-mt-24 rounded-3xl">
+            <StatsCard {...stats[0]} />
+          </div>
+          <div id="owner-tour-active-stat" className="transition-all duration-300 scroll-mt-24 rounded-3xl">
+            <StatsCard {...stats[1]} />
+          </div>
+          <div id="owner-tour-earnings-stat" className="transition-all duration-300 scroll-mt-24 rounded-3xl">
+            <StatsCard {...stats[2]} />
+          </div>
         </div>
 
         <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-12 lg:col-span-8 flex flex-col h-full">
+          <div id="owner-tour-active-rentals" className="col-span-12 lg:col-span-8 flex flex-col h-full transition-all duration-300 scroll-mt-24 rounded-3xl">
             {rentals?.length > 0 ? (
               <RentalsSection rentals={rentals} />
             ) : (
@@ -123,7 +132,7 @@ const OwnerDashboard = () => {
             )}
           </div>
 
-          <div className="col-span-12 lg:col-span-4">
+          <div id="owner-tour-quick-actions" className="col-span-12 lg:col-span-4 transition-all duration-300 scroll-mt-24 rounded-3xl">
             <QuickActions actions={quickActions} />
           </div>
         </div>
