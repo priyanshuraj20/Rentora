@@ -1,46 +1,44 @@
 # Rentora — Autonomous Peer-to-Peer Rental Marketplace
 
-> **Rentora** is a production-grade, location-aware peer-to-peer (P2P) equipment rental marketplace engineered with **Node.js, TypeScript, Express, React 18 (Vite), MongoDB, Redis, BullMQ, Socket.io, Elasticsearch, Sarvam AI (Saaras STT + Bulbul TTS), Google Gemini Multimodal AI, and Razorpay Escrow**.
+> **Rentora** is a location-aware peer-to-peer (P2P) equipment rental marketplace engineered with **Node.js, TypeScript, Express, React 18, MongoDB, Redis, BullMQ, Socket.io, Elasticsearch, Sarvam AI (Saaras STT + Bulbul TTS), Google Gemini Vision AI, and Razorpay Escrow**.
 
 [![Stack](https://img.shields.io/badge/Stack-Node.js%20%7C%20TypeScript%20%7C%20React%20%7C%20MongoDB%20%7C%20Redis-orange?style=flat-square)](https://github.com)
 [![Sarvam AI](https://img.shields.io/badge/Indic%20Voice%20AI-Sarvam%20AI%20(Saaras%20%2B%20Bulbul)-purple?style=flat-square)](https://sarvam.ai)
 [![AI Guard](https://img.shields.io/badge/AI%20Inspection-Google%20Gemini%201.5%20Flash-blue?style=flat-square)](https://ai.google.dev)
 [![Payments](https://img.shields.io/badge/Escrow%20Payments-Razorpay%20Escrow%20%2B%20Refunds-emerald?style=flat-square)](https://razorpay.com)
 [![Search](https://img.shields.io/badge/Search-Elasticsearch%20%2B%20Mongo%20Fallback-green?style=flat-square)](https://elastic.co)
-[![Security](https://img.shields.io/badge/Security-Double%20CSRF%20%2B%20JWT%20Blacklist%20%2B%20PIN%20Guard-red?style=flat-square)](https://github.com)
+[![Security](https://img.shields.io/badge/Security-Double%20CSRF%20%2B%2015s%20Dynamic%20PIN-red?style=flat-square)](https://github.com)
 
 ---
 
-## 🌟 Executive Overview
+## 🌟 Overview
 
-Rentora enables item owners to safely monetize underutilized high-value assets (cameras, drones, power tools, bikes, camping gear, electronics) while giving renters cost-effective, hyper-local short-term access.
+Rentora enables item owners to monetize idle high-value assets (cameras, drones, power tools, bikes, camping gear) while giving renters affordable short-term access.
 
-Unlike traditional rental platforms that rely on manual forms, insecure cash handshakes, and slow dispute resolution, Rentora introduces:
-1. **Autonomous Indic Voice-to-Booking Agent**: Speak naturally in Hinglish, Hindi, or English to search active inventory, validate open dates, and build an escrow booking card in seconds without typing.
-2. **Synchronized Indic Audio Dashboard Guides**: Voice-guided onboarding in **11 Indian languages** powered by Sarvam AI Bulbul TTS with real-time DOM element highlighting.
-3. **Dual-Layer Anti-Fraud Handover Architecture**: 6-digit cryptographic delivery PIN combined with **acoustic voice consent recording** to eliminate false non-delivery disputes.
-4. **Autonomous Escrow Financial Lifecycle**: 100% rental fees and refundable deposits locked in Razorpay Escrow until verified physical inspection.
-5. **Multimodal Computer Vision AI Damage Inspection**: Google Gemini 1.5 Flash comparing Handover vs. Return condition photos to detect damage and automate deposit settlements.
-6. **Admin Governance & Compliance Portal**: Real-time escrow ledger, transaction arbitration, and one-click user moderation.
+Instead of manual forms and insecure cash handshakes, Rentora delivers:
+1. **Autonomous Indic Voice Search**: Search gear, check open dates, and build booking cards simply by speaking in Hinglish, Hindi, or English without typing.
+2. **15-Second Dynamic Rotating PIN**: Uber-style live TOTP mutual verification code that auto-refreshes every 15s to eliminate false delivery claims and screenshot fraud.
+3. **Automated Razorpay Escrow**: 100% of rental fees and security deposits are held in Admin Escrow until verified return. Owners receive 90% net rental earnings (10% platform fee) only after successful return & photo verification, while deposits are refunded to renters via Razorpay.
+4. **Multimodal AI Return Inspection**: Google Gemini 1.5 Flash compares Handover vs. Return condition photos to detect damage and automate deposit settlements.
+5. **Interactive Voice Dashboard Guides**: Voice-guided onboarding in English, Hindi, Gujarati, and Marathi with real-time UI element spotlights.
+6. **Real-Time Messaging**: WebSocket-powered chat with conversation search, delete/clear options, and one-tap quick replies.
 
 ---
 
-## 🚀 Key Engineering Differentiators
+## 🚀 Key Features & Differentiators
 
-| Core Engine | Technical Implementation | Purpose & Benefit |
+| Core Feature | Technical Implementation | Purpose & Benefit |
 |---|---|---|
-| 🎙️ **Autonomous Indic Voice Booking** | Sarvam AI Saaras STT (`saaras:v4`) + Devanagari NLP Parser + Bulbul TTS (`bulbul:v2`) | Rent gear simply by speaking in Hinglish/Hindi/English; auto-matches inventory, validates dates, and builds escrow booking cards |
-| 🗣️ **Synchronized Indic Audio Tours** | Sarvam Bulbul TTS Streaming WAV + DOM focus synchronizer (`ring-4 ring-primary`) | 11-language interactive audio walkthroughs for Renters and Owners with real-time on-screen box highlighting |
-| 🔐 **Dual-Layer PIN + Voice Handover** | Cryptographic 6-digit PIN + Acoustic Voice Consent Recording stored in audit logs | Eliminates false non-delivery and theft claims; escrow funds unlock only upon mutual in-person verification |
-| 🤖 **Multimodal AI Return Inspection** | Google Gemini 1.5 Flash comparing Handover vs Return photos | Autonomous visual damage assessment, repair cost estimation, and dispute elimination |
-| 🛡️ **Autonomous Risk Guard** | Real-time AI damage categorization (`TIER_0` to `TIER_3`) | Auto-suspends malicious renters (`isBlocked=true`) on severe damage/total loss without admin intervention |
-| 💳 **Platform Escrow & Split Payment** | Razorpay Escrow + Automated Refund API | Security deposits held in platform escrow; 10% platform fee auto-retained by Admin, 90% net payout to Owner |
-| 📍 **Hyper-Local GPS & Micro-Locality** | Nominatim Geocoding + Redis Cache + Mongo `2dsphere` + Area Locality | 1-click GPS auto-detection, exact area tagging (e.g., Indiranagar, Alkapuri), and Haversine distance calculations |
-| 📸 **Ephemeral Photo Lifecycle** | BullMQ 3-Day Delay Queue + Cloudinary Admin SDK | Handover/Return photo evidence automatically purged after 3 days to preserve privacy and minimize storage |
-| 🏛️ **Admin Governance & Audit Ledger** | Real-time Escrow Ledger + User Access Controls | Full platform financial transparency, side-by-side evidence inspection, and one-click user suspension |
-| 🔍 **Zero-Downtime Smart Search** | Elasticsearch v8 Fuzzy Search + MongoDB Regex Fallback | High-performance search resilience even if Elasticsearch cluster drops offline |
-| 💬 **Real-Time WebSockets** | Socket.io with JWT cookie authentication & isolated booking rooms | Real-time direct chat, typing status, message delivery receipts, and live notification badge updates |
-| ⚡ **Resilient Async Queues** | BullMQ + Redis for background jobs with auto-retry | Decoupled email delivery (Resend), ES catalog sync, scheduled status workers, and evidence photo purge |
+| 🎙️ **Autonomous Indic Voice Booking** | Sarvam AI Saaras STT (`saaras:v4`) + Indic NLP Parser + Bulbul TTS (`bulbul:v2`) | Rent gear by speaking in Hinglish, Hindi, or English; auto-matches inventory, validates dates, and builds escrow checkout cards |
+| 🔐 **15s Dynamic Rotating PIN** | 6-digit TOTP delivery PIN auto-rotating every 15 seconds with grace window | Prevents screenshot theft and delivery disputes; physical handover is verified in-person with zero awkwardness |
+| 💳 **Platform Escrow & Split Payment** | Razorpay Escrow + Automated Instant Refund API | Security deposits held in platform escrow; 10% platform fee retained, 90% net earnings transferred to Owner |
+| 🤖 **Multimodal AI Return Inspection** | Google Gemini 1.5 Flash comparing Handover vs Return photos | Automated visual damage assessment, repair cost estimation, and objective deposit deductions |
+| 🛡️ **Autonomous Risk Guard** | Real-time AI damage categorization (`TIER_0` to `TIER_3`) | Suspends malicious accounts (`isBlocked=true`) on severe damage/total loss without manual tickets |
+| 🗣️ **Synchronized Indic Audio Tours** | Sarvam Bulbul TTS Streaming WAV + DOM focus spotlighting | Guided interactive audio walkthroughs for Renters and Owners in 4 verified languages with on-screen element highlighting |
+| 📍 **Hyper-Local GPS Discovery** | Nominatim Reverse Geocoding + MongoDB `2dsphere` Index | 1-click GPS auto-detection, locality tagging (e.g., Indiranagar, Alkapuri), radius filtering, and Haversine distance calculations |
+| 💬 **Live Chat with Options & Search** | Socket.io WebSockets + MongoDB persistence | Live messaging with conversation search, delete chat history, mute notifications, and smart quick action chips |
+| 🔍 **Zero-Downtime Smart Search** | Elasticsearch v8 Fuzzy Search + MongoDB Regex Fallback | Resilient search experience that automatically falls back to MongoDB regex if Elasticsearch is unavailable |
+| ⚡ **Background Job Queues** | BullMQ + Redis for asynchronous background tasks | Decoupled email delivery (Resend OTP), catalog sync, and ephemeral condition photo cleanup |
 
 ---
 
@@ -48,243 +46,168 @@ Unlike traditional rental platforms that rely on manual forms, insecure cash han
 
 ```mermaid
 flowchart TD
-    subgraph Clients["Client Layer (React 18 + Vite + Tailwind CSS)"]
-        RenterUI["Renter Portal (/explore, /rentals, /checkout)"]
-        OwnerUI["Owner Portal (/listings, /bookings, /earnings)"]
-        AdminUI["Admin Governance Portal (/admin)"]
-        VoiceAgentModal["Voice Booking Agent Modal (Mic Audio + NLP)"]
-        VoiceTourHUD["Indic Audio Tour HUD (11 Languages)"]
-        SocketClient["Socket.io Client (Real-Time Messaging)"]
+    subgraph ClientLayer["Frontend Client (React 18 + Vite + Tailwind CSS)"]
+        UI_Renter["Renter Portal (/explore, /rentals, /checkout)"]
+        UI_Owner["Owner Portal (/listings, /bookings, /earnings)"]
+        UI_Admin["Admin Governance Portal (/admin)"]
+        UI_Voice["Voice Booking Modal & Indic Audio Tours"]
+        UI_Chat["Live Chat & Inquiries (Socket.io)"]
     end
 
-    subgraph SecurityGateway["API Gateway & Security Layer"]
-        ExpressApp["Express.js HTTP & Socket Server (TypeScript)"]
-        AuthGuard["JWT Verification + Redis Blacklist Check"]
-        CSRFGuard["Double-Submit CSRF Guard (timingSafeEqual)"]
-        RateLimiter["Express Rate Limiter"]
-        RoleGuard["Role-Based Access Guard (Renter / Owner / Admin)"]
+    subgraph Gateway["API Gateway & Security"]
+        Server["Express.js Server (TypeScript)"]
+        AuthMid["JWT Auth & Redis Token Blacklist"]
+        CSRFMid["Double-Submit CSRF Guard"]
+        RateMid["Express Rate Limiter"]
     end
 
-    subgraph AIServices["Artificial Intelligence & Voice Engines"]
-        SarvamSTT["Sarvam AI Saaras v4 STT (Indic Speech-to-Text)"]
-        SarvamTTS["Sarvam AI Bulbul v2 TTS (Indic Speech Synthesis)"]
-        IntentParser["Indic NLP & Devanagari Intent Parser"]
-        GeminiVision["Google Gemini 1.5 Flash (Damage Inspection)"]
+    subgraph Services["Core Application Services"]
+        BookingSvc["Booking State Machine"]
+        PaymentSvc["Razorpay Escrow & Split Service"]
+        PINSvc["15s Dynamic Rotating PIN Engine"]
+        GeoSvc["Hyper-Local Geo & Haversine Engine"]
+        VoiceSvc["Sarvam AI Voice Engine (STT & TTS)"]
+        VisionSvc["Google Gemini 1.5 Flash Vision AI"]
     end
 
-    subgraph CoreServices["Domain Business Services"]
-        VoiceService["Voice & Audio Streaming Service"]
-        VoiceAgentService["Autonomous Voice Booking Agent Service"]
-        ExploreService["Explore & Geo-Engine (Haversine Distance)"]
-        BookingService["Booking State Machine & Duration Calculator"]
-        PricingEngine["Centralized Server-Side Pricing Engine"]
-        PaymentService["Razorpay Escrow & Settlement Service"]
-        PINEngine["6-Digit Verification PIN & Voice Consent Engine"]
+    subgraph DataLayer["Databases & Infrastructure"]
+        MongoDB[("MongoDB (2dsphere Spatial Index)")]
+        RedisDB[("Redis 7 (BullMQ, Cache, Blacklist)")]
+        ElasticDB[("Elasticsearch v8 (Fuzzy Search)")]
+        CloudinaryStore["Cloudinary CDN (Photos & Media)"]
+        RazorpayVault["Razorpay Escrow Gateway"]
     end
 
-    subgraph StorageInfra["Persistence & Infrastructure Layer"]
-        MongoDB[("MongoDB Replica Set (2dsphere Spatial Index)")]
-        RedisCache[("Redis 7 (BullMQ Broker + Token Blacklist + Audio Cache)")]
-        Elasticsearch[("Elasticsearch v8 (Fuzzy Search Index)")]
-        CloudinaryCDN["Cloudinary CDN (Evidence & Item Media)"]
-        RazorpayGate["Razorpay Payment Gateway (Escrow Orders & Refunds)"]
+    subgraph Workers["Background Workers (BullMQ)"]
+        EmailQ["Email Worker (Resend OTP)"]
+        PhotoQ["Photo Purge Worker (3-Day TTL)"]
+        SyncQ["Catalog Sync Worker"]
     end
 
-    subgraph BackgroundWorkers["Asynchronous Job Queues (BullMQ)"]
-        EmailWorker["Email Queue Worker (Resend OTP & Alerts)"]
-        ESSyncWorker["Elasticsearch Sync Worker (Catalog Sync)"]
-        PurgeWorker["Photo Purge Worker (3-Day Ephemeral Retention)"]
-        StatusWorker["Booking Status Worker (Date Transitions)"]
-    end
+    UI_Renter -->|HTTPS REST| Server
+    UI_Owner -->|HTTPS REST| Server
+    UI_Admin -->|HTTPS REST| Server
+    UI_Voice -->|HTTPS REST| Server
+    UI_Chat <-->|WSS WebSockets| Server
+    Server --> CSRFMid
+    CSRFMid --> RateMid
+    RateMid --> AuthMid
+    AuthMid --> Services
 
-    RenterUI & OwnerUI & AdminUI & VoiceAgentModal & VoiceTourHUD -->|HTTPS REST API| ExpressApp
-    SocketClient <-->|WSS WebSockets| ExpressApp
-    ExpressApp --> CSRFGuard --> RateLimiter --> AuthGuard --> RoleGuard
-    RoleGuard --> CoreServices
-    VoiceAgentService --> SarvamSTT & IntentParser & SarvamTTS
-    VoiceService --> SarvamTTS
-    BookingService --> GeminiVision
-    BookingService --> PINEngine
-    PaymentService --> RazorpayGate
-    CoreServices --> MongoDB
-    CoreServices --> RedisCache
-    CoreServices --> CloudinaryCDN
-    CoreServices -->|Dispatch Job| RedisCache
-    RedisCache --> BackgroundWorkers
-    BackgroundWorkers --> MongoDB & Elasticsearch & CloudinaryCDN
+    BookingSvc --> PINSvc
+    BookingSvc --> VisionSvc
+    PaymentSvc --> RazorpayVault
+    VoiceSvc --> MongoDB
+    GeoSvc --> MongoDB
+
+    Services --> MongoDB
+    Services --> RedisDB
+    Services --> ElasticDB
+    Services --> CloudinaryStore
+
+    Services -->|Queue Job| RedisDB
+    RedisDB --> Workers
+    Workers --> MongoDB
+    Workers --> CloudinaryStore
 ```
 
 ---
 
-## 🔄 Core Business Lifecycles & Flowcharts
+## 🔄 Core Workflows
 
-### 1. Autonomous Indic Voice-to-Booking Agent Data Flow
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Renter as Renter (Browser Mic)
-    participant Modal as VoiceBookingAgentModal
-    participant Server as Voice Agent API (/voice/agent)
-    participant Saaras as Sarvam Saaras STT
-    participant NLP as Intent & Duration Parser
-    participant DB as MongoDB Inventory
-    participant Bulbul as Sarvam Bulbul TTS
-    participant Checkout as RentCheckout Page
-
-    Renter->>Modal: Tap Mic & Speak ("Bhai Sony camera chahiye weekend ke liye")
-    Modal->>Server: POST /voice/agent (multipart/form-data: audio/webm + lang)
-    Server->>Saaras: Transcribe Audio Buffer (saaras:v4)
-    Saaras-->>Server: Raw Transcript ("भाई सोनी कैमरा चाहिए वीकेंड के लिए")
-    Server->>NLP: Parse Keywords, Hindi Numerals & Duration
-    Note over NLP: "सोनी" -> Sony | "कैमरा" -> Camera | "वीकेंड" -> 2 Days
-    NLP->>DB: Query Item ($or: title, description, category; isActive: true)
-    DB-->>Server: Matched Item (Sony A7 IV, ₹1400/day, ₹5000 deposit)
-    Server->>Server: Compute Escrow: ₹1400 × 2d = ₹2800 Rent + ₹5000 Deposit = ₹7800 Total
-    Server->>Bulbul: Synthesize Hinglish Confirmation Audio (bulbul:v2)
-    Bulbul-->>Server: Audio Buffer (WAV Base64)
-    Server-->>Modal: Return { success: true, bookingCard, audioBase64, spokenResponse }
-    Modal->>Renter: Autoplay Voice Reply + Render Booking Card with Date Picker
-    Renter->>Modal: Adjust Duration Chip (e.g., 3 Days) -> Price Recalculates Dynamically
-    Renter->>Modal: Click "Proceed to Instant Razorpay Checkout"
-    alt User is Demo / Guest
-        Modal->>Renter: Display Auth Warning (Register/Login or Continue as Demo)
-    else User is Registered Renter
-        Modal->>Checkout: Navigate to /renter/rent/:id?start=2026-11-25&end=2026-11-28&days=3
-    end
-```
-
----
-
-### 2. Dual-Layer PIN + Acoustic Voice Consent Handover Flow
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Renter as Renter (Dashboard)
-    participant Owner as Owner (Dashboard)
-    participant Server as Handover & PIN Engine
-    participant Escrow as Razorpay Escrow Vault
-    participant Audit as Immutable Audit Log
-
-    Note over Renter,Owner: Physical Handover at Pickup Location
-    Renter->>Server: View Confirmed Booking -> Retrieve 6-Digit Delivery PIN
-    Server-->>Renter: Displays PIN: [ 4 | 8 | 2 | 9 | 1 | 7 ]
-    Renter->>Owner: Inspects gear & verbally provides PIN
-    Owner->>Server: Enter 6-Digit PIN (PINInputModal)
-    Owner->>Server: Record Acoustic Voice Statement ("Yes, gear received in good condition")
-    Server->>Server: Validate PIN hash & verify attempts < 5
-    Server->>Audit: Save Acoustic Consent Audio Blob + SHA256 Handover Checksum
-    Server->>Server: Transition booking_status: 'confirmed' -> 'ongoing'
-    Server->>Escrow: Unlock Rental Earnings Trigger
-    Escrow-->>Owner: 90% Net Rental Revenue transferred to Owner Bank Account
-    Server-->>Renter: Handover certified! Rental active.
-```
-
----
-
-### 3. Escrow Split-Payment & AI Deposit Settlement Flow
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Renter as Renter (Client)
-    participant Server as Rentora Backend
-    participant Razorpay as Razorpay Gateway
-    participant AdminEscrow as Rentora Platform Escrow
-    participant Gemini as Google Gemini 1.5 Flash
-    participant Owner as Owner Account
-
-    Note over Renter,Server: 1. Booking Confirmation Phase
-    Renter->>Server: Request Booking (Clean dates, 0 client markup)
-    Server->>Server: Server validates daily/weekly/monthly rates
-    Owner->>Server: Owner Approves Booking Request
-    Renter->>Server: Initiate Payment (createOrder)
-    Server->>Razorpay: Create Escrow Order (Deposit + Rental Fee)
-    Renter->>Razorpay: Completes Checkout via UPI/Card
-    Razorpay-->>AdminEscrow: 100% Funds Collected into Admin Escrow Account
-    Server->>Server: Atomically set payment_status='paid', booking_status='confirmed'
-
-    Note over Renter,Owner: 2. Rental Execution & Handover Phase
-    Renter->>Server: Upload Handover Condition Photos
-    Owner->>Server: Verify 6-Digit PIN + Acoustic Voice Consent
-    Server->>Server: Status transitions to 'ongoing' -> Owner Payout Disbursed
-
-    Note over Renter,Gemini: 3. Return & Autonomous AI Inspection Phase
-    Renter->>Server: Upload Return Condition Photos
-    Owner->>Server: Verify 6-Digit Return PIN
-    Server->>Gemini: Inspect Photos (Handover vs Return Pixel Diff)
-    Gemini-->>Server: Inspection Report (Tier 0-3, Damage Cost, Findings)
-
-    alt Tier 0: No Damage (Clean Return)
-        Server->>Razorpay: Trigger Full Deposit Refund (razorpay.payments.refund)
-        Razorpay-->>Renter: ₹10,000 Deposit Refunded to original UPI/Card
-        Server->>AdminEscrow: Retain 10% Platform Fee in Admin Account
-    else Tier 1/2: Damage Detected (Repair Deduction)
-        Server->>Razorpay: Refund remaining deposit (Deposit - Repair Cost)
-        Razorpay-->>Renter: Partial Deposit Refunded
-        Server->>Owner: Compensate Repair Cost from Escrow Deposit
-        Server->>AdminEscrow: Retain 10% Platform Fee
-    else Tier 3: Severe Total Loss / Malicious Destruction
-        Server->>Server: Trigger Autonomous Risk Guard (isBlocked=true)
-        Server->>Owner: Forfeit 100% Deposit to Owner Compensation
-        Server-->>Renter: Account Instantly Suspended & Quarantined
-    end
-```
-
----
-
-### 4. Multimodal Gemini AI Vision Return Damage Inspection Pipeline
+### 1. 15-Second Dynamic Rotating PIN Handover & Return Flow
 
 ```mermaid
 flowchart TD
-    A["Renter uploads Return Photos at Drop-Off"] --> B["Backend retrieves Handover Photos from Cloudinary"]
-    B --> C["Fetch Item Metadata (Title, Category, Deposit Value)"]
-    C --> D["Compile Multimodal Request to Google Gemini 1.5 Flash"]
-    D --> E["Gemini compares pixel differences, scratches, dents, fractures"]
-    E --> F{"Evaluate Damage Severity"}
-    
-    F -- "TIER_0: No Damage" --> G["Estimated Repair Cost = ₹0"]
-    G --> H["100% Security Deposit Refunded via Razorpay"]
-    
-    F -- "TIER_1: Minor Wear & Scuffs" --> I["Estimated Repair Cost < 30% Deposit"]
-    I --> J["Deduct Repair Cost from Deposit -> Owner Compensated"]
-    J --> K["Refund Remaining Balance to Renter"]
-    
-    F -- "TIER_2: Moderate Functional Damage" --> L["Estimated Repair Cost <= 100% Deposit"]
-    L --> M["Full Deposit Allocated to Owner Repairs"]
-    
-    F -- "TIER_3: Severe Destruction / Total Loss" --> N["100% Deposit Forfeited to Owner"]
-    N --> O["Autonomous Risk Guard Triggered"]
-    O --> P["Renter Account Suspended (isBlocked = true)"]
-    
-    H & K & M & P --> Q["Save structured damageReport & depositSettlement to MongoDB"]
-    Q --> R["Sync Audit Event to Admin Escrow Ledger"]
+    subgraph PickupPhase["1. Physical Pickup Phase (At Owner Location)"]
+        P1["Renter pays Escrow Deposit + Rent"] --> P2["Booking Status: CONFIRMED"]
+        P2 --> P2B["Upload Pickup Condition Photos (Required Gate)"]
+        P2B --> P3["Renter opens 'Show My Handover PIN'"]
+        P3 --> P4["Server generates 6-digit PIN (15s TTL + 30s Grace Window)"]
+        P4 --> P5["Renter tells/shows live PIN to Owner"]
+        P5 --> P6["Owner enters PIN in 'Verify Renter PIN' modal"]
+        P6 --> P7{"Server checks Photos, PIN & Rate-Limit"}
+        P7 -->|Valid: Current or Grace Window| P8["Status -> ONGOING + Socket.io 'booking_updated' closes Renter PIN modal"]
+        P7 -->|Invalid| P9["Attempt count increments (Max 5 attempts -> Risk Guard Block)"]
+        P8 --> P10["All Funds remain safely in Admin Escrow (₹0 released upfront)"]
+    end
+
+    subgraph ReturnPhase["2. Physical Return Phase (Item Brought Back)"]
+        R1["Renter returns equipment to Owner"] --> R2["Owner inspects & uploads Return Condition Photos (Owner-Only Gate)"]
+        R2 --> R3["Owner opens 'Show Return PIN' (Rotates every 15s)"]
+        R3 --> R4["Owner tells live Return PIN to Renter"]
+        R4 --> R5["Renter enters PIN in 'Complete Return' modal"]
+        R5 --> R6{"Server validates Photos & Return PIN"}
+        R6 -->|Valid| R7["Status -> COMPLETED + Socket.io syncs both screens"]
+        R7 --> R8["Gemini AI Inspection -> Refund Security Deposit to Renter & Release 90% Rent to Owner"]
+        R6 -->|Invalid| R9["Retry with live fresh PIN"]
+    end
 ```
 
 ---
 
-### 5. Hyper-Local GPS & Geo-Search Engine Flow
+### 2. Escrow Payment & Gemini AI Damage Settlement Flow
+
+```mermaid
+flowchart TD
+    Start["Renter Initiates Booking"] --> Calc["Server Pricing Engine computes Rent + Security Deposit"]
+    Calc --> RazorpayOrder["Create Razorpay Order (Total = Rent + Security Deposit)"]
+    RazorpayOrder --> PaymentCaptured["Renter completes checkout via UPI / Card"]
+    PaymentCaptured --> EscrowLock["100% Funds locked in Admin Escrow (₹0 paid to Owner upfront)"]
+    EscrowLock --> HandoverDone["Pickup verified via Photos + 15s Dynamic PIN -> ONGOING"]
+    HandoverDone --> ItemReturned["Return verified via Owner Photos + 15s Return PIN -> COMPLETED"]
+    ItemReturned --> GeminiAI["Google Gemini 1.5 Flash Vision Inspection (Pickup vs Return Photos)"]
+    GeminiAI --> DamageCheck{"Inspect Condition & Settle Escrow"}
+    DamageCheck -->|TIER 0: Clean Return (No Damage)| FullRefund["100% Security Deposit refunded to Renter + 90% Rent to Owner (10% Fee to Admin)"]
+    DamageCheck -->|TIER 1/2: Minor or Moderate Damage| PartialDeduction["Deduct Repair Cost from Deposit -> Owner gets 90% Rent + Repair Cost"]
+    PartialDeduction --> RemainderRefund["Refund remaining deposit balance to Renter via Razorpay"]
+    DamageCheck -->|TIER 3: Severe Destruction / Total Loss| Forfeit["100% Deposit + 90% Rent to Owner + Malicious User Suspended"]
+    FullRefund --> Settled["Booking Settled & Closed"]
+    RemainderRefund --> Settled
+    Forfeit --> Settled
+```
+
+---
+
+### 3. Autonomous Indic Voice Search & Booking Flow
+
+```mermaid
+flowchart LR
+    A["Renter speaks in Hinglish, Hindi, or English"] --> B["Browser MediaRecorder captures audio"]
+    B --> C["POST /api/v1/voice/agent"]
+    C --> D["Sarvam AI Saaras v4 STT"]
+    D --> E["Devanagari & Indic NLP Parser"]
+    E --> F["Extract Item Keyword, City & Duration"]
+    F --> G["Query MongoDB Active Inventory"]
+    G --> H["Calculate Escrow Rent & Deposit"]
+    H --> I["Sarvam Bulbul v2 TTS synthesizes audio response"]
+    I --> J["Instant Booking Card displayed in UI with Autoplay Speech"]
+    J --> K["1-Click navigation to Razorpay Checkout"]
+```
+
+---
+
+### 4. Hyper-Local GPS & Geo-Search Flow
 
 ```mermaid
 flowchart LR
     A["User Opens Explore"] --> B{"Choose Location Mode"}
-    B -- "1-Click GPS" --> C["Browser Geolocation (lat, lng)"]
+    B -->|1-Click GPS| C["Browser Geolocation (lat, lng)"]
     C --> D["Nominatim Reverse Geocoding"]
     D --> E["Detect Locality (e.g., Indiranagar) & City (e.g., Bangalore)"]
-    B -- "Select Registered City" --> E
+    B -->|Select Registered City| E
     
     E --> F["Select Radius Filter: 5km | 10km | 20km | 50km | 100km"]
     F --> G["GET /explore?lat=..&lng=..&radius=..&city=.."]
-    H["MongoDB 2dsphere $geoWithin $centerSphere Query"] <-- G
-    H --> I["Haversine Formula computes precise distanceKm per item"]
+    G --> H["MongoDB 2dsphere $geoWithin $centerSphere Query"]
+    H --> I["Haversine Formula computes precise distance per item"]
     I --> J["Sort listings by proximity ascending"]
-    J --> K["Render cards with '📍 Area, City' & 'X.X km away' badge"]
+    J --> K["Render cards with '📍 Area, City' & Distance Badge"]
 ```
 
 ---
 
-### 6. Booking State Machine & Lifecycle Transitions
+### 5. Booking State Machine Transitions
 
 ```mermaid
 stateDiagram-v2
@@ -293,8 +216,8 @@ stateDiagram-v2
     PENDING --> APPROVED: Owner approves request (Dates locked)
     APPROVED --> CANCELLED: Renter cancels before payment
     APPROVED --> CONFIRMED: Renter locks Escrow Deposit via Razorpay
-    CONFIRMED --> ONGOING: Handover photos uploaded + 6-digit PIN & Voice Consent verified
-    ONGOING --> COMPLETED: Return photos uploaded + 6-digit PIN verified + AI inspected
+    CONFIRMED --> ONGOING: Handover verified with 15s Dynamic PIN
+    ONGOING --> COMPLETED: Return verified with 15s Return PIN + AI Inspection
     COMPLETED --> SETTLED: Deposit refunded / Owner earnings disbursed
     SETTLED --> [*]: Ratings & Reviews unlocked
     REJECTED --> [*]: Dates released
@@ -303,71 +226,71 @@ stateDiagram-v2
 
 ---
 
-## 🛠️ Complete 24-Feature Marketplace Catalog
+## 🛠️ Complete Marketplace Features
 
-### 🧑‍💼 Renter Features (8)
-1. **Autonomous Voice-to-Booking Agent**: Speak naturally in Hinglish, Hindi, or English to search active inventory, validate dates, and build an instant booking card without typing.
-2. **Interactive Date Picker & Live Escrow Calculator**: Select custom start dates and duration chips (`1D`, `2D`, `3D`, `1 Week`) with real-time recalculation of daily rent and refundable security deposit.
-3. **Location-Aware Geospatial Discovery**: Discover verified cameras, drones, tools, and bikes in your immediate neighborhood using browser GPS and MongoDB `2dsphere` spatial indexing.
-4. **1-Click Razorpay Escrow Protection**: Rent and refundable deposits are locked safely in an automated escrow vault; owners receive zero funds until verified handover.
-5. **6-Digit Delivery Handover PIN**: One-time cryptographic PIN generated inside the renter dashboard. Handover cannot be falsely claimed without this PIN.
-6. **Real-Time Live Chat with Owners**: Isolated Socket.io WebSocket rooms for instant gear inquiries, accessory confirmation, and pickup coordination.
-7. **Transparent Booking Lifecycle Tracker**: State machine tracking through unambiguous stages: `Requested → Approved → Escrow Locked → Active Rental → Returned → Deposit Refunded`.
-8. **Wishlist & Equipment Bookmarking**: Save high-demand cameras and equipment to a personal collection for upcoming shoots and trips.
+### 🧑‍💼 Renter Features
+1. **Autonomous Voice-to-Booking Agent**: Search active inventory, validate dates, and build instant booking cards without typing.
+2. **Interactive Date Picker & Escrow Calculator**: Choose custom dates and duration chips (`1D`, `2D`, `3D`, `1 Week`) with dynamic price and deposit calculations.
+3. **Location-Aware Geospatial Discovery**: Discover verified gear nearby using browser GPS and MongoDB `2dsphere` indexing.
+4. **1-Click Razorpay Escrow Protection**: Rent and refundable deposits are locked safely in escrow until verified pickup.
+5. **15-Second Dynamic Delivery PIN**: Time-based rotating PIN displayed in the renter dashboard; cannot be claimed or forged remotely.
+6. **Real-Time Live Chat with Owners**: Direct Socket.io chat with conversation search, delete chat history, and quick reply chips.
+7. **Transparent Booking Lifecycle Tracker**: Clear step-by-step progress tracking: `Requested → Approved → Escrow Locked → Active Rental → Returned → Deposit Refunded`.
+8. **Wishlist & Equipment Bookmarking**: Save gear to personal collections for upcoming projects and shoots.
 
-### 💼 Owner Features (7)
-1. **1-Minute Asset Listing & Photo Management**: Cloudinary-backed multi-photo listing wizard with condition tagging, category assignment, and usage guidelines in under 60 seconds.
-2. **Custom Rental Rates & Refundable Deposit Controls**: Define tiered daily, weekly, and monthly rates alongside mandatory damage security deposits.
-3. **Physical Handover PIN & Acoustic Voice Verification**: Owner enters the renter's secret PIN and captures acoustic voice consent at pickup for 100% dispute elimination.
-4. **Automated Escrow Bank Payouts**: Zero-delay revenue disbursement routed directly into the owner's linked bank account once handover verification is certified.
-5. **Booking Request Management & Profile Approval**: Full owner autonomy to review renter profiles, requested rental dates, and projected earnings before approval.
-6. **Live Earnings & Inventory Utilization Dashboard**: Real-time revenue metrics, active rental counters, equipment utilization percentages, and payout history.
-7. **Owner Guided Indic AI Audio Tour**: Synchronized audio guide in 11 Indian languages that points to and highlights dashboard boxes in real time.
+### 💼 Owner Features
+1. **Quick Asset Listing & Photo Management**: Cloudinary-backed multi-photo listing with condition tagging, category assignment, and usage guidelines.
+2. **Custom Rental Rates & Deposit Controls**: Define tiered daily rates alongside mandatory damage security deposits.
+3. **15-Second Dynamic Rotating PIN Verification**: Verify the renter's live 15-second dynamic PIN at pickup for dispute-free handover.
+4. **Escrow Payouts After Verified Return**: Revenue (90% of rent, 10% platform fee) is disbursed to the owner only after successful item return and AI photo verification, protecting renters from upfront no-shows.
+5. **Booking Request Management**: Review renter profiles, requested rental dates, and projected earnings before approving bookings.
+6. **Live Earnings & Inventory Dashboard**: Real-time revenue metrics, active rental counters, equipment status, and payout history.
+7. **Owner Guided Indic AI Audio Tour**: Synchronized audio guide in English, Hindi, Gujarati, and Marathi with on-screen UI spotlighting.
 
-### 🛡️ Platform & AI Security Features (9)
-1. **Sarvam AI Indic Voice Engine (11 Languages)**: Saaras STT and Bulbul TTS integration supporting Hindi, Gujarati, Marathi, Tamil, Telugu, Bengali, Kannada, Malayalam, Punjabi, Odia, and English.
-2. **Dual-Layer Anti-Fraud Handover Architecture**: Cryptographic 6-digit PIN combined with timestamped acoustic voice recording stored in immutable audit trails.
-3. **Role-Based Access Control (RBAC) & Layout Isolation**: Strict route guards and layout trees segregating Guest, Renter, Owner, and Admin governance with auto-redirects.
-4. **Admin Governance & Escrow Dispute Portal**: Dedicated management portal for platform GMV tracking, escrow dispute arbitration, and item moderation.
-5. **Dual Search Engine with Zero-Downtime Fallback**: Elasticsearch fuzzy query cluster with automated instant failover to MongoDB regex search.
-6. **Enterprise Multi-Layer Web Security**: HTTP-only cookies, Redis token blacklisting on logout, double CSRF verification, rate limiting, and bcrypt hashing.
-7. **BullMQ & Redis Background Task Queues**: Asynchronous worker queues offloading heavy email notifications, photo purging, and expired booking transitions.
-8. **Centralized Server-Side Pricing Engine**: Tamper-proof calculator preventing client-side amount manipulation before Razorpay order generation and HMAC signing.
-9. **Real-Time WebSocket Engine (Socket.io)**: Sub-second live booking status updates, typing indicators, and instant notifications.
+### 🛡️ Platform & Security Features
+1. **Sarvam AI Indic Voice Engine**: Saaras STT and Bulbul TTS integration supporting Hindi, Gujarati, Marathi, and English.
+2. **15-Second Dynamic PIN Engine**: Brute-force-protected dynamic PIN rotation with grace window handling and auto-countdown.
+3. **Google Gemini Multimodal AI**: Automated damage detection comparing pre-handover and post-return condition photos.
+4. **Role-Based Access Control (RBAC)**: Route guards and layouts segregating Guest, Renter, Owner, and Admin governance.
+5. **Admin Governance & Escrow Dispute Portal**: Platform GMV tracking, escrow dispute arbitration, and user moderation.
+6. **Dual Search Engine with Fallback**: Elasticsearch fuzzy query cluster with instant failover to MongoDB regex search.
+7. **Multi-Layer Web Security**: HTTP-only cookies, Redis token blacklisting on logout, double CSRF verification, rate limiting, and bcrypt hashing.
+8. **BullMQ & Redis Background Queues**: Asynchronous worker queues offloading email notifications, photo purging, and scheduled booking status transitions.
+9. **Centralized Pricing Engine**: Tamper-proof server-side rate calculator preventing client-side amount manipulation.
 
 ---
 
-## 💻 Tech Stack Summary
+## 💻 Tech Stack
 
 ### Backend
 | Technology | Version / Purpose |
 |---|---|
-| **Node.js + TypeScript** | Strongly typed, enterprise server runtime |
-| **Express.js** | Modular REST API and middleware pipeline |
-| **Sarvam AI** | Indic Voice AI: Saaras STT (`saaras:v4`) & Bulbul TTS (`bulbul:v2`) in 11 languages |
+| **Node.js + TypeScript** | Strongly typed, modular server runtime |
+| **Express.js v5** | REST API framework and middleware pipeline |
+| **Sarvam AI SDK** | Indic Voice: Saaras STT (`saaras:v4`) & Bulbul TTS (`bulbul:v2`) |
 | **Google Gemini 1.5 Flash** | Multimodal computer vision AI damage inspection |
 | **MongoDB + Mongoose** | Document database with 2dsphere spatial indexing |
-| **Redis 7** | BullMQ queue broker, token blacklist, audio cache, and geocoder caching |
+| **Redis 7 (ioredis)** | BullMQ queue broker, token blacklist, and geocoder caching |
 | **BullMQ** | Reliable asynchronous job and delay queue management |
-| **Razorpay SDK** | Payment orders, escrow payouts, and automated refunds |
-| **Elasticsearch v8** | High-performance full-text fuzzy search engine |
+| **Razorpay SDK** | Escrow payments, bank transfers, and automated refunds |
+| **Elasticsearch v8** | Full-text fuzzy search engine with MongoDB regex fallback |
 | **Socket.io v4** | Bidirectional real-time messaging and notifications |
-| **Cloudinary SDK** | Cloud image storage, transformations, and asset purging |
+| **Cloudinary SDK** | Cloud image storage and asset purging |
 | **Resend** | Transactional email delivery for OTP verification |
-| **Sentry APM** | Exception tracking and session performance profiling |
-| **Zod** | Runtime schema and payload validation |
+| **Zod** | Runtime schema and request payload validation |
+| **Bcryptjs & JWT** | Password hashing and stateless authentication tokens |
 
 ### Frontend
 | Technology | Version / Purpose |
 |---|---|
-| **React 18** | Declarative component UI library |
-| **Vite 7** | High-speed frontend build tool and dev server |
+| **React 18 / React 19** | Declarative component UI library |
+| **Vite 7** | Fast frontend build tool and development server |
 | **React Router v7** | Client-side routing with nested role-based guards |
-| **Tailwind CSS** | Custom responsive styling with dark-mode theme |
-| **Web Audio & MediaRecorder API** | In-browser microphone audio capture and WAV playback |
+| **Tailwind CSS v4** | Modern utility-first responsive styling with dark theme |
 | **Lucide React** | Clean iconography system |
 | **Socket.io Client** | Real-time WebSocket connection handling |
 | **React Hot Toast** | Dynamic, accessible user feedback alerts |
+| **Web Audio & MediaRecorder** | In-browser microphone audio capture and WAV playback |
 
 ---
 
@@ -378,13 +301,13 @@ Rentora/
 ├── backend/
 │   ├── src/
 │   │   ├── config/          # Redis, Socket.io, Mongoose, Cloudinary, Razorpay, Logger config
-│   │   ├── controllers/     # HTTP controllers (admin, auth, booking, items, payments, voice)
+│   │   ├── controllers/     # HTTP controllers (admin, auth, booking, items, payments, voice, message)
 │   │   ├── middlewares/     # verifyUser, restrictTo, double-submit CSRF, upload, rateLimiter
 │   │   ├── models/          # Schemas: User, Item, Booking, Payment, Message, Review, Notification
 │   │   ├── payments/        # Strategy Pattern: IPaymentProvider & RazorpayPaymentProvider
 │   │   ├── queues/          # BullMQ queue producers (email, status, ES sync, photo purge)
-│   │   ├── routes/          # Express route declarations (admin, auth, booking, explore, items, voice)
-│   │   ├── service/         # Domain business services (ai, booking, explore, items, payment, voice, voiceAgent)
+│   │   ├── routes/          # Express routes (admin, auth, booking, explore, items, voice, messages)
+│   │   ├── service/         # Domain services (booking, explore, items, payment, voice, voiceAgent, message)
 │   │   ├── utils/           # Geocoder, pricing calculator, AppError
 │   │   ├── validators/      # Zod validation schemas
 │   │   ├── workers/         # BullMQ queue consumers & background processors
@@ -395,13 +318,12 @@ Rentora/
 │   │   ├── assets/          # Static brand icons and images
 │   │   ├── components/      # UI components (admin_ui, owner_ui, renter_ui, guest_ui, common)
 │   │   │   ├── common/      # VoiceBookingAgentModal, VoiceWelcomeWidget, PINDisplayModal, PINInputModal
-│   │   │   ├── owner_ui/    # OwnerVoiceGuide, QuickActions, StatsCard, RentalSection
+│   │   │   ├── owner_ui/    # OwnerVoiceGuide, BookingCard, QuickActions, StatsCard
 │   │   │   ├── renter_ui/   # RenterVoiceGuide, ExploreSearchBar, RentCheckoutLayout, RentalCalendar
 │   │   ├── context/         # Socket and Auth React contexts
 │   │   ├── hooks/           # Custom React hooks (useAuth, apiClient, homeRedirect)
 │   │   ├── layouts/         # Layout wrappers (AdminLayout, GuestLayout, OwnerLayout, RenterLayout)
-│   │   ├── modals/          # AddItemModal, EditItemModal, AddReviewModal, AuthController, ProfileModal
-│   │   ├── pages/           # Pages (guest/Features, admin/AdminDashboard, owner/OwnerDashboard, etc.)
+│   │   ├── pages/           # Pages (guest/Features, owner/OwnerDashboard, renter/RentalDetails, common/Messages)
 │   │   ├── App.jsx          # Route definitions & ProtectedRoute wrapper
 │   │   └── main.jsx         # Client mount entrypoint
 ```
@@ -416,11 +338,10 @@ Rentora/
 | **Token Invalidation** | Redis-backed token blacklist; instant session termination on logout |
 | **CSRF Defense** | Double-submit cookie pattern verified with constant-time `crypto.timingSafeEqual` |
 | **Autonomous Risk Guard** | Auto-suspension (`isBlocked=true`) triggered by AI on severe item damage |
-| **Dual-Layer Handover** | 6-digit numeric PIN with 1-hour TTL + Acoustic Voice Consent Recording stored in audit logs |
-| **Input Sanitization** | Strict Zod validation on every request body, query param, and path parameter |
+| **Dynamic 15s PIN Handover** | 6-digit TOTP PIN (15s TTL + 30s grace), mandatory condition-photo gate, `409` state-lock, Socket.io live sync, and 5-attempt lockout |
+| **Input Sanitization** | Strict Zod validation on every request body, query parameter, and path parameter |
 | **Rate Limiting** | `express-rate-limit` prevents brute force on auth, voice, and sensitive endpoints |
 | **HTTP Hardening** | Helmet headers (CSP, HSTS, X-Frame-Options) and strict CORS origin checks |
-| **Error Monitoring** | Sentry APM integration with automated 500 exception capture and user tracing |
 
 ---
 
@@ -444,10 +365,10 @@ JWT_REFRESH_EXPIRY=7d
 # Cache & Queues
 REDIS_URL=redis://localhost:6379
 
-# Sarvam AI (Indic Voice Engine: Saaras STT & Bulbul TTS)
+# Sarvam AI (Indic Voice: Saaras STT & Bulbul TTS)
 SARVAM_API_KEY=your_sarvam_api_key_here
 
-# Google Gemini Multimodal AI (Damage Inspection)
+# Google Gemini Vision AI (Damage Inspection)
 GEMINI_API_KEY=your_gemini_api_key_here
 
 # Payment Gateway (Razorpay Escrow)
@@ -459,16 +380,13 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_cloudinary_key
 CLOUDINARY_API_SECRET=your_cloudinary_secret
 
-# Search Engine
+# Search Engine (Optional - Mongo regex fallback activates automatically if empty)
 ELASTIC_SEARCH_URL=http://localhost:9200
 ELASTIC_API_KEY=your_elastic_key
 
 # Transactional Email (Resend)
 RESEND_API_KEY=your_resend_api_key
 MAIL_USER=your_email@gmail.com
-
-# Error Monitoring
-SENTRY_DSN=your_sentry_dsn_url
 ```
 
 ### Frontend Configuration (`frontend/.env`)
@@ -480,14 +398,14 @@ VITE_RAZORPAY_KEY_ID=rzp_test_your_key_id
 
 ---
 
-## ⚡ Installation & Quick Start
+## ⚡ Quick Start
 
 ### Prerequisites
 - **Node.js** v18+ & **npm**
 - **MongoDB** (Local instance or MongoDB Atlas cluster)
 - **Redis Server** (Port 6379)
-- **Elasticsearch v8** *(Optional — MongoDB regex fallback activates automatically if unavailable)*
 - **Sarvam AI API Key** *(For Indic Voice Agent and Audio Dashboard Guides)*
+- **Razorpay Test Keys** *(For Escrow and Deposit testing)*
 
 ### Step 1: Clone Repository
 ```bash
@@ -506,7 +424,7 @@ cd ../frontend
 npm install
 ```
 
-### Step 3: Populate Environment Variables
+### Step 3: Configure Environment Variables
 Create `.env` in both `backend/` and `frontend/` using the templates provided above.
 
 ### Step 4: Run Geocoding Migration (One-Time)
@@ -530,14 +448,14 @@ Visit **`http://localhost:5173`** in your browser.
 
 ---
 
-## 🧠 Design Patterns & Best Practices
+## 🧠 Key Design Patterns
 
-1. **Clean Layered Architecture**: Clear separation of concerns: `Routes` → `Middlewares` → `Controllers` → `Services` → `Models`.
-2. **Strategy Pattern**: Abstracted `IPaymentProvider` allowing seamless swapping of payment gateways (Razorpay, Stripe, etc.).
-3. **State Machine Pattern**: Strict, deterministic state transitions for the booking lifecycle preventing invalid statuses or race conditions.
-4. **Observer & Event-Driven Architecture**: WebSocket event dispatching decoupled from core business transactions.
-5. **Decoupled Queue Architecture**: Non-blocking asynchronous job execution for media purging, emails, and catalog synchronization.
-6. **Voice Biometric & Acoustic Auditability**: Cryptographic one-time PINs coupled with immutable acoustic consent recordings for zero-dispute peer handovers.
+1. **Clean Layered Architecture**: Strict separation of concerns: `Routes` → `Middlewares` → `Controllers` → `Services` → `Models`.
+2. **Strategy Pattern**: Abstracted `IPaymentProvider` allowing seamless swapping of payment gateways.
+3. **State Machine Pattern**: Deterministic state transitions for the booking lifecycle preventing invalid statuses.
+4. **Observer & WebSocket Pattern**: Real-time Socket.io event broadcasting decoupled from transaction handling.
+5. **Decoupled Queue Architecture**: Asynchronous BullMQ background worker execution for media purging, emails, and catalog synchronization.
+6. **Dynamic TOTP Verification**: 15-second auto-rotating cryptographic PINs coupled with condition photo evidence for zero-dispute peer handovers.
 
 ---
 

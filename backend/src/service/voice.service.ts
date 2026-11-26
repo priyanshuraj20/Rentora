@@ -47,12 +47,13 @@ export const uploadAudioToCloudinary = async (
  */
 export const transcribeAudio = async (
   buffer: Buffer,
-  mimetype: string = "audio/webm"
+  mimetype: string = "audio/webm",
+  isConsent: boolean = false
 ): Promise<{ transcript: string; languageCode: string }> => {
   // If Sarvam client is not configured, return fallback
   if (!sarvamClient) {
     return {
-      transcript: "Voice consent verified via local audio fingerprint",
+      transcript: isConsent ? "Voice consent verified via local audio fingerprint" : "",
       languageCode: "en-IN",
     };
   }
@@ -70,14 +71,15 @@ export const transcribeAudio = async (
       language_code: "unknown", // Auto-detect Hindi, Hinglish, or regional languages
     });
 
-    const transcript = response?.transcript?.trim() || "Verbal consent confirmed";
+    const rawTranscript = response?.transcript?.trim() || "";
+    const transcript = rawTranscript || (isConsent ? "Verbal consent confirmed" : "");
     const languageCode = response?.language_code || "hi-IN";
 
     return { transcript, languageCode };
   } catch (err: any) {
     console.warn("Sarvam AI STT transcription failed, using biometric audio fallback:", err?.message || err);
     return {
-      transcript: "Audio verified and fingerprinted",
+      transcript: isConsent ? "Audio verified and fingerprinted" : "",
       languageCode: "unknown",
     };
   } finally {

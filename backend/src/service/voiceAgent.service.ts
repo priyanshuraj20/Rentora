@@ -28,7 +28,7 @@ export interface VoiceAgentBookingResult {
   message?: string;
 }
 
-// Fallback high-quality curated community items (guarantees agent never fails even if DB is unseeded)
+// Curated verified items for demo/catalog matching across top categories
 const FALLBACK_ITEMS = [
   {
     id: "featured-camera",
@@ -38,7 +38,7 @@ const FALLBACK_ITEMS = [
     dailyPrice: 1400,
     securityDeposit: 5000,
     locality: "Indiranagar, Bangalore",
-    keywords: ["camera", "sony", "dslr", "mirrorless", "alpha", "photo", "shoot"],
+    keywords: ["camera", "sony", "canon", "dslr", "mirrorless", "alpha", "photo", "shoot", "lens", "कैमरा", "फोटो"],
   },
   {
     id: "featured-drone",
@@ -48,7 +48,7 @@ const FALLBACK_ITEMS = [
     dailyPrice: 1800,
     securityDeposit: 8000,
     locality: "Alkapuri, Vadodara",
-    keywords: ["drone", "dji", "fly", "aerial", "mini 3", "mavic"],
+    keywords: ["drone", "dji", "fly", "aerial", "mini 3", "mavic", "quadcopter", "ड्रोन"],
   },
   {
     id: "featured-drill",
@@ -58,7 +58,7 @@ const FALLBACK_ITEMS = [
     dailyPrice: 450,
     securityDeposit: 1500,
     locality: "Koramangala, Bangalore",
-    keywords: ["drill", "dewalt", "hammer", "tool", "repair", "cordless"],
+    keywords: ["drill", "dewalt", "bosch", "hammer", "tool", "repair", "cordless", "ड्रिल", "टूल", "औजार"],
   },
   {
     id: "featured-bike",
@@ -68,7 +68,27 @@ const FALLBACK_ITEMS = [
     dailyPrice: 750,
     securityDeposit: 3000,
     locality: "Bandra West, Mumbai",
-    keywords: ["bike", "bullet", "enfield", "motorcycle", "classic 350", "ride"],
+    keywords: ["bike", "bullet", "enfield", "motorcycle", "classic 350", "hunter", "ride", "scooter", "बाइक", "गाड़ी", "बुलेट"],
+  },
+  {
+    id: "featured-tent",
+    title: "Quechua 4-Person Waterproof Camping Tent",
+    category: "Outdoors",
+    image: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=600&q=80",
+    dailyPrice: 350,
+    securityDeposit: 1200,
+    locality: "Kothrud, Pune",
+    keywords: ["tent", "camping", "quechua", "camp", "outdoor", "trek", "तंबू", "टेंट", "कैंपिंग"],
+  },
+  {
+    id: "featured-game",
+    title: "Sony PlayStation 5 Console + 2 Controllers",
+    category: "Gaming",
+    image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=600&q=80",
+    dailyPrice: 700,
+    securityDeposit: 4000,
+    locality: "DLF Phase 4, Gurgaon",
+    keywords: ["playstation", "ps5", "ps4", "game", "gaming", "console", "xbox", "कंसोल", "गेम"],
   },
 ];
 
@@ -117,7 +137,6 @@ function parseUserIntent(text: string): {
   ) {
     days = 7;
   } else {
-    // Regex matching: digits followed by din/day/दिन
     const numMatch = text.match(/(\d+)\s*(din|day|days|दिन)/i);
     if (numMatch && numMatch[1]) {
       days = Math.min(Math.max(parseInt(numMatch[1], 10), 1), 30);
@@ -139,40 +158,34 @@ function parseUserIntent(text: string): {
 
   // 3. Keyword extraction across English, Hinglish, Brand names & Hindi Devanagari
   const searchQueries: string[] = [];
-  let keyword = "gear";
+  let keyword = "";
 
-  // Check specific brands & items first
-  if (lower.includes("canon") || lower.includes("कैनन")) {
-    keyword = "canon";
-    searchQueries.push("canon", "camera");
-  } else if (lower.includes("sony") || lower.includes("सोनी")) {
-    keyword = "sony";
-    searchQueries.push("sony", "camera");
-  } else if (lower.includes("dji") || lower.includes("डीजेआई") || lower.includes("mavic")) {
-    keyword = "dji";
-    searchQueries.push("dji", "drone");
-  } else if (lower.includes("dewalt") || lower.includes("बॉश") || lower.includes("bosch")) {
-    keyword = "dewalt";
-    searchQueries.push("dewalt", "drill", "tool");
-  } else if (lower.includes("enfield") || lower.includes("bullet") || lower.includes("रॉयल एनफील्ड") || lower.includes("बुलेट")) {
-    keyword = "enfield";
-    searchQueries.push("enfield", "bike");
-  } else if (lower.includes("camera") || lower.includes("dslr") || lower.includes("mirrorless") || lower.includes("कैमरा") || lower.includes("फोटो")) {
-    keyword = "camera";
-    searchQueries.push("camera", "mirrorless", "dslr");
-  } else if (lower.includes("drone") || lower.includes("ड्रोन") || lower.includes("aerial")) {
+  if (lower.includes("drone") || lower.includes("ड्रोन") || lower.includes("dji") || lower.includes("डीजेआई") || lower.includes("mavic") || lower.includes("aerial")) {
     keyword = "drone";
-    searchQueries.push("drone", "dji");
-  } else if (lower.includes("drill") || lower.includes("ड्रिल") || lower.includes("tool") || lower.includes("टूल") || lower.includes("औजार")) {
+    searchQueries.push("drone", "dji", "mavic");
+  } else if (lower.includes("drill") || lower.includes("ड्रिल") || lower.includes("dewalt") || lower.includes("bosch") || lower.includes("बॉश") || lower.includes("tool") || lower.includes("hammer")) {
     keyword = "drill";
-    searchQueries.push("drill", "tool");
-  } else if (lower.includes("bike") || lower.includes("बाइक") || lower.includes("motorcycle") || lower.includes("गाड़ी") || lower.includes("स्कूटर")) {
+    searchQueries.push("drill", "dewalt", "hammer", "tool", "bosch");
+  } else if (lower.includes("bike") || lower.includes("बाइक") || lower.includes("bullet") || lower.includes("बुलेट") || lower.includes("enfield") || lower.includes("motorcycle") || lower.includes("गाड़ी")) {
     keyword = "bike";
-    searchQueries.push("bike", "motorcycle", "enfield");
+    searchQueries.push("bike", "bullet", "enfield", "motorcycle");
+  } else if (lower.includes("tent") || lower.includes("टेंट") || lower.includes("camping") || lower.includes("quechua") || lower.includes("तंबू")) {
+    keyword = "tent";
+    searchQueries.push("tent", "camping", "quechua");
+  } else if (lower.includes("ps5") || lower.includes("playstation") || lower.includes("xbox") || lower.includes("gaming") || lower.includes("कंसोल")) {
+    keyword = "playstation";
+    searchQueries.push("playstation", "ps5", "gaming", "console");
+  } else if (lower.includes("camera") || lower.includes("कैमरा") || lower.includes("sony") || lower.includes("canon") || lower.includes("dslr") || lower.includes("mirrorless") || lower.includes("फोटो")) {
+    keyword = "camera";
+    searchQueries.push("camera", "sony", "canon", "dslr", "mirrorless");
   } else {
-    // Extract substantive words
+    // Extract meaningful nouns from user sentence
     const words = lower.replace(/[^\w\s\u0900-\u097F]/gi, "").split(/\s+/).filter(w => w.length > 2);
-    const stopWords = new Set(["chahiye", "chahiye tha", "mujhe", "mera", "hoga", "karo", "rent", "pe", "ke", "liye", "aur", "hai", "bhai", "need", "want", "for", "please", "book"]);
+    const stopWords = new Set([
+      "chahiye", "chahiye tha", "mujhe", "mera", "hoga", "karo", "rent", "pe",
+      "ke", "liye", "aur", "hai", "bhai", "need", "want", "for", "please", "book",
+      "find", "doh", "dekho", "search", "karna", "krna"
+    ]);
     const meaningful = words.filter(w => !stopWords.has(w));
     if (meaningful.length > 0) {
       keyword = meaningful[0];
@@ -189,27 +202,49 @@ function parseUserIntent(text: string): {
 export async function runVoiceBookingAgent(
   audioBuffer?: Buffer,
   textQuery?: string,
-  langCode: string = "hi-IN"
+  langCode: string = "en-IN"
 ): Promise<VoiceAgentBookingResult> {
   try {
-    let transcript = textQuery || "";
+    let transcript = textQuery ? textQuery.trim() : "";
 
-    // 1. If audio provided, transcribe with Sarvam AI Saaras STT
+    // 1. If audio buffer provided, transcribe via Sarvam STT
     if (audioBuffer && audioBuffer.length > 0) {
-      const sttResult = await transcribeAudio(audioBuffer, "audio/webm");
-      transcript = sttResult.transcript || "";
+      const sttResult = await transcribeAudio(audioBuffer, "audio/webm", false);
+      transcript = sttResult.transcript?.trim() || "";
     }
 
-    if (!transcript.trim()) {
-      transcript = "Mujhe Sony camera chahiye weekend ke liye";
+    const isEnglish = langCode === "en-IN";
+
+    // 2. If nothing was said or audio was silent, DO NOT fake a camera request!
+    if (!transcript) {
+      logger.info("Voice Booking Agent: Empty speech detected");
+      return {
+        success: false,
+        transcript: "",
+        spokenResponse: isEnglish
+          ? "No speech was detected. Please tap the microphone and speak your request clearly."
+          : "कोई आवाज़ सुनाई नहीं दी। कृपया माइक्रोफ़ोन दबाकर साफ़ बोलें।",
+        message: "No speech detected. Please tap the microphone to speak, or type your request.",
+      };
     }
 
     logger.info("Voice Booking Agent transcript:", { transcript, langCode });
 
-        // 2. Parse intent
+    // 3. Parse user intent and keywords
     const { keyword, searchQueries, days, locality } = parseUserIntent(transcript);
 
-    // 3. Search MongoDB or Fallback curated inventory
+    if (!keyword) {
+      return {
+        success: false,
+        transcript,
+        spokenResponse: isEnglish
+          ? "I could not understand which equipment you need. Please say camera, drone, drill, or bike."
+          : "समझ नहीं आया कि आपको कौन सा सामान चाहिए। कृपया कैमरा, ड्रोन, ड्रिल या बाइक का नाम बोलें।",
+        message: "Could not identify equipment type. Try saying 'Sony camera', 'DJI drone', 'DeWalt drill', or 'Royal Enfield bike'.",
+      };
+    }
+
+    // 4. Search MongoDB items
     let matchedItem: any = null;
 
     try {
@@ -237,31 +272,17 @@ export async function runVoiceBookingAgent(
         };
       }
     } catch (dbErr) {
-      logger.warn("DB search error, falling back to curated assets:", dbErr);
+      logger.warn("DB search error, searching curated items:", dbErr);
     }
 
-    // Fallback to curated high-quality item if DB item not found
+    // 5. If not in DB, search curated fallback items ONLY if matching keyword
     if (!matchedItem) {
-      try {
-        const anyDbItem = await Item.findOne({ isActive: { $ne: false } }).lean();
-        if (anyDbItem) {
-          matchedItem = {
-            id: anyDbItem._id.toString(),
-            title: anyDbItem.title,
-            category: anyDbItem.category,
-            image: anyDbItem.images?.[0] || FALLBACK_ITEMS[0].image,
-            dailyPrice: anyDbItem.price?.daily || 1000,
-            securityDeposit: anyDbItem.securityDeposit || 3000,
-            locality: anyDbItem.location?.area || anyDbItem.location?.city || "Goa Central",
-          };
-        }
-      } catch (_) {}
+      const lowerKw = keyword.toLowerCase();
+      const fallback = FALLBACK_ITEMS.find((f) =>
+        f.keywords.some((k) => k.toLowerCase() === lowerKw || lowerKw.includes(k) || k.includes(lowerKw))
+      );
 
-      if (!matchedItem) {
-        const fallback =
-          FALLBACK_ITEMS.find((f) => f.keywords.some((k) => k.includes(keyword) || keyword.includes(k))) ||
-          FALLBACK_ITEMS[0];
-
+      if (fallback) {
         matchedItem = {
           id: fallback.id,
           title: fallback.title,
@@ -269,12 +290,24 @@ export async function runVoiceBookingAgent(
           image: fallback.image,
           dailyPrice: fallback.dailyPrice,
           securityDeposit: fallback.securityDeposit,
-          locality: locality ? `${locality}, Bangalore` : fallback.locality,
+          locality: locality ? `${locality}, City Center` : fallback.locality,
         };
       }
     }
 
-    // 4. Calculate Dates & Pricing
+    // 6. If STILL no match, DO NOT hallucinate a random camera! Report honest not-found.
+    if (!matchedItem) {
+      return {
+        success: false,
+        transcript,
+        spokenResponse: isEnglish
+          ? `Sorry, I could not find any equipment matching "${keyword}". Please try searching for cameras, drones, drills, or bikes.`
+          : `माफ़ कीजिये, "${keyword}" से मिलता-जुलता कोई उपकरण नहीं मिला। कृपया कैमरा, ड्रोन, ड्रिल या बाइक सर्च करें।`,
+        message: `No equipment found matching "${keyword}". Try searching for cameras, drones, power tools, or bikes.`,
+      };
+    }
+
+    // 7. Calculate Dates & Pricing
     const now = new Date();
     const startDate = new Date(now.getTime() + 24 * 60 * 60 * 1000); // Tomorrow
     const endDate = new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000);
@@ -283,13 +316,12 @@ export async function runVoiceBookingAgent(
     const securityDeposit = matchedItem.securityDeposit;
     const totalAmount = rentAmount + securityDeposit;
 
-    // 5. Generate Hinglish Voice Reply
-    const isEnglish = langCode === "en-IN";
+    // 8. Generate Voice Reply
     const spokenResponse = isEnglish
-      ? `Found ${matchedItem.title}! The total rent for ${days} days is ₹${rentAmount.toLocaleString()} with a refundable deposit of ₹${securityDeposit.toLocaleString()}. I have prepared your booking card.`
-      : `${matchedItem.title} मिल गया है! ${days} दिन का किराया ₹${rentAmount.toLocaleString()} और रिफंडेबल सिक्योरिटी डिपॉज़िट ₹${securityDeposit.toLocaleString()} है। मैंने आपका बुकिंग कार्ड तैयार कर दिया है!`;
+      ? `Found ${matchedItem.title}! The rent for ${days} days is ₹${rentAmount.toLocaleString()} with a refundable deposit of ₹${securityDeposit.toLocaleString()}.`
+      : `${matchedItem.title} मिल गया है! ${days} दिन का किराया ₹${rentAmount.toLocaleString()} और रिफंडेबल सिक्योरिटी डिपॉज़िट ₹${securityDeposit.toLocaleString()} है।`;
 
-    // 6. Synthesize Spoken Audio with Sarvam AI Bulbul TTS
+    // 9. Synthesize Spoken Audio with Sarvam AI Bulbul TTS
     let audioBase64: string | undefined = undefined;
     try {
       const speechBuffer = await synthesizeSpeech(spokenResponse, langCode);

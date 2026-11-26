@@ -59,19 +59,22 @@ const OwnerDashboard = () => {
       id: 1,
       title: "Total Listings",
       value: totalListings,
-      icon: ""
+      desc: "Active equipment published in your rental catalog",
+      icon: "inventory_2"
     },
     {
       id: 2,
       title: "Active Rentals",
       value: activeRentals,
-      icon: ""
+      desc: "Equipment currently in handover with verified renters",
+      icon: "schedule"
     },
     {
       id: 3,
       title: "Total Earnings",
       value: `₹${totalEarnings}`,
-      icon: ""
+      desc: "90% net earnings deposited directly into your bank",
+      icon: "account_balance_wallet"
     }
   ];
 

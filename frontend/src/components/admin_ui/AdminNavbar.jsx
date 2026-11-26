@@ -50,8 +50,8 @@ export default function AdminNavbar() {
             />
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-text-primary tracking-tight">
-                  Rent<span className="text-primary">ora</span>
+                <h2 className="text-xl font-bold text-white tracking-tight">
+                  Rentora
                 </h2>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-primary/20 text-primary border border-primary/30 flex items-center gap-1">
                   <ShieldCheck size={12} />

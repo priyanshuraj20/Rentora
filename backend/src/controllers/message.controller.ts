@@ -4,6 +4,8 @@ import {
   saveMessageService,
   getBookingMessagesService,
   markMessagesAsReadService,
+  clearConversationService,
+  deleteSingleMessageService,
 } from "../service/message.service";
 
 export const getBookingMessages = catchAsync(
@@ -53,5 +55,29 @@ export const markAsRead = catchAsync(async (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: "Messages marked as read",
+  });
+});
+
+export const clearConversation = catchAsync(async (req: Request, res: Response) => {
+  const bookingId = req.params.bookingId as string;
+
+  const result = await clearConversationService(req.userId!, bookingId);
+
+  res.status(200).json({
+    success: true,
+    message: "Conversation cleared successfully",
+    data: result,
+  });
+});
+
+export const deleteSingleMessage = catchAsync(async (req: Request, res: Response) => {
+  const messageId = req.params.messageId as string;
+
+  const result = await deleteSingleMessageService(req.userId!, messageId);
+
+  res.status(200).json({
+    success: true,
+    message: "Message deleted successfully",
+    data: result,
   });
 });

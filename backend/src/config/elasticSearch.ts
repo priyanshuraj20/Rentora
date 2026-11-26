@@ -2,12 +2,15 @@ import { Client } from "@elastic/elasticsearch";
 import logger from "./logger";
 import { env } from "./env";
 
-export const esClient = new Client({
-  node: env.ELASTIC_SEARCH_URL,
-  auth: {
-    apiKey: env.ELASTIC_API_KEY,
-  },
-});
+export const esClient: Client | null =
+  env.ELASTIC_SEARCH_URL && env.ELASTIC_API_KEY
+    ? new Client({
+        node: env.ELASTIC_SEARCH_URL,
+        auth: {
+          apiKey: env.ELASTIC_API_KEY,
+        },
+      })
+    : null;
 
 export const ITEMS_INDEX = "items";
 
@@ -16,6 +19,10 @@ export const ITEMS_INDEX = "items";
  * Call this once on server startup.
  */
 export const initElasticIndex = async () => {
+  if (!esClient) {
+    logger.info("[ElasticSearch] Not configured — using MongoDB regex search fallback.");
+    return;
+  }
   try {
     const exists = await esClient.indices.exists({ index: ITEMS_INDEX });
     if (exists) {

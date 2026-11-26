@@ -19,8 +19,8 @@ const envSchema = z.object({
   CLIENT_URL: z.string().url(),
 
   SENTRY_DSN: z.string().url().optional(),
-  ELASTIC_SEARCH_URL: z.string().url(),
-  ELASTIC_API_KEY: z.string().min(1),
+  ELASTIC_SEARCH_URL: z.string().url().optional().or(z.literal("")),
+  ELASTIC_API_KEY: z.string().optional(),
 
   SESSION_SECRET: z.string().min(20),
 

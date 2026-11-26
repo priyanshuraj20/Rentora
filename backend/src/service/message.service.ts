@@ -161,3 +161,59 @@ export const markMessagesAsReadService = async (userId: string, bookingId: strin
   );
   return { success: true };
 };
+
+export const clearConversationService = async (userId: string, bookingId: string) => {
+  logger.info("Clearing conversation messages", { userId, bookingId });
+
+  const booking = await Booking.findById(bookingId);
+  if (!booking) {
+    throw new AppError("Booking not found", 404);
+  }
+
+  const userStr = userId.toString();
+  const renterStr = booking.renter_id.toString();
+  const ownerStr = booking.owner_id.toString();
+
+  if (userStr !== renterStr && userStr !== ownerStr) {
+    throw new AppError("Forbidden: You do not have access to manage this conversation", 403);
+  }
+
+  const result = await Message.deleteMany({ bookingId });
+  logger.info("Conversation cleared", { bookingId, deletedCount: result.deletedCount });
+
+  return { success: true, deletedCount: result.deletedCount };
+};
+
+export const deleteSingleMessageService = async (userId: string, messageId: string) => {
+  logger.info("Deleting single message", { userId, messageId });
+
+  const message = await Message.findById(messageId);
+  if (!message) {
+    throw new AppError("Message not found", 404);
+  }
+
+  const userStr = userId.toString();
+  const senderStr = message.senderId.toString();
+
+  // Allow sender to delete their message, or booking participants
+  if (userStr !== senderStr) {
+    const booking = await Booking.findById(message.bookingId);
+    if (!booking) {
+      throw new AppError("Message booking not found", 404);
+    }
+    const isOwner = booking.owner_id.toString() === userStr;
+    const isRenter = booking.renter_id.toString() === userStr;
+    if (!isOwner && !isRenter) {
+      throw new AppError("Forbidden: You cannot delete this message", 403);
+    }
+  }
+
+  await Message.findByIdAndDelete(messageId);
+  logger.info("Message deleted", { messageId });
+
+  return {
+    success: true,
+    messageId,
+    bookingId: message.bookingId.toString(),
+  };
+};

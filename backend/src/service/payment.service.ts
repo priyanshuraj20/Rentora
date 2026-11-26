@@ -31,10 +31,10 @@ export class PaymentService {
       throw new AppError("Forbidden: You do not own this booking", 403);
     }
 
-    // Initial payment to confirm booking locks the Refundable Security Deposit in Platform Escrow.
-    // If the item requires 0 deposit, charge the rental fee.
-    const depositAmount = booking.pricing?.securityDeposit || 0;
-    const orderAmount = depositAmount > 0 ? depositAmount : (booking.pricing?.totalAmount || 0);
+    // Initial payment to confirm booking locks BOTH Rental Cost + Refundable Security Deposit in Admin/Platform Escrow.
+    // Nothing is disbursed to the Owner until successful return & photo verification.
+    const fallbackTotal = (booking.pricing?.subtotal || 0) + (booking.pricing?.securityDeposit || 0);
+    const orderAmount = booking.pricing?.totalAmount || fallbackTotal;
 
     const orderResult = await this.paymentProvider.createOrder({
       bookingId: booking._id.toString(),
@@ -168,7 +168,7 @@ export class PaymentService {
       totalDeposit
     );
 
-    const repairCost = inspection.estimatedRepairCost;
+    const repairCost = Math.min(totalDeposit, Math.max(0, inspection.estimatedRepairCost || 0));
     const refundAmount = Math.max(0, totalDeposit - repairCost);
     const ownerCompensation = repairCost;
 
@@ -188,8 +188,11 @@ export class PaymentService {
       }
     }
 
-    // 3. Compensate Owner: Rental Fee + any Repair Cost (from deposit)
-    const rentalEarnings = booking.pricing?.ownerEarning || booking.pricing?.baseRate || 0;
+    // 3. Release Owner Payout ONLY after successful return & photo verification:
+    // 90% of Rental Cost (10% platform fee retained by Admin) + any Repair Compensation from deposit
+    const subtotal = booking.pricing?.subtotal || booking.pricing?.baseRate || 0;
+    const rentalEarnings =
+      booking.pricing?.ownerEarning ?? Math.max(0, subtotal - Math.round(subtotal * 0.1));
     const totalOwnerPayout = rentalEarnings + ownerCompensation;
 
     if (totalOwnerPayout > 0) {
@@ -255,13 +258,13 @@ export class PaymentService {
 
     await createNotificationService({
       userId: booking.owner_id.toString(),
-      title: "Security Deposit Escrow Released 🛡️",
+      title: "Escrow Payout Released 💰",
       message:
         ownerCompensation > 0
-          ? `₹${ownerCompensation} repair compensation credited to your wallet.`
-          : `Deposit escrow released to renter following clean return inspection.`,
+          ? `₹${rentalEarnings} rental earnings (after 10% platform fee) + ₹${ownerCompensation} repair compensation credited to your wallet!`
+          : `₹${rentalEarnings} net rental earnings (after 10% platform fee) credited to your wallet following clean return inspection!`,
       type: "payment_success",
-      link: `/bookings`,
+      link: `/earnings`,
     });
 
     return {

@@ -1,7 +1,12 @@
 import { Clock } from "lucide-react";
 
 export default function RentalProgress({ rental }) {
-  const isPaid = rental.paymentStatus === "paid" && (rental.status === "confirmed" || rental.status === "ongoing");
+  const isCompleted = rental.status === "completed";
+  const isPaid =
+    rental.paymentStatus === "paid" ||
+    rental.status === "confirmed" ||
+    rental.status === "ongoing" ||
+    isCompleted;
 
   return (
     <div className="bg-surface border border-divider rounded-3xl p-6 shadow-sm">
@@ -18,15 +23,21 @@ export default function RentalProgress({ rental }) {
         <>
           <div className="h-2 bg-card rounded-full overflow-hidden border border-divider">
             <div
-              className="h-full bg-primary rounded-full transition-all duration-500"
-              style={{ width: `${rental.progressPercent}%` }}
+              className={`h-full rounded-full transition-all duration-500 ${isCompleted ? "bg-success" : "bg-primary"}`}
+              style={{ width: `${isCompleted ? 100 : rental.progressPercent}%` }}
             />
           </div>
 
           <div className="mt-4 flex justify-center">
-            <span className="bg-primary/10 text-primary text-xs font-semibold px-4 py-1 rounded-full border border-primary/20">
-              {rental.daysRemaining} Days Remaining
-            </span>
+            {isCompleted ? (
+              <span className="bg-success/15 text-success text-xs font-semibold px-4 py-1 rounded-full border border-success/30">
+                Rental Completed & Settled ✓
+              </span>
+            ) : (
+              <span className="bg-primary/10 text-primary text-xs font-semibold px-4 py-1 rounded-full border border-primary/20">
+                {rental.daysRemaining} Days Remaining
+              </span>
+            )}
           </div>
         </>
       ) : (

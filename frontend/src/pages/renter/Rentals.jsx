@@ -65,7 +65,7 @@ export default function Rentals() {
   });
 
   return (
-    <main className="px-8 lg:px-40 py-10 max-w-[1440px] mx-auto w-full min-h-screen">
+    <main id="renter-rentals-header" className="px-8 lg:px-40 py-10 max-w-[1440px] mx-auto w-full min-h-screen">
       <RentalsHeader />
 
       <RentalsTabs

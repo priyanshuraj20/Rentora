@@ -52,7 +52,7 @@ const RenterNavbar = () => {
         [
             "flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 text-sm font-medium",
             isActive
-                ? "bg-primary text-text-primary font-semibold shadow-sm"
+                ? "bg-emerald-600 text-white font-semibold shadow-sm"
                 : "text-text-secondary hover:text-text-primary hover:bg-white/5",
         ].join(" ");
 
@@ -64,22 +64,27 @@ const RenterNavbar = () => {
                 <div className="flex items-center gap-10">
                     <Link to="/renter" className="flex items-center gap-2.5 group">
                         <img src={logo} alt="logo" width="34px" height="34px" className="rounded-xl transition-transform group-hover:scale-105 shadow-sm" />
-                        <h2 className="text-2xl font-bold text-text-primary tracking-tight">
-                            Rent<span className="text-primary">ora</span>
-                        </h2>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-2xl font-bold text-white tracking-tight">
+                                Rentora
+                            </h2>
+                            <span className="text-[10px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hidden sm:inline">
+                                Renter Portal
+                            </span>
+                        </div>
                     </Link>
 
                     <nav className="hidden md:flex items-center gap-2">
-                        <NavLink to="/renter" className={navItemClass}>
+                        <NavLink id="renter-nav-explore" to="/renter" className={navItemClass}>
                             Browse Gear
                         </NavLink>
-                        <NavLink to="/rentals" className={navItemClass}>
+                        <NavLink id="renter-nav-rentals" to="/rentals" className={navItemClass}>
                             My Rentals
                         </NavLink>
-                        <NavLink to="/wishlist" className={navItemClass}>
+                        <NavLink id="renter-nav-wishlist" to="/wishlist" className={navItemClass}>
                             Wishlist
                         </NavLink>
-                        <NavLink to="/messages" className={navItemClass}>
+                        <NavLink id="renter-nav-messages" to="/messages" className={navItemClass}>
                             Messages
                         </NavLink>
                     </nav>
@@ -90,10 +95,13 @@ const RenterNavbar = () => {
                     <button
                         onClick={() => setVoiceAgentOpen(true)}
                         title="Autonomous Voice Booking (Sarvam Indic AI)"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/25 text-primary text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
                     >
-                        <Mic size={13} className="animate-pulse" />
+                        <Mic size={13} className="animate-pulse text-emerald-400" />
                         <span className="hidden sm:inline">Voice Agent</span>
+                        <span className="text-[10px] bg-emerald-500/20 px-1.5 py-0.5 rounded text-emerald-300 font-bold hidden md:inline">
+                            Renter AI
+                        </span>
                     </button>
 
                     {/* Dedicated Renter AI Voice Tour */}
@@ -137,13 +145,6 @@ const RenterNavbar = () => {
                             >
                                 <span>👤 My Profile & Account</span>
                             </button>
-                            <Link
-                                to="/owner"
-                                onClick={() => setIsDropdownOpen(false)}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
-                            >
-                                <span>Switch to Owner Mode</span>
-                            </Link>
                             {(user?.roles === "admin" || user?.role === "admin") && (
                                 <Link
                                     to="/admin"

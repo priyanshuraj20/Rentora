@@ -3,8 +3,8 @@ import { Volume2, Play, Pause, Sparkles, ChevronDown, RefreshCw } from "lucide-r
 import toast from "react-hot-toast";
 
 export const SUPPORTED_LANGUAGES = [
-  { code: "hi-IN", label: "Hindi", native: "हिंदी", flag: "🇮🇳" },
   { code: "en-IN", label: "English", native: "English", flag: "🌐" },
+  { code: "hi-IN", label: "Hindi", native: "हिंदी", flag: "🇮🇳" },
   { code: "gu-IN", label: "Gujarati", native: "ગુજરાતી", flag: "🇮🇳" },
   { code: "mr-IN", label: "Marathi", native: "मराठी", flag: "🇮🇳" },
 ];
@@ -14,7 +14,7 @@ export default function RenterVoiceGuide() {
   const [isLoading, setIsLoading] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [selectedLang, setSelectedLang] = useState(() => {
-    return localStorage.getItem("rentora_voice_lang") || "hi-IN";
+    return localStorage.getItem("rentora_voice_lang") || "en-IN";
   });
 
   const audioRef = useRef(null);
@@ -101,7 +101,7 @@ export default function RenterVoiceGuide() {
             </span>
           </h4>
           <p className="text-xs text-text-secondary">
-            Learn how to browse gear, verify 6-digit PIN & voice consent, and enjoy Razorpay escrow safety.
+            Learn how to browse gear, share your 15-second dynamic PIN at pickup, and enjoy Razorpay escrow safety.
           </p>
         </div>
       </div>

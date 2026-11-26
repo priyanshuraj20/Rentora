@@ -6,6 +6,7 @@ import { BookingStatus } from "../validators/booking.validator";
 import mongoose from "mongoose";
 import { emailQueue, bookingStatusQueue, photoPurgeQueue } from "../queues/email.queue";
 import { createNotificationService } from "./notification.service";
+import { getIO } from "../config/socket";
 import logger from "../config/logger";
 import { calculatePricing } from "../utils/pricing.calculator";
 import { generateQRToken, verifyQRToken, QRType } from "../utils/qrToken";
@@ -24,7 +25,7 @@ export const getBookingService = async (userId: string, userRole: string) => {
 
   const bookings = await Booking.find(filter)
     .select(
-      "item_id renter_id owner_id start_date end_date pricing booking_status payment_status createdAt handoverPhotos returnPhotos",
+      "item_id renter_id owner_id start_date end_date pricing booking_status payment_status createdAt handoverPhotos returnPhotos handoverConfirmedAt returnConfirmedAt",
     )
     .populate("item_id", "title images")
     .populate("renter_id", "name profileImage")
@@ -519,7 +520,9 @@ export const uploadBookingPhotosService = async (
     throw new AppError("Booking not found", 404);
   }
 
-  // Both booking participants (owner and renter) are allowed to upload condition photos
+  if (type === "return" && booking.owner_id.toString() !== userId) {
+    throw new AppError("Only the owner can upload return inspection photos.", 403);
+  }
 
 
   const photos = files.map((f) => ({ url: f.path, publicId: f.filename }));
@@ -543,6 +546,17 @@ export const uploadBookingPhotosService = async (
   }
 
   logger.info("Booking evidence photos uploaded", { bookingId, type, count: photos.length });
+
+  try {
+    const io = getIO();
+    const payload = {
+      bookingId: booking._id.toString(),
+      status: booking.booking_status,
+      event: type === "handover" ? "handover_photos_uploaded" : "return_photos_uploaded",
+    };
+    io.to(booking.renter_id.toString()).emit("booking_updated", payload);
+    io.to(booking.owner_id.toString()).emit("booking_updated", payload);
+  } catch (_) {}
 
   return {
     type,
@@ -713,32 +727,57 @@ export const generateVerificationPinService = async (
     throw new AppError("Booking not found", 404);
   }
 
-  if (type === "handover" && booking.booking_status !== BookingStatus.CONFIRMED && booking.booking_status !== BookingStatus.ONGOING) {
-    throw new AppError("Payment must be completed before handover PIN can be generated", 400);
+  if (type === "handover") {
+    if (booking.handoverConfirmedAt || booking.booking_status === BookingStatus.ONGOING || booking.booking_status === BookingStatus.COMPLETED) {
+      throw new AppError("Handover has already been confirmed!", 409);
+    }
+    if (booking.booking_status !== BookingStatus.CONFIRMED) {
+      throw new AppError("Payment must be completed before handover PIN can be generated", 400);
+    }
+    if (!booking.handoverPhotos || booking.handoverPhotos.length === 0) {
+      throw new AppError("Please upload pickup condition photos first before generating Handover PIN.", 400);
+    }
   }
 
-  if (
-    type === "return" &&
-    (!booking.handoverConfirmedAt ||
-      (booking.booking_status !== BookingStatus.CONFIRMED &&
-        booking.booking_status !== BookingStatus.ONGOING))
-  ) {
-    throw new AppError("Handover must be confirmed before return PIN can be generated", 400);
+  if (type === "return") {
+    if (booking.returnConfirmedAt || booking.booking_status === BookingStatus.COMPLETED) {
+      throw new AppError("Return has already been completed!", 409);
+    }
+    if (!booking.handoverConfirmedAt || booking.booking_status !== BookingStatus.ONGOING) {
+      throw new AppError("Handover must be confirmed before return PIN can be generated", 400);
+    }
+    if (!booking.returnPhotos || booking.returnPhotos.length === 0) {
+      throw new AppError("Please upload return condition photos first before generating Return PIN.", 400);
+    }
   }
 
-  // Generate a clean 6-digit numeric PIN
+  // Dynamic Rotating PIN: 15 seconds validity with 30s grace window for previous PIN
   const pin = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour TTL
+  const TTL_MS = 15 * 1000; // 15 seconds
+  const GRACE_MS = 30 * 1000; // 30 seconds grace for previous code
+  const now = Date.now();
+  const expiresAt = new Date(now + TTL_MS);
+  const graceExpiresAt = new Date(now + GRACE_MS);
 
   if (!booking.verificationPin) {
     booking.verificationPin = {};
   }
 
   if (type === "handover") {
+    // Preserve current pin as previous pin for 30s grace
+    if (booking.verificationPin.handoverPin) {
+      booking.verificationPin.previousHandoverPin = booking.verificationPin.handoverPin;
+      booking.verificationPin.previousHandoverExpiresAt = graceExpiresAt;
+    }
     booking.verificationPin.handoverPin = pin;
     booking.verificationPin.handoverExpiresAt = expiresAt;
     booking.verificationPin.handoverAttempts = 0;
   } else {
+    // Return PIN rotation
+    if (booking.verificationPin.returnPin) {
+      booking.verificationPin.previousReturnPin = booking.verificationPin.returnPin;
+      booking.verificationPin.previousReturnExpiresAt = graceExpiresAt;
+    }
     booking.verificationPin.returnPin = pin;
     booking.verificationPin.returnExpiresAt = expiresAt;
     booking.verificationPin.returnAttempts = 0;
@@ -746,14 +785,14 @@ export const generateVerificationPinService = async (
 
   await booking.save();
 
-  logger.info("Verification PIN generated", { bookingId, type, userId });
+  logger.info("15-Second Dynamic Verification PIN generated", { bookingId, type, userId, pin });
 
   return {
     success: true,
     pin,
     type,
     expiresAt,
-    expiresInSeconds: 3600,
+    expiresInSeconds: 15,
   };
 };
 
@@ -781,18 +820,19 @@ export const verifyPinService = async (
   }
 
   const cleanPin = enteredPin.trim();
+  const now = new Date();
 
   if (type === "handover") {
-    if (booking.booking_status === BookingStatus.ONGOING) {
+    if (booking.booking_status === BookingStatus.ONGOING || booking.handoverConfirmedAt) {
       return { success: true, message: "Handover is already confirmed", status: "ongoing" };
     }
 
-    if (!booking.verificationPin?.handoverPin) {
-      throw new AppError("No active handover PIN found. Please generate a PIN first.", 400);
+    if (!booking.handoverPhotos || booking.handoverPhotos.length === 0) {
+      throw new AppError("Pickup condition photos must be uploaded before verifying handover PIN.", 400);
     }
 
-    if (booking.verificationPin.handoverExpiresAt && new Date() > booking.verificationPin.handoverExpiresAt) {
-      throw new AppError("Handover PIN has expired. Please generate a new PIN.", 400);
+    if (!booking.verificationPin?.handoverPin) {
+      throw new AppError("No active handover PIN found. Please open the PIN screen first.", 400);
     }
 
     if ((booking.verificationPin.handoverAttempts || 0) >= 5) {
@@ -800,7 +840,16 @@ export const verifyPinService = async (
       throw new AppError("Maximum verification attempts reached (5). Account suspended by Autonomous Risk Guard for security.", 429);
     }
 
-    if (booking.verificationPin.handoverPin !== cleanPin) {
+    const isCurrentMatch =
+      booking.verificationPin.handoverPin === cleanPin &&
+      (!booking.verificationPin.handoverExpiresAt || now <= booking.verificationPin.handoverExpiresAt);
+
+    const isGraceMatch =
+      booking.verificationPin.previousHandoverPin === cleanPin &&
+      booking.verificationPin.previousHandoverExpiresAt &&
+      now <= booking.verificationPin.previousHandoverExpiresAt;
+
+    if (!isCurrentMatch && !isGraceMatch) {
       booking.verificationPin.handoverAttempts = (booking.verificationPin.handoverAttempts || 0) + 1;
       await booking.save();
       const remaining = 5 - booking.verificationPin.handoverAttempts;
@@ -827,6 +876,18 @@ export const verifyPinService = async (
 
     logger.info("Handover verified via PIN", { bookingId, userId });
 
+    try {
+      const io = getIO();
+      const payload = {
+        bookingId: booking._id.toString(),
+        status: "ongoing",
+        event: "handover_confirmed",
+        confirmedAt: booking.handoverConfirmedAt,
+      };
+      io.to(booking.renter_id.toString()).emit("booking_updated", payload);
+      io.to(booking.owner_id.toString()).emit("booking_updated", payload);
+    } catch (_) {}
+
     return {
       success: true,
       message: "Handover verified successfully! Rental is now ongoing.",
@@ -835,16 +896,16 @@ export const verifyPinService = async (
     };
   } else {
     // Return flow
-    if (booking.booking_status === BookingStatus.COMPLETED) {
+    if (booking.booking_status === BookingStatus.COMPLETED || booking.returnConfirmedAt) {
       return { success: true, message: "Return is already completed", status: "completed" };
     }
 
-    if (!booking.verificationPin?.returnPin) {
-      throw new AppError("No active return PIN found. Please generate a PIN first.", 400);
+    if (!booking.returnPhotos || booking.returnPhotos.length === 0) {
+      throw new AppError("Return condition photos must be uploaded before verifying return PIN.", 400);
     }
 
-    if (booking.verificationPin.returnExpiresAt && new Date() > booking.verificationPin.returnExpiresAt) {
-      throw new AppError("Return PIN has expired. Please generate a new PIN.", 400);
+    if (!booking.verificationPin?.returnPin) {
+      throw new AppError("No active return PIN found. Please open the Return PIN screen first.", 400);
     }
 
     if ((booking.verificationPin.returnAttempts || 0) >= 5) {
@@ -852,7 +913,16 @@ export const verifyPinService = async (
       throw new AppError("Maximum verification attempts reached (5). Account suspended by Autonomous Risk Guard for security.", 429);
     }
 
-    if (booking.verificationPin.returnPin !== cleanPin) {
+    const isCurrentReturnMatch =
+      booking.verificationPin.returnPin === cleanPin &&
+      (!booking.verificationPin.returnExpiresAt || now <= booking.verificationPin.returnExpiresAt);
+
+    const isGraceReturnMatch =
+      booking.verificationPin.previousReturnPin === cleanPin &&
+      booking.verificationPin.previousReturnExpiresAt &&
+      now <= booking.verificationPin.previousReturnExpiresAt;
+
+    if (!isCurrentReturnMatch && !isGraceReturnMatch) {
       booking.verificationPin.returnAttempts = (booking.verificationPin.returnAttempts || 0) + 1;
       await booking.save();
       const remaining = 5 - booking.verificationPin.returnAttempts;
@@ -862,7 +932,6 @@ export const verifyPinService = async (
     // Complete the booking
     await completeBookingService(booking.owner_id.toString(), bookingId);
 
-    const now = new Date();
     booking.returnConfirmedAt = now;
     if (booking.verificationPin) {
       booking.verificationPin.returnAttempts = 0;
@@ -881,6 +950,18 @@ export const verifyPinService = async (
     });
 
     logger.info("Return verified via PIN", { bookingId, userId });
+
+    try {
+      const io = getIO();
+      const payload = {
+        bookingId: booking._id.toString(),
+        status: "completed",
+        event: "return_confirmed",
+        confirmedAt: now,
+      };
+      io.to(booking.renter_id.toString()).emit("booking_updated", payload);
+      io.to(booking.owner_id.toString()).emit("booking_updated", payload);
+    } catch (_) {}
 
     return {
       success: true,
@@ -913,16 +994,33 @@ export const getActivePinForDemoService = async (
     ? booking.verificationPin?.handoverPin
     : booking.verificationPin?.returnPin;
 
-  // Auto-generate if not created yet for seamless demo experience
-  if (!pin) {
+  const expiresAt = type === "handover"
+    ? booking.verificationPin?.handoverExpiresAt
+    : booking.verificationPin?.returnExpiresAt;
+
+  const now = new Date();
+  const isExpired = !expiresAt || now > expiresAt;
+
+  // Auto-generate fresh 15s rotating PIN if not created yet or expired
+  if (!pin || isExpired) {
     const generated = await generateVerificationPinService(userId, bookingId, type);
-    pin = generated.pin;
+    return {
+      success: true,
+      pin: generated.pin,
+      type,
+      expiresAt: generated.expiresAt,
+      expiresInSeconds: generated.expiresInSeconds,
+    };
   }
+
+  const remainingSeconds = Math.max(1, Math.ceil((expiresAt.getTime() - now.getTime()) / 1000));
 
   return {
     success: true,
     pin,
     type,
+    expiresAt,
+    expiresInSeconds: remainingSeconds,
   };
 };
 

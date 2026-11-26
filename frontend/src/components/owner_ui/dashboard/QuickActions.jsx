@@ -3,7 +3,12 @@ import { Link } from "react-router-dom";
 export default function QuickActions({ actions }) {
   return (
     <div className="p-6 bg-surface rounded-3xl border border-divider shadow-sm">
-      <h3 className="text-base font-bold text-text-primary mb-5">Quick Actions</h3>
+      <div className="mb-4">
+        <h3 className="text-base font-bold text-text-primary">Quick Actions</h3>
+        <p className="text-xs text-text-secondary mt-0.5">
+          Shortcuts to publish new equipment, review requests, or update listings.
+        </p>
+      </div>
 
       <div className="flex flex-col gap-2.5">
         {actions.map((action) => (

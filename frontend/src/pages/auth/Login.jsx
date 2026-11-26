@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/authHook";
 import ForgotPasswordModal from "../../modals/ForgotPasswordModal";
 
-const Login = ({ switchMode, onClose }) => {
+const Login = ({ switchMode, onClose, role = "owner", setRole }) => {
   const [user, setUser] = useState({
     email: "",
     password: "",
@@ -65,12 +65,43 @@ const Login = ({ switchMode, onClose }) => {
     <AuthLayout>
 
       {/* Header */}
-      <div className="p-8 pb-6 text-center border-b border-divider">
+      <div className="p-6 pb-4 text-center border-b border-divider">
+        {setRole && (
+          <div className="flex justify-center mb-3">
+            <div className="inline-flex p-1 rounded-xl bg-app border border-divider shadow-inner">
+              <button
+                type="button"
+                onClick={() => setRole("owner")}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  role === "owner"
+                    ? "bg-primary text-text-primary shadow-sm"
+                    : "text-text-muted hover:text-text-secondary hover:bg-white/5"
+                }`}
+              >
+                <span>Owner Portal</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole("renter")}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  role === "renter"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "text-text-muted hover:text-text-secondary hover:bg-white/5"
+                }`}
+              >
+                <span>Renter Portal</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         <h1 className="text-text-primary text-xl font-bold tracking-tight">
-          Welcome Back
+          {role === "owner" ? "Welcome Back, Owner" : "Welcome Back, Renter"}
         </h1>
         <p className="text-text-secondary text-xs mt-1">
-          Login to continue renting or listing items
+          {role === "owner"
+            ? "Sign in to manage gear listings, active rentals & earnings"
+            : "Sign in to explore gear nearby, track bookings & voice orders"}
         </p>
       </div>
 
@@ -106,7 +137,7 @@ const Login = ({ switchMode, onClose }) => {
               <button
                 type="button"
                 onClick={() => setShowForgotModal(true)}
-                className="text-primary text-xs font-medium hover:underline cursor-pointer"
+                className={`${role === "renter" ? "text-emerald-400" : "text-primary"} text-xs font-medium hover:underline cursor-pointer`}
               >
                 Forgot?
               </button>
@@ -136,7 +167,11 @@ const Login = ({ switchMode, onClose }) => {
           {/* Login Button */}
           <button
             type="submit"
-            className="w-full mt-4 bg-primary hover:bg-primary-hover text-text-primary font-semibold py-2.5 rounded-lg transition-all shadow-sm active:scale-[0.98] flex items-center justify-center gap-2 text-sm cursor-pointer"
+            className={`w-full mt-4 font-semibold py-2.5 rounded-lg transition-all shadow-sm active:scale-[0.98] flex items-center justify-center gap-2 text-sm cursor-pointer ${
+              role === "renter"
+                ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20"
+                : "bg-primary hover:bg-primary-hover text-text-primary shadow-primary/20"
+            }`}
           >
             {loading ? (
               <div className="flex items-center gap-2">
@@ -145,7 +180,7 @@ const Login = ({ switchMode, onClose }) => {
               </div>
             ) : (
               <>
-                Login
+                <span>Sign In to {role === "owner" ? "Owner Portal" : "Renter Portal"}</span>
                 <span className="material-symbols-outlined text-base">
                   arrow_forward
                 </span>
@@ -162,18 +197,6 @@ const Login = ({ switchMode, onClose }) => {
             </div>
           )}
 
-          {/* Admin Quick Jump */}
-          <div className="pt-1 text-center">
-            <button
-              type="button"
-              onClick={() => handleDemoQuickLogin("admin")}
-              className="text-[11px] text-text-muted hover:text-primary transition-colors cursor-pointer inline-flex items-center gap-1"
-            >
-              <span>🛡️</span>
-              <span>Looking for Admin Escrow & Treasury Portal? Click for instant access</span>
-            </button>
-          </div>
-
         </form>
       </div>
 
@@ -181,7 +204,7 @@ const Login = ({ switchMode, onClose }) => {
       <div className="bg-card/60 px-8 py-3.5 border-t border-divider text-center">
         <p className="text-text-secondary text-xs">
           Don’t have an account?
-          <button className="text-primary font-semibold hover:underline ml-1 cursor-pointer" onClick={() => switchMode("register")}>
+          <button className={`${role === "renter" ? "text-emerald-400" : "text-primary"} font-semibold hover:underline ml-1 cursor-pointer`} onClick={() => switchMode("register")}>
             Register
           </button>
         </p>

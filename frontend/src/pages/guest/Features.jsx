@@ -43,30 +43,10 @@ export default function Features() {
   const [voiceAgentOpen, setVoiceAgentOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState("login");
-  const [demoLoading, setDemoLoading] = useState(false);
   const [simulatedPinVerified, setSimulatedPinVerified] = useState(false);
 
-  const { user, demoLogin } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-
-  const handleDemoLaunch = async (persona) => {
-    setDemoLoading(true);
-    try {
-      const res = await demoLogin(persona);
-      if (res.success) {
-        toast.success(`Logged in as Demo ${persona.toUpperCase()}! 🚀`);
-        if (persona === "admin") navigate("/admin");
-        else if (persona === "owner") navigate("/owner");
-        else navigate("/renter");
-      } else {
-        toast.error("Demo login failed");
-      }
-    } catch (_) {
-      toast.error("Demo login failed");
-    } finally {
-      setDemoLoading(false);
-    }
-  };
 
   // Comprehensive 24 Production Features
   const allFeatures = useMemo(
@@ -214,12 +194,12 @@ export default function Features() {
         personaLabel: "Owner Feature",
         badge: "Dispute Elimination",
         icon: <ShieldCheck className="size-6 text-primary" />,
-        title: "Physical Handover PIN & Acoustic Voice Verification",
-        summary: "Verify the renter's 6-digit PIN and capture acoustic voice consent at pickup for 100% dispute protection.",
+        title: "15-Second Dynamic Rotating PIN & Condition Photo Handover",
+        summary: "Verify the renter's live 15-second dynamic PIN and compare inspection photos at pickup for 100% dispute protection.",
         problem: "Owners worry that renters might damage gear and deny ever receiving it, leaving the owner with no proof.",
-        solution: "At pickup, the owner enters the renter's secret 6-digit PIN and records a verbal acoustic consent statement. This creates an indisputable legal audit trail before gear leaves the owner's hands.",
-        flow: ["Renter Arrives", "Owner Enters 6-Digit PIN", "Acoustic Voice Consent Recorded", "Cryptographic Check", "Handover Certified"],
-        tech: ["PIN Validation API", "Voice Consent Audio Blob", "SHA256 Handover Checksum", "Audit Trail"],
+        solution: "At pickup, the owner inspects equipment with condition photos and enters the renter's live 15-second dynamic PIN (TOTP). This creates an indisputable mathematical audit trail before gear leaves the owner's hands.",
+        flow: ["Renter Arrives", "Inspect Gear & Take Photos", "Owner Enters 15s Dynamic PIN", "State Machine Validates", "Handover Certified"],
+        tech: ["Dynamic TOTP PIN API", "15s Expiration Engine", "Condition Photo Appraisal", "Escrow Handover Lock"],
       },
       {
         id: "owner-payouts",
@@ -471,15 +451,6 @@ export default function Features() {
               <Search size={14} />
               <span>Browse Nearby Equipment</span>
             </Link>
-
-            <button
-              onClick={() => handleDemoLaunch("owner")}
-              disabled={demoLoading}
-              className="px-5 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
-            >
-              <Zap size={14} />
-              <span>Launch Demo Owner</span>
-            </button>
           </div>
         </div>
 
@@ -830,48 +801,37 @@ export default function Features() {
         )}
 
         {/* ========================================================= */}
-        {/* BOTTOM CTA: INSTANT DEMO LAUNCHER                         */}
+        {/* BOTTOM CTA: START RENTING OR EARNING                      */}
         {/* ========================================================= */}
-        <div className="rounded-3xl bg-gradient-to-r from-surface via-surface to-primary/10 border border-primary/30 p-8 sm:p-12 shadow-2xl relative overflow-hidden">
-          <div className="max-w-3xl mx-auto text-center space-y-6 relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-              <span>⚡ 1-Click Instant Recruiter Access</span>
-            </div>
-
-            <h2 className="text-2xl sm:text-4xl font-black text-text-primary tracking-tight">
-              Test Every Feature in Real Time
+        <div className="rounded-3xl bg-surface border border-divider p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+          <div className="max-w-2xl mx-auto text-center space-y-6 relative z-10">
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-text-primary tracking-tight font-display">
+              Ready to Experience Rentora?
             </h2>
 
-            <p className="text-xs sm:text-sm text-text-secondary leading-relaxed max-w-xl mx-auto">
-              No registration or credit card needed. Switch between Demo Renter, Demo Owner, and Demo Admin with 1 click to test voice booking, PIN verification, and escrow payouts live.
+            <p className="text-sm text-text-secondary leading-relaxed max-w-lg mx-auto">
+              Explore cameras, drones, tools, and bikes in your neighborhood, or list your own gear and start earning steady passive income today.
             </p>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-              <button
-                onClick={() => handleDemoLaunch("renter")}
-                disabled={demoLoading}
-                className="px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-text-primary text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-2 cursor-pointer"
+            <div className="flex flex-wrap items-center justify-center gap-3.5 pt-2">
+              <Link
+                to="/explore"
+                className="px-6 py-3.5 rounded-xl bg-primary hover:bg-primary-hover text-text-primary text-sm font-bold transition-all shadow-md active:scale-95 flex items-center gap-2 font-display"
               >
-                <span>🧑‍💼 Launch Demo Renter</span>
-                <ArrowRight size={14} />
-              </button>
+                <span>Explore Equipment</span>
+                <ArrowRight size={15} />
+              </Link>
 
               <button
-                onClick={() => handleDemoLaunch("owner")}
-                disabled={demoLoading}
-                className="px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-text-primary text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-2 cursor-pointer"
+                type="button"
+                onClick={() => {
+                  setAuthMode("register");
+                  setAuthOpen(true);
+                }}
+                className="px-6 py-3.5 rounded-xl bg-card hover:bg-white/5 border border-divider text-text-primary text-sm font-bold transition-all shadow-sm active:scale-95 flex items-center gap-2 cursor-pointer font-display"
               >
-                <span>💼 Launch Demo Owner</span>
-                <ArrowRight size={14} />
-              </button>
-
-              <button
-                onClick={() => handleDemoLaunch("admin")}
-                disabled={demoLoading}
-                className="px-5 py-3 rounded-xl bg-surface hover:bg-white/10 border border-divider text-primary text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-2 cursor-pointer"
-              >
-                <span>🛡️ Launch Demo Admin</span>
-                <ArrowRight size={14} />
+                <span>Join Rentora</span>
+                <ArrowRight size={15} />
               </button>
             </div>
           </div>

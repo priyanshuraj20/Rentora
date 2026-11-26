@@ -125,7 +125,7 @@ export default function OwnerListings() {
             <div className="max-w-[1400px] px-6 py-6 mx-auto space-y-8">
 
                 {/* Header Row */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+                <div id="owner-listings-header" className="flex flex-col md:flex-row justify-between items-start md:items-center">
                     <div>
                         <h1 className="text-4xl font-black tracking-tighter text-white mb-1">
                             Inventory

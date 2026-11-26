@@ -1,6 +1,6 @@
-import { Calendar, User, CheckCircle, XCircle, Clock, RotateCcw, KeyRound, ShieldCheck } from 'lucide-react';
+import { Calendar, User, CheckCircle, XCircle, Clock, RotateCcw, KeyRound, ShieldCheck, Camera } from 'lucide-react';
 
-const BookingCard = ({ booking, onApprove, onReject, onComplete, onExtend, onShowHandoverPin, onEnterReturnPin, onShowHandoverQR, onScanReturnQR, activeTab }) => {
+const BookingCard = ({ booking, onApprove, onReject, onComplete, onExtend, onVerifyHandoverPin, onShowReturnPin, onShowHandoverPin, onEnterReturnPin, onUploadPhotos, activeTab }) => {
   const { item, status, id, startDate, endDate, renterInfo } = booking;
   
   const formatDate = (dateStr) => {
@@ -138,35 +138,86 @@ const BookingCard = ({ booking, onApprove, onReject, onComplete, onExtend, onSho
           </>
         )}
 
-        {activeTab === 'active' && (
-          <>
-            {!booking.handoverConfirmedAt && (
-              <button
-                onClick={() => (onShowHandoverPin || onShowHandoverQR) && (onShowHandoverPin || onShowHandoverQR)(id)}
-                className="w-full flex items-center justify-center gap-1.5 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
-              >
-                <KeyRound className="w-3.5 h-3.5" />
-                Show Handover PIN
-              </button>
-            )}
-            {booking.handoverConfirmedAt && !booking.returnConfirmedAt && (
-              <button
-                onClick={() => (onEnterReturnPin || onScanReturnQR) && (onEnterReturnPin || onScanReturnQR)(id)}
-                className="w-full flex items-center justify-center gap-1.5 bg-secondary-accent/20 hover:bg-secondary-accent/30 text-secondary-accent border border-secondary-accent/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                Enter Return PIN
-              </button>
-            )}
-            <button
-              onClick={() => onComplete(id)}
-              className="w-full flex items-center justify-center gap-1.5 bg-success/20 hover:bg-success/30 text-success border border-success/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
-            >
-              <CheckCircle className="w-3.5 h-3.5" />
-              Mark Returned
-            </button>
-          </>
-        )}
+        {activeTab === 'active' && (() => {
+          const statusLower = status?.toLowerCase();
+          const isHandoverDone = Boolean(booking.handoverConfirmedAt) || statusLower === 'ongoing' || statusLower === 'completed';
+          const isReturnDone = Boolean(booking.returnConfirmedAt) || statusLower === 'completed';
+
+          if (statusLower === 'approved') {
+            return (
+              <div className="px-4 py-2.5 rounded-xl bg-secondary-accent/10 border border-secondary-accent/30 text-secondary-accent text-xs font-semibold text-center">
+                Awaiting Renter Payment
+              </div>
+            );
+          }
+
+          const hasHandoverPhotos = booking.handoverPhotos && booking.handoverPhotos.length > 0;
+          const hasReturnPhotos = booking.returnPhotos && booking.returnPhotos.length > 0;
+
+          return (
+            <>
+              {statusLower === 'confirmed' && !isHandoverDone && (
+                hasHandoverPhotos ? (
+                  <button
+                    onClick={() => (onVerifyHandoverPin || onShowHandoverPin) && (onVerifyHandoverPin || onShowHandoverPin)(id)}
+                    className="w-full flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-hover text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md shadow-primary/20 active:scale-95"
+                    title="Renter will tell you their 15-second dynamic PIN at physical pickup"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Verify Renter PIN & Handover</span>
+                  </button>
+                ) : (
+                  <div className="space-y-1.5">
+                    <button
+                      onClick={() => onUploadPhotos?.(id, 'handover')}
+                      className="w-full flex items-center justify-center gap-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95"
+                    >
+                      <Camera className="w-4 h-4" />
+                      <span>Upload Pickup Photos</span>
+                    </button>
+                    <p className="text-[10px] text-text-muted text-center">
+                      Pickup photos required before PIN handover
+                    </p>
+                  </div>
+                )
+              )}
+              {isHandoverDone && !isReturnDone && (
+                hasReturnPhotos ? (
+                  <>
+                    <button
+                      onClick={() => (onShowReturnPin || onEnterReturnPin) && (onShowReturnPin || onEnterReturnPin)(id)}
+                      className="w-full flex items-center justify-center gap-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95"
+                      title="Share this 15-second dynamic PIN with renter after verifying gear condition"
+                    >
+                      <KeyRound className="w-4 h-4" />
+                      <span>Show Return PIN to Renter</span>
+                    </button>
+                    <button
+                      onClick={() => onComplete(id)}
+                      className="w-full flex items-center justify-center gap-1.5 bg-success/20 hover:bg-success/30 text-success border border-success/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95"
+                    >
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      <span>Mark Returned</span>
+                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-1.5">
+                    <button
+                      onClick={() => onUploadPhotos?.(id, 'return')}
+                      className="w-full flex items-center justify-center gap-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95"
+                    >
+                      <Camera className="w-4 h-4" />
+                      <span>Upload Return Photos</span>
+                    </button>
+                    <p className="text-[10px] text-text-muted text-center">
+                      Return photos required before Return PIN
+                    </p>
+                  </div>
+                )
+              )}
+            </>
+          );
+        })()}
       </div>
     </div>
   );

@@ -61,29 +61,29 @@ const OwnerNavbar = () => {
                 <div className="flex items-center gap-10">
                     <Link to="/owner" className="flex items-center gap-2.5 group">
                         <img src={logo} alt="logo" width="34px" height="34px" className="rounded-xl transition-transform group-hover:scale-105 shadow-sm" />
-                        <h2 className="text-2xl font-bold text-text-primary tracking-tight">
-                            Rent<span className="text-primary">ora</span>
+                        <h2 className="text-2xl font-bold text-white tracking-tight">
+                            Rentora
                         </h2>
                     </Link>
 
                     <nav className="hidden md:flex items-center gap-2">
-                        <NavLink to="/owner" className={navItemClass}>
+                        <NavLink id="owner-nav-dashboard" to="/owner" className={navItemClass}>
                             Dashboard
                         </NavLink>
 
-                        <NavLink to="/listings" className={navItemClass}>
+                        <NavLink id="owner-nav-listings" to="/listings" className={navItemClass}>
                             Listings
                         </NavLink>
 
-                        <NavLink to="/bookings" className={navItemClass}>
+                        <NavLink id="owner-nav-bookings" to="/bookings" className={navItemClass}>
                             Bookings
                         </NavLink>
 
-                        <NavLink to="/earnings" className={navItemClass}>
+                        <NavLink id="owner-nav-earnings" to="/earnings" className={navItemClass}>
                             Earnings
                         </NavLink>
 
-                        <NavLink to="/messages" className={navItemClass}>
+                        <NavLink id="owner-nav-messages" to="/messages" className={navItemClass}>
                             Messages
                         </NavLink>
                     </nav>
@@ -130,13 +130,6 @@ const OwnerNavbar = () => {
                             >
                                 <span>👤 My Profile & Account</span>
                             </button>
-                            <Link
-                                to="/renter"
-                                onClick={() => setIsDropdownOpen(false)}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
-                            >
-                                <span>Switch to Renter Mode</span>
-                            </Link>
                             {(user?.roles === "admin" || user?.role === "admin") && (
                                 <Link
                                     to="/admin"

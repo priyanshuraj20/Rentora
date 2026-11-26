@@ -4,11 +4,13 @@ import Footer from "../components/guest_ui/Footer";
 
 const RenterLayout = () => {
   return (
-    <>
+    <div className="renter-theme min-h-screen bg-app flex flex-col">
       <RenterNavbar />
-      <Outlet />
+      <div className="flex-1">
+        <Outlet />
+      </div>
       <Footer />
-    </>
+    </div>
   );
 };
 

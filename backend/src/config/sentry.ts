@@ -9,6 +9,7 @@ export const initSentry = () => {
 
   Sentry.init({
     dsn: env.SENTRY_DSN,
-    tracesSampleRate: 1.0, // 100% of transactions traced — lower this in real prod (e.g. 0.1) to control cost/volume
+    environment: env.NODE_ENV,
+    tracesSampleRate: env.NODE_ENV === "production" ? 0.2 : 1.0,
   });
 };

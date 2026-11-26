@@ -324,6 +324,7 @@ export const getItemByIdService = async (id: string) => {
 // ─────────────────────────────────────────────────────
 
 export const indexItemToES = async (item: any) => {
+  if (!esClient) return;
   const itemId = item._id.toString();
 
   logger.info("Indexing item to ElasticSearch", { itemId });
@@ -355,6 +356,7 @@ export const indexItemToES = async (item: any) => {
 };
 
 export const deleteItemFromES = async (itemId: string) => {
+  if (!esClient) return;
   logger.info("Deleting item from ElasticSearch", { itemId });
 
   try {
@@ -412,6 +414,9 @@ export const searchItemsService = async ({
 
   // 1. Attempt Elasticsearch search first
   try {
+    if (!esClient) {
+      throw new Error("Elasticsearch not configured");
+    }
     const filters: object[] = [
       { term: { isActive: true } },
       { term: { status: "active" } },

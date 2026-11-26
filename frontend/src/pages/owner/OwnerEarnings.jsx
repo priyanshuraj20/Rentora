@@ -83,7 +83,7 @@ export default function OwnerEarnings() {
   return (
     <main className="min-h-screen bg-app px-6 md:px-12 py-8 max-w-[1400px] mx-auto space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div id="owner-earnings-header" className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-text-primary tracking-tight">Earnings & Analytics</h1>
           <p className="text-text-secondary text-sm mt-1">

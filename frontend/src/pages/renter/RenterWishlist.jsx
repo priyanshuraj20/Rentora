@@ -92,7 +92,7 @@ export default function RenterWishlist() {
 
     return (
         <main className="flex-1 overflow-y-auto bg-app min-h-screen">
-            <div className="max-w-[1200px] mx-auto px-6 py-8">
+            <div id="renter-wishlist-header" className="max-w-[1200px] mx-auto px-6 py-8">
                 <WishlistHeader
                     title="Your Saved Items"
                     subtitle="Premium gear waiting for your next project."

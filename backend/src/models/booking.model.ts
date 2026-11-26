@@ -61,9 +61,13 @@ export interface IBooking extends Document {
     handoverPin?: string;
     handoverExpiresAt?: Date;
     handoverAttempts?: number;
+    previousHandoverPin?: string;
+    previousHandoverExpiresAt?: Date;
     returnPin?: string;
     returnExpiresAt?: Date;
     returnAttempts?: number;
+    previousReturnPin?: string;
+    previousReturnExpiresAt?: Date;
   };
 
   damageReport?: {
@@ -219,9 +223,13 @@ const BookingSchema: Schema<IBooking> = new Schema(
       handoverPin: { type: String },
       handoverExpiresAt: { type: Date },
       handoverAttempts: { type: Number, default: 0 },
+      previousHandoverPin: { type: String },
+      previousHandoverExpiresAt: { type: Date },
       returnPin: { type: String },
       returnExpiresAt: { type: Date },
       returnAttempts: { type: Number, default: 0 },
+      previousReturnPin: { type: String },
+      previousReturnExpiresAt: { type: Date },
     },
 
     damageReport: {

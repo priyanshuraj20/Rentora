@@ -1,15 +1,18 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { X, ShieldCheck, Clock, KeyRound } from "lucide-react";
+import { X, ShieldCheck, Clock, KeyRound, Camera } from "lucide-react";
 
 export default function RentalActions({
   status,
   handoverConfirmedAt,
   returnConfirmedAt,
+  hasHandoverPhotos = false,
+  hasReturnPhotos = false,
+  onUploadPhotos,
+  onShowHandoverPin,
+  onEnterReturnPin,
   onEnterHandoverPin,
   onShowReturnPin,
-  onScanHandoverQR,
-  onShowReturnQR,
 }) {
   const [showReturnModal, setShowReturnModal] = useState(false);
 
@@ -17,33 +20,50 @@ export default function RentalActions({
     toast("Rental extension feature is coming soon!", { icon: "⏳" });
   };
 
-  const handleHandoverClick = onEnterHandoverPin || onScanHandoverQR;
-  const handleReturnClick = onShowReturnPin || onShowReturnQR;
+  const handleHandoverClick = onShowHandoverPin || onShowReturnPin;
+  const handleReturnClick = onEnterReturnPin || onEnterHandoverPin;
 
   return (
     <>
       <div className="flex flex-wrap gap-4">
-        {(status === "confirmed" || status === "ongoing") && (
-          <>
-            {!handoverConfirmedAt && (
-              <button
-                onClick={handleHandoverClick}
-                className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-text-primary py-3 px-4 rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-sm active:scale-95"
-              >
-                <ShieldCheck size={15} />
-                Enter Handover PIN
-              </button>
-            )}
-            {handoverConfirmedAt && !returnConfirmedAt && (
-              <button
-                onClick={handleReturnClick}
-                className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-secondary-accent hover:bg-secondary-accent/80 text-text-primary py-3 px-4 rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-sm active:scale-95"
-              >
-                <KeyRound size={15} />
-                Show Return PIN
-              </button>
-            )}
-          </>
+        {status === "confirmed" && !handoverConfirmedAt && (
+          hasHandoverPhotos ? (
+            <button
+              onClick={handleHandoverClick}
+              className="flex-1 min-w-[150px] flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white py-3 px-4 rounded-2xl font-bold text-xs transition-all cursor-pointer shadow-md shadow-emerald-600/25 active:scale-95"
+            >
+              <KeyRound size={15} />
+              <span>Show Handover PIN</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => onUploadPhotos?.("handover")}
+              className="flex-1 min-w-[150px] flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-3 px-4 rounded-2xl font-bold text-xs transition-all cursor-pointer shadow-md shadow-primary/25 active:scale-95"
+            >
+              <Camera size={15} />
+              <span>Upload Pickup Photos</span>
+            </button>
+          )
+        )}
+        {(status === "ongoing" || handoverConfirmedAt) && !returnConfirmedAt && status !== "completed" && (
+          hasReturnPhotos ? (
+            <button
+              onClick={handleReturnClick}
+              className="flex-1 min-w-[150px] flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-surface py-3 px-4 rounded-2xl font-bold text-xs transition-all cursor-pointer shadow-md shadow-amber-500/25 active:scale-95"
+            >
+              <ShieldCheck size={15} />
+              <span>Enter Owner's Return PIN</span>
+            </button>
+          ) : (
+            <button
+              disabled
+              className="flex-1 min-w-[150px] flex items-center justify-center gap-2 bg-amber-500/10 text-amber-400/70 border border-amber-500/20 py-3 px-4 rounded-2xl font-bold text-xs cursor-not-allowed"
+              title="Owner must upload return inspection photos first"
+            >
+              <Clock size={15} />
+              <span>Awaiting Owner Return Photos</span>
+            </button>
+          )
         )}
         <button
           onClick={handleRequestExtension}

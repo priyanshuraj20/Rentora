@@ -1,25 +1,37 @@
 import { Link, NavLink, useLocation, useSearchParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
-import { ChevronDown, ShieldCheck, Mic } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ShieldCheck, Mic } from "lucide-react";
+import toast from "react-hot-toast";
 import AuthController from "../auth/AuthController";
 import VoiceWelcomeWidget from "../common/VoiceWelcomeWidget";
 import VoiceBookingAgentModal from "../common/VoiceBookingAgentModal";
-import logo from "../../assets/logo.svg";
 import useAuth from "../../hooks/authHook";
-import toast from "react-hot-toast";
+import logo from "../../assets/logo.svg";
 
 const Navbar = () => {
+  const { user } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState("login");
   const [searchParams, setSearchParams] = useSearchParams();
-  const [isDemoDropdownOpen, setIsDemoDropdownOpen] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
   const [voiceAgentOpen, setVoiceAgentOpen] = useState(false);
-  const demoDropdownRef = useRef(null);
+  const [homeMode, setHomeMode] = useState(() => {
+    return localStorage.getItem("rentora_home_mode") || "owner";
+  });
 
-  const { demoLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Keep homeMode synchronized with Hero tab and tour switches
+  useEffect(() => {
+    const handleMode = (e) => {
+      const mode = e.detail?.mode;
+      if (mode && (mode === "owner" || mode === "renter")) {
+        setHomeMode(mode);
+      }
+    };
+    window.addEventListener("rentora:mode-change", handleMode);
+    return () => window.removeEventListener("rentora:mode-change", handleMode);
+  }, []);
 
   useEffect(() => {
     const authStatus = searchParams.get("auth");
@@ -31,16 +43,6 @@ const Navbar = () => {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (demoDropdownRef.current && !demoDropdownRef.current.contains(e.target)) {
-        setIsDemoDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   const handleAuthClose = () => {
     setAuthOpen(false);
     if (searchParams.has("auth") || searchParams.has("mode")) {
@@ -51,36 +53,13 @@ const Navbar = () => {
     }
   };
 
-  const handleDemoPersonaLogin = async (persona) => {
-    setDemoLoading(true);
-    setIsDemoDropdownOpen(false);
-    try {
-      const result = await demoLogin(persona);
-      if (result.success) {
-        toast.success(`Logged in as Demo ${persona.toUpperCase()} 🚀`);
-        if (persona === "admin") {
-          navigate("/admin");
-        } else if (persona === "owner") {
-          navigate("/owner");
-        } else {
-          navigate("/renter");
-        }
-      } else {
-        toast.error(result.message || "Demo login failed");
-      }
-    } catch (err) {
-      console.error("Demo login error:", err);
-      toast.error("Could not switch demo persona");
-    } finally {
-      setDemoLoading(false);
-    }
-  };
-
-  const navItemClass = ({ isActive }) =>
+  const navItemClass = (isActive, mode = homeMode) =>
     [
       "flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 text-sm font-medium",
       isActive
-        ? "bg-primary text-text-primary font-semibold shadow-sm"
+        ? mode === "renter"
+          ? "bg-emerald-600 text-white font-semibold shadow-sm"
+          : "bg-primary text-text-primary font-semibold shadow-sm"
         : "text-text-secondary hover:text-text-primary hover:bg-white/5",
     ].join(" ");
 
@@ -90,19 +69,49 @@ const Navbar = () => {
         <div className="flex items-center gap-10">
           <Link to="/" className="flex items-center gap-2.5 group">
             <img src={logo} alt="logo" width="34px" height="34px" className="rounded-xl transition-transform group-hover:scale-105 shadow-sm" />
-            <h2 className="text-2xl font-bold text-text-primary tracking-tight">
-              Rent<span className="text-primary">ora</span>
+            <h2 className="text-2xl font-bold text-white tracking-tight">
+              Rentora
             </h2>
           </Link>
 
           <nav className="hidden md:flex items-center gap-2">
-            <NavLink to="/" end className={navItemClass}>
+            <NavLink to="/" end className={({ isActive }) => navItemClass(isActive, homeMode)}>
               Home
             </NavLink>
-            <NavLink to="/explore" className={navItemClass}>
-              Explore
-            </NavLink>
-            <NavLink to="/features" className={navItemClass}>
+
+            {homeMode === "owner" ? (
+              <NavLink
+                to="/explore?tab=owner"
+                className={({ isActive }) =>
+                  navItemClass(
+                    isActive || (location.pathname === "/explore" && searchParams.get("tab") !== "renter"),
+                    "owner"
+                  )
+                }
+              >
+                <span>List & Earn</span>
+                <span className="text-[10px] bg-primary/20 text-primary border border-primary/30 font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider ml-0.5">
+                  Owner
+                </span>
+              </NavLink>
+            ) : (
+              <NavLink
+                to="/explore?tab=renter"
+                className={({ isActive }) =>
+                  navItemClass(
+                    isActive || (location.pathname === "/explore" && searchParams.get("tab") === "renter"),
+                    "renter"
+                  )
+                }
+              >
+                <span>Explore Gear</span>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider ml-0.5">
+                  Renter
+                </span>
+              </NavLink>
+            )}
+
+            <NavLink to="/features" className={({ isActive }) => navItemClass(isActive, homeMode)}>
               <span>Features</span>
               <span className="text-[10px] bg-gradient-to-r from-primary to-amber-500 text-white font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm ml-0.5">
                 All-in-One
@@ -112,73 +121,33 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Autonomous Voice-to-Booking Agent */}
-          <button
-            onClick={() => setVoiceAgentOpen(true)}
-            title="Autonomous Voice Booking (Sarvam Indic AI)"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/25 text-primary text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
-          >
-            <Mic size={13} className="animate-pulse" />
-            <span className="hidden sm:inline">Voice Agent</span>
-            <span className="text-[10px] bg-primary/20 px-1.5 py-0.5 rounded text-primary font-bold hidden md:inline">
-              🔒 Renter AI
-            </span>
-          </button>
-
-          {/* Multilingual Voice Tour (Sarvam AI) */}
-          <VoiceWelcomeWidget />
-
-          {/* Single Main-Page Demo Button with 1-Click Dropdown */}
-          <div className="relative" ref={demoDropdownRef}>
+          {/* Autonomous Voice-to-Booking Agent: Renter-specific feature, shown ONLY when in Renter mode */}
+          {homeMode === "renter" && (
             <button
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/20 transition-all cursor-pointer shadow-sm active:scale-95"
-              onClick={() => setIsDemoDropdownOpen(!isDemoDropdownOpen)}
-              disabled={demoLoading}
-              title="1-Click Demo Login"
+              onClick={() => {
+                if (!user) {
+                  toast("Please sign in as a Renter to use Voice Booking", { icon: "🎙" });
+                  setAuthMode("login");
+                  setAuthOpen(true);
+                } else if (user.role === "owner" || user.roles === "owner") {
+                  toast.error("Voice Booking is built for Renters. Please switch to a Renter account.");
+                } else {
+                  setVoiceAgentOpen(true);
+                }
+              }}
+              title="Autonomous Voice Booking (Renter Feature)"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
             >
-              <span>⚡</span>
-              <span>{demoLoading ? "Logging in..." : "1-Click Demo"}</span>
-              <ChevronDown size={13} className={`transition-transform duration-200 ${isDemoDropdownOpen ? "rotate-180" : ""}`} />
+              <Mic size={13} className="animate-pulse text-emerald-400" />
+              <span className="hidden sm:inline">Voice Agent</span>
+              <span className="text-[10px] bg-emerald-500/20 px-1.5 py-0.5 rounded text-emerald-300 font-bold hidden md:inline">
+                Renter AI
+              </span>
             </button>
+          )}
 
-            {isDemoDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-52 bg-surface border border-divider rounded-2xl shadow-2xl py-1.5 z-50 overflow-hidden animate-[modalIn_150ms_ease-out]">
-                <div className="px-3.5 py-1.5 border-b border-divider text-[10px] font-extrabold uppercase tracking-wider text-text-muted">
-                  Instant Recruiter Access
-                </div>
-                <button
-                  onClick={() => handleDemoPersonaLogin("renter")}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-text-primary hover:bg-white/5 transition-colors cursor-pointer text-left"
-                >
-                  <span className="text-base">🧑‍💼</span>
-                  <div>
-                    <p className="font-bold">Demo Renter</p>
-                    <p className="text-[10px] text-text-muted">Explore & rent gear</p>
-                  </div>
-                </button>
-                <button
-                  onClick={() => handleDemoPersonaLogin("owner")}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-text-primary hover:bg-white/5 transition-colors cursor-pointer text-left"
-                >
-                  <span className="text-base">💼</span>
-                  <div>
-                    <p className="font-bold">Demo Owner</p>
-                    <p className="text-[10px] text-text-muted">Listings & earnings</p>
-                  </div>
-                </button>
-                <button
-                  onClick={() => handleDemoPersonaLogin("admin")}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-text-primary hover:bg-white/5 transition-colors cursor-pointer text-left"
-                >
-                  <span className="text-base">🛡️</span>
-                  <div>
-                    <p className="font-bold text-primary">Demo Admin</p>
-                    <p className="text-[10px] text-text-muted">Governance & escrow</p>
-                  </div>
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Multilingual Voice Tour (Sarvam AI) - Follows current active home page mode */}
+          <VoiceWelcomeWidget />
 
           <button
             className="text-sm font-medium text-text-secondary hover:text-text-primary px-3 py-2 rounded-xl transition-all cursor-pointer"
@@ -190,7 +159,11 @@ const Navbar = () => {
             Login
           </button>
           <button
-            className="bg-primary text-text-primary px-5 py-2 rounded-xl font-semibold hover:bg-primary-hover transition-all cursor-pointer shadow-sm active:scale-95 text-sm"
+            className={`px-5 py-2 rounded-xl font-semibold transition-all cursor-pointer shadow-sm active:scale-95 text-sm ${
+              homeMode === "renter"
+                ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                : "bg-primary hover:bg-primary-hover text-text-primary"
+            }`}
             onClick={() => {
               setAuthMode("register");
               setAuthOpen(true);
@@ -199,7 +172,7 @@ const Navbar = () => {
             Register
           </button>
 
-          <AuthController open={authOpen} onClose={handleAuthClose} defaultMode={authMode} />
+          <AuthController open={authOpen} onClose={handleAuthClose} defaultMode={authMode} initialRole={homeMode} />
           <VoiceBookingAgentModal
             open={voiceAgentOpen}
             onClose={() => setVoiceAgentOpen(false)}

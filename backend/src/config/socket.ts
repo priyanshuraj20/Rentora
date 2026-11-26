@@ -3,7 +3,11 @@ import { Server, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 import { env } from "./env";
 import logger from "./logger";
-import { saveMessageService } from "../service/message.service";
+import {
+  saveMessageService,
+  deleteSingleMessageService,
+  clearConversationService,
+} from "../service/message.service";
 
 let io: Server | null = null;
 
@@ -93,6 +97,40 @@ export const initSocket = (httpServer: HttpServer): Server => {
         } catch (err: any) {
           logger.error("Error processing socket message", { error: err.message });
           socket.emit("error", { message: err.message || "Failed to process message" });
+        }
+      }
+    );
+
+    // -------------------- LIVE CHAT EVENT: DELETE MESSAGE --------------------
+    socket.on(
+      "delete_message",
+      async (data: { messageId: string; bookingId: string }) => {
+        try {
+          if (!socket.data.userId) return;
+          await deleteSingleMessageService(socket.data.userId, data.messageId);
+          if (io) {
+            io.emit("message_deleted", { messageId: data.messageId, bookingId: data.bookingId });
+          }
+        } catch (err: any) {
+          logger.error("Error deleting socket message", { error: err.message });
+          socket.emit("error", { message: err.message || "Failed to delete message" });
+        }
+      }
+    );
+
+    // -------------------- LIVE CHAT EVENT: CLEAR CONVERSATION --------------------
+    socket.on(
+      "clear_conversation",
+      async (data: { bookingId: string }) => {
+        try {
+          if (!socket.data.userId) return;
+          await clearConversationService(socket.data.userId, data.bookingId);
+          if (io) {
+            io.emit("conversation_cleared", { bookingId: data.bookingId });
+          }
+        } catch (err: any) {
+          logger.error("Error clearing socket conversation", { error: err.message });
+          socket.emit("error", { message: err.message || "Failed to clear conversation" });
         }
       }
     );

@@ -11,7 +11,8 @@ export default function FinancialBreakdown({
   const isApproved = status === "approved" && paymentStatus === "pending";
   const isPendingOwner = status === "pending";
   const depositAmount = pricing.deposit || 0;
-  const initialAmountToPay = depositAmount > 0 ? depositAmount : pricing.totalPaid;
+  const subtotalAmount = pricing.subtotal || pricing.dailyRate * pricing.durationDays || 0;
+  const initialAmountToPay = pricing.totalPaid || (subtotalAmount + depositAmount);
 
   return (
     <div className="bg-surface border border-divider rounded-3xl p-6 shadow-sm">
@@ -51,7 +52,7 @@ export default function FinancialBreakdown({
               !isPaid ? "text-emerald-400" : "text-text-muted"
             }`}
           >
-            {!isPaid ? "Escrow Deposit to Confirm" : "Escrow Deposit Locked"}
+            {!isPaid ? "Total Admin Escrow to Confirm" : "Total Held in Admin Escrow"}
           </span>
         </div>
         <span className="font-extrabold text-2xl text-text-primary mt-1">
@@ -59,8 +60,8 @@ export default function FinancialBreakdown({
         </span>
         <p className="text-[11px] text-text-muted mt-1 leading-relaxed">
           {!isPaid
-            ? "🔒 100% Refundable Security Deposit held safely in Platform Escrow. The rental fee is payable upon handover/return directly to owner."
-            : "✓ Deposit safely held in Admin Escrow. 100% refunded to you via Razorpay upon return after AI inspection."}
+            ? `🔒 100% held safely in Admin Escrow (Rent + ₹${depositAmount.toLocaleString("en-IN")} Deposit). Owner receives 90% of rent (10% platform fee) and your deposit is refunded via Razorpay only after verified return & AI photo inspection.`
+            : `✓ Held safely in Admin Escrow. ₹${depositAmount.toLocaleString("en-IN")} deposit is refunded via Razorpay upon clean return; owner receives 90% rent only after order completion.`}
         </p>
       </div>
 

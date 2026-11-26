@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, KeyRound, Camera, CheckCircle2, ArrowRight } from "lucide-react";
 import { apiClient } from "../../utils/apiClient";
+import { useSocket } from "../../context/SocketContext";
 import Breadcrumbs from "../../components/renter_ui/rental_details/Breadcrumbs";
 import RentalHero from "../../components/renter_ui/rental_details/RentalHero";
 import RentalProgress from "../../components/renter_ui/rental_details/RentalProgress";
@@ -21,8 +22,9 @@ export default function RentalDetails() {
   const [rental, setRental] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { socket } = useSocket() || {};
   const [isPaymentSubmitting, setIsPaymentSubmitting] = useState(false);
-  const [showHandoverModal, setShowHandoverModal] = useState(false);
+  const [photoUploadType, setPhotoUploadType] = useState(null); // "handover" | "return" | null
   const [showPINInputModal, setShowPINInputModal] = useState(false);
   const [showPINDisplayModal, setShowPINDisplayModal] = useState(false);
 
@@ -166,6 +168,19 @@ export default function RentalDetails() {
     fetchRentalDetails();
   }, [rentalId]);
 
+  useEffect(() => {
+    if (!socket || !rentalId) return;
+    const handleBookingUpdated = (data) => {
+      if (data?.bookingId === rentalId) {
+        fetchRentalDetails();
+      }
+    };
+    socket.on("booking_updated", handleBookingUpdated);
+    return () => {
+      socket.off("booking_updated", handleBookingUpdated);
+    };
+  }, [socket, rentalId]);
+
   const handleCompletePayment = async () => {
     try {
       setIsPaymentSubmitting(true);
@@ -277,6 +292,150 @@ export default function RentalDetails() {
     <main className="flex-1 px-6 py-10 max-w-[900px] mx-auto space-y-6">
       <Breadcrumbs />
       <RentalHero rental={rental} />
+
+      {/* Prominent Physical Handover & Pickup Card for Renter */}
+      {rental.status === "confirmed" && !rental.handoverConfirmedAt && (
+        <div className="bg-gradient-to-br from-surface via-surface to-emerald-950/20 border-2 border-emerald-500/40 rounded-3xl p-6 sm:p-7 space-y-4 shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-divider pb-4">
+            <div className="flex items-center gap-3.5">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0">
+                <KeyRound size={24} />
+              </div>
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
+                  Payment Confirmed • Next: Equipment Pickup
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black text-text-primary tracking-tight mt-1">
+                  Collect Equipment from Owner
+                </h2>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  Meet the owner, inspect your gear, and show your secret 6-digit PIN.
+                </p>
+              </div>
+            </div>
+
+            {rental.handoverPhotos && rental.handoverPhotos.length > 0 ? (
+              <button
+                onClick={() => setShowPINDisplayModal(true)}
+                className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 active:scale-95 cursor-pointer transition-all whitespace-nowrap"
+              >
+                <KeyRound size={16} />
+                <span>Show My Handover PIN</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setPhotoUploadType("handover")}
+                className="px-5 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/30 active:scale-95 cursor-pointer transition-all whitespace-nowrap"
+              >
+                <Camera size={16} />
+                <span>Upload Pickup Photos First</span>
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
+            <div className="bg-app/80 p-3.5 rounded-2xl border border-divider">
+              <span className="font-bold text-emerald-400 flex items-center gap-1.5 mb-1">
+                <span className="h-4 w-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">1</span>
+                Inspect Equipment
+              </span>
+              <p className="text-text-secondary text-[11px] leading-relaxed">
+                Inspect accessories, test operation, and verify physical condition together.
+              </p>
+            </div>
+
+            <div className="bg-app/80 p-3.5 rounded-2xl border border-divider">
+              <span className="font-bold text-emerald-400 flex items-center gap-1.5 mb-1">
+                <span className="h-4 w-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">2</span>
+                Condition Photos
+              </span>
+              <p className="text-text-secondary text-[11px] leading-relaxed">
+                Upload pickup inspection photos below to secure zero-dispute deposit safety.
+              </p>
+            </div>
+
+            <div className="bg-app/80 p-3.5 rounded-2xl border border-divider">
+              <span className="font-bold text-emerald-400 flex items-center gap-1.5 mb-1">
+                <span className="h-4 w-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">3</span>
+                15s Dynamic PIN
+              </span>
+              <p className="text-text-secondary text-[11px] leading-relaxed">
+                Tell or show your live 15-second dynamic PIN so the owner certifies pickup.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Return Handback & Escrow Refund Card for Renter */}
+      {(rental.status === "ongoing" || rental.handoverConfirmedAt) && !rental.returnConfirmedAt && rental.status !== "completed" && (
+        <div className="bg-gradient-to-br from-surface via-surface to-amber-950/20 border-2 border-amber-500/40 rounded-3xl p-6 sm:p-7 space-y-4 shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-divider pb-4">
+            <div className="flex items-center gap-3.5">
+              <div className="h-12 w-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+                <ShieldCheck size={24} />
+              </div>
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 rounded-full">
+                  Active Rental • Return & Refund
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black text-text-primary tracking-tight mt-1">
+                  Return Gear to Owner & Claim Escrow
+                </h2>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  Bring the gear back, get the 6-digit Return PIN from owner, and unlock your 100% deposit refund.
+                </p>
+              </div>
+            </div>
+
+            {rental.returnPhotos && rental.returnPhotos.length > 0 ? (
+              <button
+                onClick={() => setShowPINInputModal(true)}
+                className="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-surface font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/30 active:scale-95 cursor-pointer transition-all whitespace-nowrap"
+              >
+                <ShieldCheck size={16} />
+                <span>Complete Return (Enter Owner's PIN)</span>
+              </button>
+            ) : (
+              <div className="px-4 py-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold text-xs flex items-center justify-center gap-2 whitespace-nowrap">
+                <ShieldCheck size={15} />
+                <span>Awaiting Owner Return Photos</span>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
+            <div className="bg-app/80 p-3.5 rounded-2xl border border-divider">
+              <span className="font-bold text-amber-400 flex items-center gap-1.5 mb-1">
+                <span className="h-4 w-4 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px]">1</span>
+                Hand Gear Back
+              </span>
+              <p className="text-text-secondary text-[11px] leading-relaxed">
+                Return equipment with all original chargers, lens caps, and accessories.
+              </p>
+            </div>
+            <div className="bg-app/80 p-3.5 rounded-2xl border border-divider">
+              <span className="font-bold text-amber-400 flex items-center gap-1.5 mb-1">
+                <span className="h-4 w-4 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px]">2</span>
+                Owner Gives PIN
+              </span>
+              <p className="text-text-secondary text-[11px] leading-relaxed">
+                Owner checks condition and tells you their secret 6-digit Return PIN.
+              </p>
+            </div>
+            <div className="bg-app/80 p-3.5 rounded-2xl border border-divider">
+              <span className="font-bold text-amber-400 flex items-center gap-1.5 mb-1">
+                <span className="h-4 w-4 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px]">3</span>
+                Instant Escrow Refund
+              </span>
+              <p className="text-text-secondary text-[11px] leading-relaxed">
+                Enter PIN to complete return and disburse your deposit refund straight to bank.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <RentalProgress rental={rental} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -301,7 +460,7 @@ export default function RentalDetails() {
               <p className="text-xs text-text-secondary">Upload item condition photos at handover for protection.</p>
             </div>
             <button
-              onClick={() => setShowHandoverModal(true)}
+              onClick={() => setPhotoUploadType("handover")}
               className="bg-primary hover:bg-primary-hover text-text-primary px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer"
             >
               📷 Upload Pickup Photos
@@ -442,18 +601,21 @@ export default function RentalDetails() {
         status={rental.status}
         handoverConfirmedAt={rental.handoverConfirmedAt}
         returnConfirmedAt={rental.returnConfirmedAt}
-        onEnterHandoverPin={() => setShowPINInputModal(true)}
-        onShowReturnPin={() => setShowPINDisplayModal(true)}
+        hasHandoverPhotos={Boolean(rental.handoverPhotos && rental.handoverPhotos.length > 0)}
+        hasReturnPhotos={Boolean(rental.returnPhotos && rental.returnPhotos.length > 0)}
+        onUploadPhotos={(type) => setPhotoUploadType(type)}
+        onShowHandoverPin={() => setShowPINDisplayModal(true)}
+        onEnterReturnPin={() => setShowPINInputModal(true)}
       />
       <ActivityTimeline timeline={rental.timeline} />
 
-      {showHandoverModal && (
+      {photoUploadType && (
         <BookingPhotoUploadModal
           bookingId={rental.id}
-          type="handover"
-          onClose={() => setShowHandoverModal(false)}
+          type={photoUploadType}
+          onClose={() => setPhotoUploadType(null)}
           onSuccess={() => {
-            setShowHandoverModal(false);
+            setPhotoUploadType(null);
             fetchRentalDetails();
           }}
         />
@@ -462,7 +624,8 @@ export default function RentalDetails() {
       {showPINInputModal && (
         <PINInputModal
           bookingId={rental.id}
-          type="handover"
+          type="return"
+          title="Enter Owner's Return PIN"
           open={showPINInputModal}
           onClose={() => setShowPINInputModal(false)}
           onSuccess={fetchRentalDetails}
@@ -472,9 +635,11 @@ export default function RentalDetails() {
       {showPINDisplayModal && (
         <PINDisplayModal
           bookingId={rental.id}
-          type="return"
+          type="handover"
+          title="My Secret Handover PIN"
           open={showPINDisplayModal}
           onClose={() => setShowPINDisplayModal(false)}
+          onCompleted={fetchRentalDetails}
         />
       )}
     </main>

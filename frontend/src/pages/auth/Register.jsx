@@ -14,8 +14,22 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-const Register = ({ switchMode, setEmail }) => {
-  const [role, setRole] = useState("renter"); // 'renter' | 'owner'
+const Register = ({
+  switchMode,
+  setEmail,
+  initialRole = "owner",
+  role: externalRole,
+  setRole: setExternalRole,
+}) => {
+  const [internalRole, setInternalRole] = useState(initialRole);
+  const role = externalRole || internalRole;
+  const setRole = setExternalRole || setInternalRole;
+
+  useEffect(() => {
+    if (initialRole && !externalRole) {
+      setInternalRole(initialRole);
+    }
+  }, [initialRole, externalRole]);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -210,84 +224,56 @@ const Register = ({ switchMode, setEmail }) => {
 
   return (
     <AuthLayout>
-      {/* Header */}
+      {/* Header with Pre-selected Role Toggle */}
       <div className="p-6 pb-4 text-center border-b border-divider">
+        {/* Seamless Role Toggle at Top */}
+        <div className="flex justify-center mb-3">
+          <div className="inline-flex p-1 rounded-xl bg-app border border-divider shadow-inner">
+            <button
+              type="button"
+              onClick={() => setRole("owner")}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                role === "owner"
+                  ? "bg-primary text-text-primary shadow-sm"
+                  : "text-text-muted hover:text-text-secondary hover:bg-white/5"
+              }`}
+            >
+              <span>List & Earn</span>
+              <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded text-white uppercase font-extrabold">
+                Owner
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole("renter")}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                role === "renter"
+                  ? "bg-emerald-600 text-white shadow-sm"
+                  : "text-text-muted hover:text-text-secondary hover:bg-white/5"
+              }`}
+            >
+              <span>Browse & Rent</span>
+              <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded text-white uppercase font-extrabold">
+                Renter
+              </span>
+            </button>
+          </div>
+        </div>
+
         <h1 className="text-xl font-bold tracking-tight text-text-primary">
-          Join Rentora Community
+          {role === "owner" ? "Create Owner Account" : "Create Renter Account"}
         </h1>
         <p className="text-text-secondary text-xs mt-1">
-          Create your account with your rental preferences
+          {role === "owner"
+            ? "List unused cameras, tools, or gear & earn 90% net bank payouts"
+            : "Rent verified equipment nearby with 100% escrow protection"}
         </p>
       </div>
 
       {/* Form */}
       <div className="p-6 max-h-[80vh] overflow-y-auto">
         <form className="space-y-4" onSubmit={handleRegister}>
-          {/* 1. Role Selection: Rent vs List */}
-          <div>
-            <label className="block text-[11px] font-bold text-text-muted uppercase tracking-wider mb-2">
-              I Want To
-            </label>
-            <div className="grid grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => setRole("renter")}
-                className={`flex items-center gap-2.5 p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                  role === "renter"
-                    ? "bg-primary/10 border-primary text-primary shadow-sm"
-                    : "bg-surface border-divider text-text-secondary hover:border-text-muted"
-                }`}
-              >
-                <div
-                  className={`p-2 rounded-lg ${
-                    role === "renter"
-                      ? "bg-primary text-text-primary"
-                      : "bg-card text-text-muted"
-                  }`}
-                >
-                  <ShoppingBag size={18} />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-text-primary">
-                    Rent Items
-                  </div>
-                  <div className="text-[10px] text-text-muted">
-                    Browse & borrow gear
-                  </div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setRole("owner")}
-                className={`flex items-center gap-2.5 p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                  role === "owner"
-                    ? "bg-primary/10 border-primary text-primary shadow-sm"
-                    : "bg-surface border-divider text-text-secondary hover:border-text-muted"
-                }`}
-              >
-                <div
-                  className={`p-2 rounded-lg ${
-                    role === "owner"
-                      ? "bg-primary text-text-primary"
-                      : "bg-card text-text-muted"
-                  }`}
-                >
-                  <TrendingUp size={18} />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-text-primary">
-                    List Items
-                  </div>
-                  <div className="text-[10px] text-text-muted">
-                    Earn from your gear
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* 2. Optional Profile Photo Picker */}
+          {/* 1. Optional Profile Photo Picker */}
           <div className="flex items-center gap-3.5 p-2.5 rounded-xl bg-surface/50 border border-divider">
             <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
               <div className="w-14 h-14 rounded-full overflow-hidden bg-card border border-divider flex items-center justify-center">
@@ -454,11 +440,15 @@ const Register = ({ switchMode, setEmail }) => {
               id="termsCheckbox"
               checked={checked}
               onChange={() => setChecked(!checked)}
-              className="mt-0.5 rounded border-divider bg-card text-primary focus:ring-primary accent-[#e8734a] cursor-pointer"
+              className={`mt-0.5 rounded border-divider bg-card cursor-pointer ${
+                role === "renter"
+                  ? "text-emerald-500 focus:ring-emerald-500 accent-[#10b981]"
+                  : "text-primary focus:ring-primary accent-[#e8734a]"
+              }`}
             />
             <label htmlFor="termsCheckbox" className="text-xs text-text-secondary leading-relaxed cursor-pointer select-none">
               I agree to Rentora&apos;s{" "}
-              <span className="text-primary hover:underline font-medium">
+              <span className={`font-medium hover:underline ${role === "renter" ? "text-emerald-400" : "text-primary"}`}>
                 Rental Terms
               </span>{" "}
               and Escrow Policy.
@@ -469,9 +459,11 @@ const Register = ({ switchMode, setEmail }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full cursor-pointer bg-primary hover:bg-primary-hover text-text-primary font-semibold 
-                       py-2.5 px-6 rounded-lg text-xs shadow-sm transition-all 
-                       active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
+            className={`w-full cursor-pointer font-semibold py-2.5 px-6 rounded-lg text-xs shadow-sm transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2 ${
+              role === "renter"
+                ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20"
+                : "bg-primary hover:bg-primary-hover text-text-primary shadow-primary/20"
+            }`}
           >
             {loading ? (
               <div className="flex items-center gap-2">
@@ -479,7 +471,7 @@ const Register = ({ switchMode, setEmail }) => {
                 <span>Creating Account...</span>
               </div>
             ) : (
-              `Create ${role === "owner" ? "Owner" : "Renter"} Account`
+              `Register as ${role === "owner" ? "Equipment Owner" : "Gear Renter"} →`
             )}
           </button>
 

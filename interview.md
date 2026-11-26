@@ -12,7 +12,7 @@
 4. [Authentication, Security & Session Engineering](#4-authentication-security--session-engineering)
 5. [Financial Engine: Payment, Escrow, Split & Refund Lifecycle](#5-financial-engine-payment-escrow-split--refund-lifecycle)
 6. [Concurrency, Idempotency & Race-Condition Mitigation](#6-concurrency-idempotency--race-condition-mitigation)
-7. [Handover & Return Verification: Dual-Layer 6-Digit PIN & Acoustic Voice Protocol](#7-handover--return-verification-dual-layer-6-digit-pin--acoustic-voice-protocol)
+7. [Handover & Return Verification: 15-Second Dynamic PIN & Condition-Photo Gate](#7-handover--return-verification-15-second-dynamic-pin--condition-photo-gate)
 8. [Multimodal AI Vision Damage Inspection & Autonomous Risk Guard](#8-multimodal-ai-vision-damage-inspection--autonomous-risk-guard)
 9. [Search, Geospatial Engine & Elasticsearch DB Fallback](#9-search-geospatial-engine--elasticsearch-db-fallback)
 10. [Asynchronous Background Architecture: Redis & BullMQ Workers](#10-asynchronous-background-architecture-redis--bullmq-workers)
@@ -27,7 +27,7 @@
 ## 1. Executive Summary & Elevator Pitches
 
 ### The 30-Second Elevator Pitch
-> *"Rentora is a location-aware, peer-to-peer equipment sharing marketplace built on Node.js, Express, React, MongoDB, Redis, and BullMQ. What sets it apart from traditional rental classifieds is its autonomous risk and voice AI infrastructure: we implement an **Autonomous Indic Voice-to-Booking Agent powered by Sarvam AI (Saaras STT + Bulbul TTS)** allowing renters to book gear in Hinglish/Hindi without typing, an automated **Razorpay Escrow Vault** with 10% platform split and 90% owner payouts, an **Uber-style 6-digit PIN + Acoustic Voice Consent** handover protocol to eliminate physical delivery disputes, and a **Google Gemini 1.5 Flash multimodal AI vision pipeline** that inspects return photos to autonomously detect damage and settle deposits without human support tickets."*
+> *"Rentora is a location-aware, peer-to-peer equipment sharing marketplace built on Node.js, Express, React, MongoDB, Redis, and BullMQ. What sets it apart from traditional rental classifieds is its autonomous risk and voice AI infrastructure: we implement an **Autonomous Indic Voice-to-Booking Agent powered by Sarvam AI (Saaras STT + Bulbul TTS)** allowing renters to book gear in Hinglish/Hindi without typing, an automated **Razorpay Escrow Vault** with 10% platform split and 90% owner payouts, an **Uber-style 15-second Dynamic Rotating PIN + Condition Photo** handover protocol to eliminate physical delivery disputes, and a **Google Gemini 1.5 Flash multimodal AI vision pipeline** that inspects return photos to autonomously detect damage and settle deposits without human support tickets."*
 
 ### The 60-Second Architecture Pitch
 > *"I designed Rentora to solve the two biggest friction points in peer-to-peer rentals: trust and operational friction. 
@@ -38,14 +38,14 @@
 > 
 > For data storage, MongoDB handles core documents with a `2dsphere` geospatial index for micro-locality search, while Elasticsearch provides fuzzy full-text querying with an automatic MongoDB fallback if the cluster is down. 
 > 
-> To eliminate fraud and manual disputes, we built three proprietary pillars: a dual-layer handover protocol combining a brute-force-protected 6-digit PIN with an acoustic voice consent recording, a Google Gemini 1.5 Flash vision differential inspection engine for damage settlement, and a 100% automated Razorpay Escrow engine with a dedicated Admin Governance Portal."*
+> To eliminate fraud and manual disputes, we built three core pillars: a condition-photo-gated **15-second Dynamic Rotating PIN** protocol with real-time Socket.io synchronization, a Google Gemini 1.5 Flash vision differential inspection engine for damage settlement, and a 100% automated Razorpay Escrow engine with a dedicated Admin Governance Portal."*
 
 ### The 2-Minute Deep Pitch (For Senior Technical Interviewers)
 *(Use this when an interviewer asks: "Tell me about your project from architectural and engineering perspectives.")*
 > 1. **Problem Statement**: Peer-to-peer asset sharing (cameras, drones, power tools, vehicles) suffers from high default risk, physical handover friction, deposit disputes, manual arbitration costs, and high typing friction on mobile devices.
 > 2. **Autonomous Indic Voice Intelligence**: We integrated Sarvam AI (`saaras:v4` STT and `bulbul:v2` TTS) with an Indic NLP parser. Users can speak in 11 Indian languages (e.g. *"Bhai Sony camera chahiye weekend ke liye"*). The system parses Devanagari numbers and brand tokens, queries MongoDB using `$or` across title and category, calculates dynamic escrow amounts, synthesizes a spoken audio response, and renders a pre-filled booking card with interactive date pickers.
 > 3. **Financial Escrow & Split Architecture**: Renters pay 100% of the booking cost plus a refundable security deposit upfront into a platform escrow account via Razorpay. Client-side price tampering is completely prevented by a server-side single-source-of-truth pricing engine. We calculate a 10% platform fee and a 90% net owner payout.
-> 4. **Dual-Layer Anti-Fraud Handover Protocol**: We transitioned away from camera-based QR codes (which failed in low-light basements and had cross-browser WebRTC permission issues) to an Uber-style 6-digit verification PIN paired with an **Acoustic Voice Consent Recording** stored as a cryptographic audit blob before gear is released.
+> 4. **Anti-Fraud 15s Dynamic PIN Handover Protocol**: We transitioned away from camera-based QR codes (which failed in low-light basements and had cross-browser WebRTC permission issues) to an Uber-style 15-second dynamic rotating TOTP PIN paired with pre-handover condition photo appraisals before gear is released.
 > 5. **Multimodal AI Vision & Autonomous Risk Guard**: When items are returned, photos are sent to Google Gemini 1.5 Flash alongside pickup baseline photos. The AI returns a structured JSON evaluation (Tier 0 to Tier 3 damage). If Tier 0, 100% deposit is refunded automatically via Razorpay. If Tier 3 (total loss), the Autonomous Risk Guard immediately triggers, forfeits the deposit to the owner, and auto-suspends the renter (`isBlocked = true`) across all JWT sessions.
 > 6. **Background Queues & Geocoding**: We offload heavy I/O tasks to BullMQ backed by Redis: asynchronous email dispatch (Resend), non-blocking Elasticsearch catalog indexing, booking status cron transitions, and an ephemeral photo purge worker that destroys evidence photos after 3 days to protect user privacy and optimize storage. Micro-locality queries use MongoDB's `2dsphere` S2 geometry index with Haversine distance calculations.
 
@@ -89,7 +89,7 @@ flowchart TD
         BookingService["Booking State Machine & Duration Calculator"]
         PricingEngine["Clean Server-Side Pricing Engine (10% Fee, 90% Payout)"]
         PaymentService["Escrow Settlement & Razorpay Split Engine"]
-        PINEngine["6-Digit Verification PIN & Acoustic Voice Consent Engine"]
+        PINEngine["15-Second Dynamic Rotating PIN Engine"]
         SocketService["Socket.io Event Dispatcher (Private Rooms)"]
     end
 
@@ -504,52 +504,46 @@ Network timeouts can cause a browser or Razorpay webhook to re-send payment conf
 
 ---
 
-## 7. Handover & Return Verification: Dual-Layer 6-Digit PIN & Acoustic Voice Protocol
+## 7. Handover & Return Verification: 15-Second Dynamic PIN & Condition-Photo Gate
 
-### Why We Replaced QR Codes with 6-Digit PINs (Classic Interview Question)
-> **Interviewer**: *"Why did you move away from QR code scanners for handover verification?"*
+### Why We Replaced QR Codes with 15-Second Dynamic Rotating PINs (Classic Interview Question)
+> **Interviewer**: *"Why did you move away from QR code scanners and static PINs for handover verification?"*
 > 
 > **Candidate Answer**: 
 > *"We initially explored QR codes, but real-world testing exposed three critical operational flaws:
 > 1. **Lighting & Physical Glare**: Renters and owners often meet in basements, parking garages, or dimly lit areas where mobile phone cameras struggle to focus on screens.
 > 2. **Cross-Browser WebRTC Permissions**: In mobile browsers (Safari on iOS, in-app webviews inside WhatsApp/Instagram), camera permissions are frequently blocked or restricted.
-> 3. **Hardware Latency**: Loading a client-side WebAssembly camera scanner library adds 300KB+ overhead to the bundle.
+> 3. **Static PIN Screenshot Fraud**: A static 1-hour PIN can be screenshotted and shared remotely over WhatsApp, allowing someone to claim pickup without being physically present.
 > 
-> By switching to an **Uber-style 6-Digit PIN protocol**, verification is 100% reliable across any device, requires zero camera permissions, works in the dark, and is cryptographically secured with an auto-expiring 1-hour TTL and brute-force lockout."*
+> By switching to an **Uber-style 15-Second Dynamic Rotating PIN protocol**, verification works in any lighting, requires zero camera permissions, auto-rotates every 15 seconds (with a 30-second server-side grace window for the previous code to handle network/typing latency), and enforces a 5-attempt brute-force lockout."*
 
-### Why PIN Alone Wasn't Enough: The Need for Acoustic Voice Consent
-> **Senior Interviewer**: *"What if an owner coerces the renter or intercepts the SMS/screen to input the 6-digit PIN, then steals the item or claims it was never delivered?"*
+### Why We Enforce a Mandatory Condition-Photo Gate & Real-Time Socket.io State Sync
+> **Senior Interviewer**: *"What happens if a user skips uploading condition photos before entering the PIN, or if the Renter's PIN modal stays open after the Owner verifies pickup?"*
 > 
 > **Candidate Answer**:
-> *"That exact edge case led us to invent our **Dual-Layer Handover Protocol**:
-> 1. **Layer 1: Cryptographic 6-Digit One-Time PIN**: Proves that the renter is in proximity and authorized the handoff.
-> 2. **Layer 2: Acoustic Voice Consent Recording**: At the moment of physical handover, the owner records a short verbal consent statement from the renter (e.g. *'Yes, I confirm I have received the Sony A7 IV in good condition'*).
-> - The audio blob is compressed, timestamped, hashed with SHA256, and appended as an immutable audit record in `handoverVoiceConsent` on the booking document.
-> - If the renter ever files a chargeback or claims non-delivery, the acoustic voice statement provides legally binding biometric evidence of physical possession.
-> - Only when both the PIN hash and voice consent verify does the Escrow engine unlock the 90% rental payout to the owner."*
+> *"We enforce two strict invariants in `booking.service.ts` and our React UI:
+> 1. **Mandatory Condition-Photo Gate**: Neither `generateVerificationPinService` nor `verifyPinService` allows generating or verifying a Handover PIN unless `handoverPhotos.length > 0` (uploaded by Renter at pickup), and only the **Owner** can upload `returnPhotos` (`403 Forbidden` for Renter) before unlocking the Return PIN. This prevents a renter from uploading old/good photos for damaged gear and guarantees Gemini 1.5 Flash always has an authentic Before-and-After baseline.
+> 2. **State-Lock (`409 Conflict`) & Socket.io Sync**: Once handover is verified, `booking_status` atomically transitions to `ongoing` (`handoverConfirmedAt` is set). Any subsequent request for a Handover PIN returns `409 Conflict`, and the server emits a `booking_updated` Socket.io event to both parties so the Renter's open `PINDisplayModal` closes instantly and both portals stay synchronized."*
 
-### Dual-Layer Handover & Verification Mechanics
+### 15s Dynamic PIN & Photo-Gated Verification Mechanics
 ```mermaid
 flowchart TD
-    A["Renter arrives at Pickup Location"] --> B["Renter opens booking -> views 6-Digit PIN [ 4 | 8 | 2 | 9 | 1 | 7 ]"]
-    B --> C["Owner enters PIN into PINInputModal"]
-    C --> D["Owner captures Renter Verbal Consent via MediaRecorder ('Item received in good condition')"]
-    D --> E["POST /booking/:id/verify-handover-dual { pin, voiceBlob }"]
+    A["Renter arrives at Pickup Location"] --> B{"Are Pickup Condition Photos Uploaded?"}
+    B -- No --> C["UI & API block PIN generation: 'Upload Pickup Photos First'"]
+    B -- Yes --> D["Renter opens PINDisplayModal -> POST /booking/:id/generate-pin"]
+    D --> E["Server generates 6-digit PIN (15s TTL + 30s previous-PIN grace window)"]
+    E --> F["Owner enters live PIN in PINInputModal -> POST /booking/:id/verify-pin"]
     
-    E --> F{"Is PIN Expired (>1 hr)?"}
-    F -- Yes --> G["400 Bad Request: 'PIN expired. Request fresh PIN.'"]
+    F --> G{"Is PIN valid (current <= 15s OR previous <= 30s grace)?"}
+    G -- No --> H["Increment attempts (+1)"]
+    H --> I{"attempts >= 5?"}
+    I -- No --> J["400 Bad Request: 'Incorrect PIN. X attempts remaining.'"]
+    I -- Yes --> K["TRIGGER AUTONOMOUS RISK GUARD\nUser.isBlocked = true\nRevoke all active JWT sessions"]
     
-    F -- No --> H{"Does PIN match database hash?"}
-    H -- No --> I["Increment attempts (+1)"]
-    I --> J{"attempts >= 5?"}
-    J -- No --> K["400 Bad Request: 'Incorrect PIN. X attempts remaining.'"]
-    J -- Yes --> L["TRIGGER AUTONOMOUS RISK GUARD\nUser.isBlocked = true\nRevoke all active JWT sessions"]
-    
-    H -- Yes --> M["Validate Voice Consent Audio Buffer"]
-    M --> N["Calculate SHA256 Checksum & Save Audit Blob to Booking Document"]
-    N --> O["Atomically transition booking_status = 'ongoing'\nhandoverConfirmedAt = Date.now()"]
-    O --> P["Trigger Razorpay Escrow Unlock: Disburse 90% Rental Revenue to Owner Bank"]
-    P --> Q["200 OK: Handover Certified! Rental is Live"]
+    G -- Yes --> L["Atomically transition booking_status = 'ongoing'\nhandoverConfirmedAt = Date.now()"]
+    L --> M["Emit Socket.io 'booking_updated' to Renter & Owner rooms"]
+    M --> N["Renter PINDisplayModal auto-closes & both screens sync to ONGOING"]
+    N --> O["200 OK: Handover Certified! Rental is Live"]
 ```
 
 ---

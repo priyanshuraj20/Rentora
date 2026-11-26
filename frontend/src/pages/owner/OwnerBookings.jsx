@@ -6,12 +6,14 @@ import PINDisplayModal from '../../components/common/PINDisplayModal';
 import PINInputModal from '../../components/common/PINInputModal';
 import toast from 'react-hot-toast';
 import { apiClient } from '../../utils/apiClient';
+import { useSocket } from '../../context/SocketContext';
 
 const OwnerBookings = () => {
+  const { socket } = useSocket() || {};
   const [activeTab, setActiveTab] = useState('pending');
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [photoModalBookingId, setPhotoModalBookingId] = useState(null);
+  const [photoModalState, setPhotoModalState] = useState({ open: false, bookingId: null, type: 'return', completeAfter: false });
   const [pinDisplayModal, setPinDisplayModal] = useState({ open: false, bookingId: null, type: 'handover' });
   const [pinInputModal, setPinInputModal] = useState({ open: false, bookingId: null, type: 'return' });
 
@@ -36,6 +38,17 @@ const OwnerBookings = () => {
   useEffect(() => {
     fetchBookings();
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleBookingUpdated = () => {
+      fetchBookings();
+    };
+    socket.on("booking_updated", handleBookingUpdated);
+    return () => {
+      socket.off("booking_updated", handleBookingUpdated);
+    };
+  }, [socket]);
 
   const handleApprove = async (id) => {
     try {
@@ -103,7 +116,7 @@ const OwnerBookings = () => {
   const handleComplete = (id) => {
     const booking = bookings.find((b) => b.id === id);
     if (booking && (!booking.returnPhotos || booking.returnPhotos.length === 0)) {
-      setPhotoModalBookingId(id);
+      setPhotoModalState({ open: true, bookingId: id, type: 'return', completeAfter: true });
     } else {
       if (window.confirm("Are you sure the item has been returned?")) {
         executeComplete(id);
@@ -134,7 +147,7 @@ const OwnerBookings = () => {
       <div className="max-w-[1400px] px-6 py-6 mx-auto space-y-8">
         
         {/* Header Section */}
-        <div className="flex flex-col gap-2">
+        <div id="owner-bookings-header" className="flex flex-col gap-2">
             <h1 className="text-4xl font-black tracking-tighter text-white">Bookings</h1>
             <p className="text-text-secondary font-medium text-lg">Manage rental requests and active bookings</p>
         </div>
@@ -154,8 +167,9 @@ const OwnerBookings = () => {
                   onApprove={handleApprove} 
                   onReject={handleReject} 
                   onComplete={handleComplete}
-                  onShowHandoverPin={(id) => setPinDisplayModal({ open: true, bookingId: id, type: 'handover' })}
-                  onEnterReturnPin={(id) => setPinInputModal({ open: true, bookingId: id, type: 'return' })}
+                  onUploadPhotos={(id, type) => setPhotoModalState({ open: true, bookingId: id, type, completeAfter: false })}
+                  onVerifyHandoverPin={(id) => setPinInputModal({ open: true, bookingId: id, type: 'handover' })}
+                  onShowReturnPin={(id) => setPinDisplayModal({ open: true, bookingId: id, type: 'return' })}
                   activeTab={activeTab}
                 />
               ))
@@ -169,15 +183,19 @@ const OwnerBookings = () => {
         </div>
       </div>
 
-      {photoModalBookingId && (
+      {photoModalState.open && (
         <BookingPhotoUploadModal
-          bookingId={photoModalBookingId}
-          type="return"
-          onClose={() => setPhotoModalBookingId(null)}
+          bookingId={photoModalState.bookingId}
+          type={photoModalState.type}
+          onClose={() => setPhotoModalState({ open: false, bookingId: null, type: 'return', completeAfter: false })}
           onSuccess={() => {
-            const idToComplete = photoModalBookingId;
-            setPhotoModalBookingId(null);
-            executeComplete(idToComplete);
+            const { bookingId, completeAfter } = photoModalState;
+            setPhotoModalState({ open: false, bookingId: null, type: 'return', completeAfter: false });
+            if (completeAfter) {
+              executeComplete(bookingId);
+            } else {
+              fetchBookings();
+            }
           }}
         />
       )}
@@ -188,6 +206,7 @@ const OwnerBookings = () => {
           type={pinDisplayModal.type}
           open={pinDisplayModal.open}
           onClose={() => setPinDisplayModal({ open: false, bookingId: null, type: 'handover' })}
+          onCompleted={fetchBookings}
         />
       )}
 
