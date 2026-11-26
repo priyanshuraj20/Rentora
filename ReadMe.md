@@ -158,10 +158,10 @@ flowchart TD
     HandoverDone --> ItemReturned["Return verified via Owner Photos + 15s Return PIN -> COMPLETED"]
     ItemReturned --> GeminiAI["Google Gemini 1.5 Flash Vision Inspection (Pickup vs Return Photos)"]
     GeminiAI --> DamageCheck{"Inspect Condition & Settle Escrow"}
-    DamageCheck -->|TIER 0: Clean Return (No Damage)| FullRefund["100% Security Deposit refunded to Renter + 90% Rent to Owner (10% Fee to Admin)"]
-    DamageCheck -->|TIER 1/2: Minor or Moderate Damage| PartialDeduction["Deduct Repair Cost from Deposit -> Owner gets 90% Rent + Repair Cost"]
+    DamageCheck -->|"TIER 0: Clean Return - No Damage"| FullRefund["100% Security Deposit refunded to Renter + 90% Rent to Owner (10% Fee to Admin)"]
+    DamageCheck -->|"TIER 1/2: Minor or Moderate Damage"| PartialDeduction["Deduct Repair Cost from Deposit -> Owner gets 90% Rent + Repair Cost"]
     PartialDeduction --> RemainderRefund["Refund remaining deposit balance to Renter via Razorpay"]
-    DamageCheck -->|TIER 3: Severe Destruction / Total Loss| Forfeit["100% Deposit + 90% Rent to Owner + Malicious User Suspended"]
+    DamageCheck -->|"TIER 3: Severe Destruction / Total Loss"| Forfeit["100% Deposit + 90% Rent to Owner + Malicious User Suspended"]
     FullRefund --> Settled["Booking Settled & Closed"]
     RemainderRefund --> Settled
     Forfeit --> Settled
