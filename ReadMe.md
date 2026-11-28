@@ -17,9 +17,9 @@ Rentora lets equipment owners earn from unused items (cameras, drones, tools, bi
 ### Core Highlights
 - **Marketplace Architecture**: Complete owner and renter workflows with Elasticsearch + MongoDB geolocation discovery, booking lifecycle management, Socket.IO real-time chat, and Razorpay Escrow payments.
 - **Asynchronous Processing**: BullMQ + Redis background workers handle booking status updates, OTP/email delivery, search index sync, and scheduled media cleanup without blocking API requests.
-- **Authentication & Authorization**: JWT authentication in HTTP-only cookies, Redis-backed token blacklisting on logout, Google OAuth, Role-Based Access Control (RBAC), double-submit CSRF protection, and rate limiting.
+- **Authentication & Authorization**: Email/password signup with OTP verification, JWT access & refresh tokens in HTTP-only cookies, Redis-backed token blacklisting on logout, Role-Based Access Control (RBAC), double-submit CSRF protection, and rate limiting.
 - **Security Hardening**: Prevented cross-booking payment replay attacks and fixed IDOR vulnerabilities in booking cancellation, paired with server-side pricing and a photo-gated 15-second dynamic PIN handover system.
-- **AI Features**: Indic voice search & audio guides (Sarvam AI) and automated pickup-vs-return condition inspection (Google Gemini Vision).
+- **AI Condition Inspection**: Automated pickup-vs-return condition comparison using Google Gemini Vision to assist with escrow deposit settlement.
 
 ---
 
@@ -41,10 +41,11 @@ flowchart TD
     end
 
     subgraph Services["Core Services"]
+        AuthSvc["Auth & OTP Verification Service"]
         BookingSvc["Booking Lifecycle & 15s Dynamic PIN"]
         PaymentSvc["Razorpay Escrow & Refund Service"]
         ExploreSvc["Search & Geolocation Service"]
-        VoiceSvc["Sarvam AI Voice & Gemini Vision"]
+        VisionSvc["Google Gemini Vision Inspection"]
     end
 
     subgraph DataLayer["Databases & Storage"]
@@ -56,7 +57,7 @@ flowchart TD
     end
 
     subgraph Workers["Background Workers (BullMQ)"]
-        EmailQ["Email Worker"]
+        EmailQ["Email & OTP Worker"]
         StatusQ["Booking Status Worker"]
         SyncQ["Search Sync Worker"]
         PhotoQ["Media Cleanup Worker"]
@@ -71,11 +72,13 @@ flowchart TD
     SecMid --> AuthMid
     AuthMid --> Services
 
+    AuthSvc --> MongoDB
+    AuthSvc --> RedisDB
     BookingSvc --> MongoDB
     PaymentSvc --> RazorpayVault
+    PaymentSvc --> VisionSvc
     ExploreSvc --> ElasticDB
     ExploreSvc --> MongoDB
-    VoiceSvc --> MongoDB
 
     Services --> MongoDB
     Services --> RedisDB
@@ -164,8 +167,8 @@ stateDiagram-v2
 - **Media Cleanup Worker**: Automatically deletes temporary condition photos after 3 days.
 
 ### Authentication & Security Hardening
-- **Auth & Sessions**: Access + Refresh JWT tokens in HTTP-only cookies, Redis token blacklisting on logout, and Google OAuth 2.0.
-- **RBAC & CSRF**: Role guards (`renter`, `owner`, `admin`), double-submit CSRF verification, Helmet headers, Zod input validation, and route-level rate limiting.
+- **Auth & Sessions**: Email OTP verification (`/send-otp`, `/verify-otp`), Access + Refresh JWT tokens in HTTP-only cookies, Redis token blacklisting on logout, and password reset flow.
+- **RBAC & CSRF**: Role guards (`renter`, `owner`, `admin`), double-submit CSRF verification, Helmet headers, Zod input validation, and route-level rate limiting (`AUTH_LIMITER`, `OTP_LIMITER`).
 - **Payment Replay Fix**: Bound Razorpay `orderId` strictly to the matching `bookingId` and `payment` record so a single payment cannot be replayed across bookings.
 - **IDOR Fix**: Enforced strict ownership checks (`renter_id` / `owner_id`) on booking cancellation, photo uploads, and PIN endpoints.
 
@@ -178,9 +181,9 @@ stateDiagram-v2
 | **Backend** | Node.js, Express.js, Mongoose, Zod, Winston, Sentry |
 | **Database & Cache** | MongoDB (`2dsphere`), Redis (`ioredis`), Elasticsearch |
 | **Queues & Realtime** | BullMQ, Socket.IO |
-| **Payments & Auth** | Razorpay API, JWT, Google OAuth 2.0 (Passport), Bcrypt |
+| **Payments & Auth** | Razorpay API, JWT, Bcrypt, Email OTP (Resend / Nodemailer) |
 | **Frontend** | React, Vite, Tailwind CSS, React Router, Lucide Icons |
-| **AI & Media** | Sarvam AI (STT/TTS), Google Gemini Vision, Cloudinary, Resend |
+| **AI & Media** | Google Gemini Vision, Cloudinary |
 
 ---
 
@@ -202,7 +205,7 @@ Rentora/
 │       └── workers/         # BullMQ background workers
 └── frontend/
     └── src/
-        ├── components/      # Portal UI, PIN modals, Voice guide, Search bar
+        ├── components/      # Portal UI, PIN modals, Search bar
         ├── context/         # AuthContext, SocketContext
         ├── layouts/         # Guest, Renter, Owner, Admin layouts
         ├── pages/           # Explore, Rentals, Bookings, Earnings, Messages, Admin
@@ -249,7 +252,6 @@ ELASTIC_API_KEY=
 
 # Optional AI & Monitoring
 GEMINI_API_KEY=
-SARVAM_API_KEY=
 SENTRY_DSN=
 ```
 
